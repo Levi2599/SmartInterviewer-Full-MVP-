@@ -20,7 +20,10 @@
     "mongoose": "^9.7.0",
     "morgan": "^1.11.0",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.18.0",
+    "recharts": "^3.8.1",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.2",
