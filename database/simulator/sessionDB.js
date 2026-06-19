@@ -26,6 +26,10 @@ const SessionSchema = new mongoose.Schema({
     A: { type: Number, default: 0 },
     R: { type: Number, default: 0 }
   },
+  feedback_history: {
+    type: [String],
+    default: []
+  },
   created_at: { 
     type: Date, 
     default: Date.now 

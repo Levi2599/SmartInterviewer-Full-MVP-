@@ -23,15 +23,21 @@ async function coachFeedbackPrompt(input) {
 
   // 2. Define System Instructions
   const systemInstruction = 
-    "You are an expert interview coach AI for SmartInterviewer. Detect which framework best fits " +
-    "the answer: STAR, CAR, SOAR, PAR, SARI, DEAL, STEP_BY_STEP, or NONE. Analyze accordingly. " +
-    "If the answer fits no framework, return framework_detected: \"NONE\". Feedback must be " +
-    "specific, constructive, actionable, and nonjudgmental. The improvement_tip must be maximum " +
-    "15 words long. Return ONLY valid JSON matching this schema:\n" +
+    "You are an expert interview coach AI for SmartInterviewer. Evaluate the candidate's answer using the STAR or CAR methodology. " +
+    "If the answer does not align with STAR or CAR, identify it as NONE. " +
+    "Provide a numerical score between 0 and 100 for each STAR component (Situation, Task, Action, Result) under 'star_breakdown'. " +
+    "If the candidate used CAR, map the 'Context' score to both Situation (S) and Task (T) scores. " +
+    "Feedback must be specific, constructive, actionable, and nonjudgmental. The improvement_tip must be maximum 15 words long. " +
+    "Return ONLY valid JSON matching this schema:\n" +
     "{\n" +
     "  \"overall_score\": 0,\n" +
-    "  \"framework_detected\": \"STAR\" | \"CAR\" | \"SOAR\" | \"PAR\" | \"SARI\" | \"DEAL\" | \"STEP_BY_STEP\" | \"NONE\",\n" +
-    "  \"framework_analysis\": {},\n" +
+    "  \"framework_detected\": \"STAR\" | \"CAR\" | \"NONE\",\n" +
+    "  \"star_breakdown\": {\n" +
+    "    \"S\": 0,\n" +
+    "    \"T\": 0,\n" +
+    "    \"A\": 0,\n" +
+    "    \"R\": 0\n" +
+    "  },\n" +
     "  \"missing_components\": [\"string\"],\n" +
     "  \"improvement_tip\": \"string\"\n" +
     "}";

@@ -19,11 +19,13 @@ async function questionGenPrompt(input) {
   if (typeof input.seniority_level !== 'string' || !input.seniority_level.trim()) {
     throw new Error('Invalid or empty seniority_level provided.');
   }
-  if (typeof input.jd_text !== 'string' || !input.jd_text.trim()) {
-    throw new Error('Invalid or empty jd_text provided.');
-  }
   if (typeof input.question_count !== 'number' || input.question_count <= 0 || isNaN(input.question_count)) {
     throw new Error('Invalid question_count provided. Must be a positive number.');
+  }
+
+  let jdText = input.jd_text;
+  if (typeof jdText !== 'string' || !jdText.trim()) {
+    jdText = 'General role requirements';
   }
 
   // 2. Define System Instructions
@@ -47,7 +49,7 @@ async function questionGenPrompt(input) {
       job_role: input.job_role,
       industry: input.industry,
       seniority_level: input.seniority_level,
-      contextual_job_description: input.jd_text
+      contextual_job_description: jdText
     },
     generation_constraints: {
       exact_question_count_to_generate: input.question_count,

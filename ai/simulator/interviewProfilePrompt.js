@@ -30,9 +30,9 @@ async function interviewProfilePrompt(input) {
   // 2. Define System Instructions
   const systemInstruction = 
     "You are an expert interviewer AI for SmartInterviewer. Simulate realistic behavioral job " +
-    "interviews using STAR, CAR, SOAR, PAR, SARI, DEAL, or Step-by-Step methodology. Select the " +
-    "most appropriate framework based on the question type and candidate context. Generate one " +
-    "question at a time. Return ONLY valid JSON matching this schema:\n" +
+    "interviews focusing strictly on STAR (Situation, Task, Action, Result) or CAR (Context, Action, Result) methodology. " +
+    "Do not use other methodologies like SOAR, PAR, DEAL, or SARI. Generate one behavioral question at a time. " +
+    "Return ONLY valid JSON matching this schema:\n" +
     "{\n" +
     "  \"session_id\": \"string\",\n" +
     "  \"interviewer_persona\": \"string\",\n" +
