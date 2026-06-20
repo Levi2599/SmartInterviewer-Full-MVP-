@@ -1,132 +1,75 @@
 import React, { useState } from 'react';
 
-const styles = {
-  container: {
-    backgroundColor: '#f8fafc',
-    border: '2px solid #2563eb',
-    borderRadius: '8px',
-    padding: '1.5rem',
-    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.15)',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottom: '1px solid #e2e8f0',
-    paddingBottom: '1rem',
-    marginBottom: '1rem',
-  },
-  scoreBadge: {
-    backgroundColor: '#dbeafe',
-    color: '#1e40af',
-    padding: '0.5rem 1rem',
-    borderRadius: '6px',
-    fontWeight: 'bold',
-    fontSize: '1.25rem',
-  },
-  sectionTitle: {
-    fontSize: '1rem',
-    fontWeight: '600',
-    color: '#334155',
-    margin: '1rem 0 0.5rem 0',
-  },
-  frameworkBox: {
-    backgroundColor: '#fff',
-    border: '1px solid #e2e8f0',
-    padding: '0.75rem',
-    borderRadius: '6px',
-    fontSize: '0.95rem',
-  },
-  missingItem: {
-    color: '#b91c1c',
-    backgroundColor: '#fef2f2',
-    display: 'inline-block',
-    padding: '0.25rem 0.5rem',
-    borderRadius: '4px',
-    marginRight: '0.5rem',
-    marginBottom: '0.5rem',
-    fontSize: '0.875rem',
-    fontWeight: '500',
-  },
-  tip: {
-    backgroundColor: '#fef08a',
-    color: '#713f12',
-    padding: '0.75rem',
-    borderRadius: '6px',
-    fontSize: '0.95rem',
-    fontStyle: 'italic',
-  },
-  button: {
-    backgroundColor: '#10b981',
-    color: '#fff',
-    padding: '0.75rem 1.5rem',
-    border: 'none',
-    borderRadius: '6px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    marginTop: '1.5rem',
-    width: '100%',
-  },
-  retryContainer: {
-    marginTop: '1.5rem',
-    padding: '1rem',
-    backgroundColor: '#fff',
-    border: '1px solid #cbd5e1',
-    borderRadius: '6px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem',
-  },
-  retryTextarea: {
-    width: '100%',
-    height: '100px',
-    padding: '0.5rem',
-    borderRadius: '4px',
-    border: '1px solid #cbd5e1',
-    fontFamily: 'inherit',
-    fontSize: '0.95rem',
-  },
-  buttonRow: {
-    display: 'flex',
-    gap: '0.75rem',
-  },
-  retryButton: {
-    backgroundColor: '#3b82f6',
-    color: '#fff',
-    padding: '0.5rem 1rem',
-    border: 'none',
-    borderRadius: '4px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    flex: 1,
-  },
-  cancelButton: {
-    backgroundColor: '#64748b',
-    color: '#fff',
-    padding: '0.5rem 1rem',
-    border: 'none',
-    borderRadius: '4px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    flex: 1,
-  },
-  deltaBadge: {
-    display: 'inline-block',
-    padding: '0.25rem 0.5rem',
-    borderRadius: '4px',
-    fontWeight: 'bold',
-    fontSize: '0.875rem',
-    color: '#15803d',
-    backgroundColor: '#dcfce7',
-    marginLeft: '0.5rem',
-  },
-};
+const INDIGO = '#4f46e5';
+
+function getBarColor(score) {
+  if (score >= 70) return '#10b981';
+  if (score >= 40) return '#f59e0b';
+  return '#ef4444';
+}
+
+function ComponentChecklist({ labels, star, missing_components }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      {Object.entries(labels).map(([key, label]) => {
+        const score = star?.[key] ?? 0;
+        const isPresent = score >= 40;
+        const barColor = getBarColor(score);
+
+        return (
+          <div key={key} style={{
+            backgroundColor: '#f8fafc',
+            borderRadius: '10px',
+            padding: '0.75rem',
+            border: `1px solid ${isPresent ? '#e2e8f0' : '#fecaca'}`,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+              {/* Status icon */}
+              <div style={{
+                width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.75rem', fontWeight: '700',
+                backgroundColor: isPresent ? '#dcfce7' : '#fee2e2',
+                color: isPresent ? '#166534' : '#dc2626',
+              }}>
+                {isPresent ? '✓' : '!'}
+              </div>
+              <div style={{ flex: 1 }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#1e293b' }}>{label}</span>
+                {!isPresent && (
+                  <span style={{
+                    marginLeft: '0.4rem', fontSize: '0.7rem',
+                    color: '#dc2626', fontWeight: '600',
+                  }}>— Missing</span>
+                )}
+              </div>
+              <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b' }}>{score}/100</span>
+            </div>
+            {/* Progress bar */}
+            <div style={{ height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+              <div style={{
+                height: '100%', width: `${score}%`,
+                backgroundColor: barColor,
+                borderRadius: '3px',
+                transition: 'width 0.4s ease',
+              }} />
+            </div>
+            {!isPresent && (
+              <p style={{ fontSize: '0.72rem', color: '#ef4444', marginTop: '0.35rem', fontStyle: 'italic' }}>
+                Tip: Describe the {label.split(' ')[0].toLowerCase()} clearly in your answer.
+              </p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function CoachOverlay({ feedback, originalAnswer, questionText, sessionId, expectedMethod, onNext }) {
   const {
     overall_score,
     framework_detected,
-    framework_analysis,
     star_breakdown,
     missing_components,
     fillers_detected,
@@ -153,8 +96,8 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           retry_answer: retryAnswer,
           question_text: questionText,
           session_id: sessionId,
-          expected_method: expectedMethod || "STAR"
-        })
+          expected_method: expectedMethod || 'STAR',
+        }),
       });
       if (!res.ok) throw new Error('Failed to process retry analysis.');
       const data = await res.json();
@@ -166,203 +109,97 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
     }
   };
 
-  const renderFrameworkAnalysis = (analysis, star) => {
-    if (star) {
-      const method = framework_detected || expectedMethod || 'STAR';
-      let labels = {
-        S: 'Situation (S)',
-        T: 'Task (T)',
-        A: 'Action (A)',
-        R: 'Result (R)'
-      };
-      
-      if (method === 'PREP') {
-        labels = {
-          S: 'Point (P)',
-          T: 'Reason (R)',
-          A: 'Example (E)',
-          R: 'Point (P)'
-        };
-      } else if (method === 'Step-by-Step') {
-        labels = {
-          S: 'Goal (G)',
-          T: 'Strategy (S)',
-          A: 'Analysis (A)',
-          R: 'Reporting (R)'
-        };
-      }
+  const method = framework_detected || expectedMethod || 'STAR';
+  let labels = { S: 'Situation', T: 'Task', A: 'Action', R: 'Result' };
+  if (method === 'PREP') labels = { S: 'Point', T: 'Reason', A: 'Example', R: 'Point (Revisited)' };
+  if (method === 'Step-by-Step') labels = { S: 'Goal', T: 'Strategy', A: 'Analysis', R: 'Reporting' };
 
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {Object.entries(labels).map(([key, label]) => {
-            const score = star[key] ?? 0;
-            
-            // Dynamic bar coloring based on score
-            let barColor = '#ef4444'; // Red for < 40 (Missing)
-            if (score >= 70) {
-              barColor = '#10b981'; // Green for >= 70 (Success)
-            } else if (score >= 40) {
-              barColor = '#f59e0b'; // Yellow/Orange for 40-69 (Weak)
-            }
-
-            return (
-              <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', fontWeight: '600' }}>
-                  <span>{label}</span>
-                  <span>{score} / 100</span>
-                </div>
-                <div style={{ width: '100%', height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div style={{ width: `${score}%`, height: '100%', backgroundColor: barColor, borderRadius: '4px', transition: 'width 0.3s ease' }} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      );
-    }
-
-    if (!analysis) return null;
-    if (typeof analysis === 'string') {
-      return <p style={{ margin: 0 }}>{analysis}</p>;
-    }
-    if (typeof analysis === 'object') {
-      return (
-        <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-          {Object.entries(analysis).map(([key, val]) => (
-            <li key={key} style={{ marginBottom: '0.25rem' }}>
-              <strong>{key.toUpperCase()}:</strong> {String(val)}
-            </li>
-          ))}
-        </ul>
-      );
-    }
-    return null;
-  };
+  const isGood = overall_score >= 60;
+  const statusColor = isGood ? '#166534' : '#b91c1c';
+  const statusBg = isGood ? '#dcfce7' : '#fee2e2';
+  const statusText = isGood ? 'Good' : 'Needs Improvement';
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h3 style={{ margin: 0, color: '#1e293b' }}>AI Coach Tactical Review</h3>
-        <div style={styles.scoreBadge}>{overall_score} / 100</div>
-      </div>
-
-      <div style={styles.sectionTitle}>Framework Classification</div>
-      <div style={{ fontWeight: '500', marginBottom: '0.5rem', color: '#475569' }}>
-        Detected Pattern: <span style={{ color: '#2563eb' }}>{framework_detected || 'General Structure'}</span>
-      </div>
-
-      <div style={styles.frameworkBox}>
-        {renderFrameworkAnalysis(framework_analysis, star_breakdown)}
-      </div>
-
-      {missing_components && missing_components.length > 0 && (
-        <>
-          <div style={styles.sectionTitle}>Missing Structural Components</div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      {/* Main Coach Card */}
+      <div style={{
+        backgroundColor: '#fff',
+        borderRadius: '16px',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 16px rgba(79, 70, 229, 0.1)',
+        overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: '1.25rem 1.5rem',
+          background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
           <div>
-            {missing_components.map((comp, idx) => (
-              <span key={idx} style={styles.missingItem}>✕ {comp}</span>
-            ))}
+            <div style={{ fontSize: '0.65rem', color: '#a5b4fc', letterSpacing: '0.1em', fontWeight: '700', marginBottom: '0.2rem' }}>
+              AI COACH FEEDBACK
+            </div>
+            <div style={{ color: '#fff', fontWeight: '700', fontSize: '1.1rem' }}>
+              Session Review
+            </div>
           </div>
-        </>
-      )}
-
-      {fillers_detected && fillers_detected.length > 0 && (
-        <>
-          <div style={styles.sectionTitle}>Filler Words Detected</div>
-          <div>
-            {fillers_detected.map((filler, idx) => (
-              <span key={idx} style={{ ...styles.missingItem, color: '#a16207', backgroundColor: '#fef9c3', border: '1px solid #fef08a' }}>
-                ⚠ "{filler}"
-              </span>
-            ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {/* Status badge */}
+            <span style={{
+              backgroundColor: statusBg, color: statusColor,
+              padding: '0.3rem 0.8rem', borderRadius: '20px',
+              fontWeight: '700', fontSize: '0.8rem',
+            }}>
+              {isGood ? '✓' : '!'} {statusText}
+            </span>
+            {/* Score badge */}
+            <div style={{
+              backgroundColor: 'rgba(255,255,255,0.15)',
+              color: '#fff', padding: '0.4rem 0.9rem',
+              borderRadius: '10px', fontWeight: '800', fontSize: '1.3rem',
+            }}>
+              {overall_score}/100
+            </div>
           </div>
-        </>
-      )}
-
-      {improvement_tip && (
-        <>
-          <div style={styles.sectionTitle}>Actionable Optimization Tip</div>
-          <div style={styles.tip}>"{improvement_tip}"</div>
-        </>
-      )}
-
-      {!isRetrying && !retryResult && (
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-          <button onClick={() => onNext()} style={{ ...styles.button, marginTop: 0, flex: 1, backgroundColor: '#64748b' }}>
-            Keep & Continue →
-          </button>
-          <button onClick={() => { setIsRetrying(true); setRetryAnswer(''); }} style={{ ...styles.button, marginTop: 0, flex: 1, backgroundColor: '#2563eb' }}>
-            Retry Answer ↻
-          </button>
         </div>
-      )}
 
-      {isRetrying && !retryResult && (
-        <form onSubmit={handleRetrySubmit} style={styles.retryContainer}>
-          <div style={{ fontWeight: '600', color: '#1e293b', fontSize: '0.95rem' }}>Optimize Your Answer</div>
-          <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Use the tip above to improve your response's structure.</div>
-          <textarea
-            style={styles.retryTextarea}
-            value={retryAnswer}
-            onChange={(e) => setRetryAnswer(e.target.value)}
-            disabled={retryLoading}
-            placeholder="Write your revised answer response details..."
-          />
-          {retryError && <div style={{ color: '#dc2626', fontSize: '0.875rem' }}>{retryError}</div>}
-          <div style={styles.buttonRow}>
-            <button type="button" onClick={() => { setIsRetrying(false); setRetryResult(null); }} style={styles.cancelButton} disabled={retryLoading}>
-              Cancel
-            </button>
-            <button type="submit" style={styles.retryButton} disabled={retryLoading || !retryAnswer.trim()}>
-              {retryLoading ? 'Evaluating...' : 'Submit Revision'}
-            </button>
+        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Method tag */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>
+              Detected Framework:
+            </span>
+            <span style={{
+              backgroundColor: '#f5f3ff', color: INDIGO,
+              padding: '0.25rem 0.75rem', borderRadius: '20px',
+              fontWeight: '700', fontSize: '0.8rem',
+              border: '1px solid #e0d9ff',
+            }}>
+              {method}
+            </span>
           </div>
-        </form>
-      )}
 
-      {retryResult && (
-        <div style={{ ...styles.retryContainer, border: '2px solid #10b981', backgroundColor: '#f0fdf4' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #d1fae5', paddingBottom: '0.5rem' }}>
-            <span style={{ fontWeight: 'bold', color: '#065f46', fontSize: '1.1rem' }}>Revision Review</span>
+          {/* Component checklist */}
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
+              RESPONSE COMPONENTS
+            </div>
+            <ComponentChecklist labels={labels} star={star_breakdown} missing_components={missing_components} />
+          </div>
+
+          {/* Filler words */}
+          {fillers_detected && fillers_detected.length > 0 && (
             <div>
-              <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#047857' }}>
-                {retryResult.retry_feedback.overall_score} / 100
-              </span>
-              <span style={{
-                ...styles.deltaBadge,
-                color: retryResult.score_delta >= 0 ? '#15803d' : '#b91c1c',
-                backgroundColor: retryResult.score_delta >= 0 ? '#dcfce7' : '#fee2e2'
-              }}>
-                {retryResult.score_delta >= 0 ? '+' : ''}{retryResult.score_delta} Delta
-              </span>
-            </div>
-          </div>
-
-          <div style={{ fontSize: '0.9rem', color: '#374151', margin: '0.5rem 0' }}>
-            <strong>Revision Pattern:</strong> {retryResult.retry_feedback.framework_detected || 'NONE'}
-          </div>
-
-          <div style={{ ...styles.frameworkBox, backgroundColor: '#fff' }}>
-            {renderFrameworkAnalysis(retryResult.retry_feedback.framework_analysis, retryResult.retry_feedback.star_breakdown)}
-          </div>
-
-          {retryResult.retry_feedback.missing_components && retryResult.retry_feedback.missing_components.length > 0 && (
-            <div style={{ marginTop: '0.5rem' }}>
-              <div style={{ ...styles.sectionTitle, margin: '0 0 0.25rem 0', fontSize: '0.9rem' }}>Remaining Missing Components</div>
-              <div>
-                {retryResult.retry_feedback.missing_components.map((comp, idx) => (
-                  <span key={idx} style={styles.missingItem}>✕ {comp}</span>
-                ))}
+              <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>
+                FILLER WORDS DETECTED
               </div>
-            </div>
-          )}
-
-          {retryResult.retry_feedback.fillers_detected && retryResult.retry_feedback.fillers_detected.length > 0 && (
-            <div style={{ marginTop: '0.5rem' }}>
-              <div style={{ ...styles.sectionTitle, margin: '0 0 0.25rem 0', fontSize: '0.9rem' }}>Filler Words Detected in Revision</div>
-              <div>
-                {retryResult.retry_feedback.fillers_detected.map((filler, idx) => (
-                  <span key={idx} style={{ ...styles.missingItem, color: '#a16207', backgroundColor: '#fef9c3', border: '1px solid #fef08a' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                {fillers_detected.map((filler, idx) => (
+                  <span key={idx} style={{
+                    color: '#92400e', backgroundColor: '#fef3c7',
+                    border: '1px solid #fde68a', padding: '0.2rem 0.6rem',
+                    borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600',
+                  }}>
                     ⚠ "{filler}"
                   </span>
                 ))}
@@ -370,23 +207,188 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
             </div>
           )}
 
-          {retryResult.retry_feedback.improvement_tip && (
-            <div style={{ marginTop: '0.5rem' }}>
-              <div style={{ ...styles.sectionTitle, margin: '0 0 0.25rem 0', fontSize: '0.9rem' }}>Actionable Tip</div>
-              <div style={styles.tip}>"{retryResult.retry_feedback.improvement_tip}"</div>
+          {/* Improvement tip */}
+          {improvement_tip && (
+            <div style={{
+              backgroundColor: '#fffbeb',
+              border: '1px solid #fde68a',
+              borderRadius: '10px',
+              padding: '0.875rem 1rem',
+            }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#92400e', marginBottom: '0.25rem', letterSpacing: '0.05em' }}>
+                💡 ACTIONABLE TIP
+              </div>
+              <p style={{ color: '#78350f', fontSize: '0.9rem', lineHeight: '1.5', margin: 0 }}>
+                {improvement_tip}
+              </p>
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-            <button onClick={() => { setRetryResult(null); setIsRetrying(true); }} style={{ ...styles.cancelButton, flex: 1 }}>
-              Try Again ↻
-            </button>
-            <button onClick={() => onNext(retryAnswer)} style={{ ...styles.retryButton, backgroundColor: '#10b981', flex: 2 }}>
-              Accept & Continue →
-            </button>
-          </div>
+          {/* Action buttons */}
+          {!isRetrying && !retryResult && (
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                onClick={() => onNext()}
+                style={{
+                  flex: 1, padding: '0.875rem',
+                  backgroundColor: '#f1f5f9', color: '#475569',
+                  border: '1px solid #e2e8f0', borderRadius: '10px',
+                  fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem',
+                  transition: 'all 0.15s',
+                }}
+              >
+                Keep & Continue →
+              </button>
+              <button
+                onClick={() => { setIsRetrying(true); setRetryAnswer(''); }}
+                style={{
+                  flex: 1, padding: '0.875rem',
+                  background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                  color: '#fff', border: 'none', borderRadius: '10px',
+                  fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem',
+                  boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                ↻ Retry Answer
+              </button>
+            </div>
+          )}
+
+          {/* Retry form */}
+          {isRetrying && !retryResult && (
+            <form onSubmit={handleRetrySubmit} style={{
+              backgroundColor: '#f8fafc', borderRadius: '12px',
+              border: '1px solid #e2e8f0', padding: '1.25rem',
+              display: 'flex', flexDirection: 'column', gap: '0.75rem',
+            }}>
+              <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>
+                ✏️ Revise Your Answer
+              </div>
+              <p style={{ fontSize: '0.82rem', color: '#64748b', margin: 0 }}>
+                Apply the tip above. Use the {method} framework to structure your response.
+              </p>
+              <textarea
+                value={retryAnswer}
+                onChange={(e) => setRetryAnswer(e.target.value)}
+                disabled={retryLoading}
+                placeholder={`Use the ${method} structure to rewrite your answer...`}
+                style={{
+                  width: '100%', height: '110px', padding: '0.75rem',
+                  borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                  fontFamily: 'inherit', fontSize: '0.9rem', resize: 'vertical',
+                  outline: 'none', lineHeight: '1.5',
+                  transition: 'border-color 0.15s',
+                }}
+                onFocus={e => e.target.style.borderColor = INDIGO}
+                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+              />
+              {retryError && (
+                <div style={{ color: '#dc2626', fontSize: '0.85rem', fontWeight: '500' }}>
+                  ⚠️ {retryError}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => { setIsRetrying(false); setRetryResult(null); }}
+                  disabled={retryLoading}
+                  style={{
+                    flex: 1, padding: '0.75rem',
+                    backgroundColor: '#f1f5f9', color: '#475569',
+                    border: '1px solid #e2e8f0', borderRadius: '8px',
+                    fontWeight: '600', cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={retryLoading || !retryAnswer.trim()}
+                  style={{
+                    flex: 2, padding: '0.75rem',
+                    background: (!retryLoading && retryAnswer.trim())
+                      ? 'linear-gradient(135deg, #4f46e5, #7c3aed)'
+                      : '#e2e8f0',
+                    color: (!retryLoading && retryAnswer.trim()) ? '#fff' : '#94a3b8',
+                    border: 'none', borderRadius: '8px',
+                    fontWeight: '700', cursor: 'pointer',
+                    boxShadow: (!retryLoading && retryAnswer.trim())
+                      ? '0 4px 12px rgba(79,70,229,0.3)' : 'none',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {retryLoading ? 'Evaluating...' : 'Submit Revision'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Retry results */}
+          {retryResult && (
+            <div style={{
+              backgroundColor: '#f0fdf4', borderRadius: '12px',
+              border: '1px solid #bbf7d0', padding: '1.25rem',
+            }}>
+              <div style={{ fontWeight: '700', color: '#166534', marginBottom: '0.75rem' }}>
+                ✅ Revision Comparison
+              </div>
+              <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                <div style={{
+                  flex: 1, minWidth: '100px',
+                  backgroundColor: '#fee2e2', borderRadius: '8px', padding: '0.75rem', textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#991b1b', marginBottom: '0.2rem' }}>ORIGINAL</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#dc2626' }}>
+                    {retryResult.original_feedback?.overall_score ?? 0}
+                  </div>
+                </div>
+                <div style={{
+                  flex: 1, minWidth: '100px',
+                  backgroundColor: '#dcfce7', borderRadius: '8px', padding: '0.75rem', textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#166534', marginBottom: '0.2rem' }}>REVISION</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#16a34a' }}>
+                    {retryResult.retry_feedback?.overall_score ?? 0}
+                  </div>
+                </div>
+                {retryResult.score_delta !== undefined && (
+                  <div style={{
+                    flex: 1, minWidth: '100px',
+                    backgroundColor: retryResult.score_delta >= 0 ? '#f0fdf4' : '#fef2f2',
+                    borderRadius: '8px', padding: '0.75rem', textAlign: 'center',
+                  }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#64748b', marginBottom: '0.2rem' }}>DELTA</div>
+                    <div style={{
+                      fontSize: '1.5rem', fontWeight: '800',
+                      color: retryResult.score_delta >= 0 ? '#16a34a' : '#dc2626',
+                    }}>
+                      {retryResult.score_delta >= 0 ? '+' : ''}{retryResult.score_delta}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {retryResult.retry_feedback?.improvement_tip && (
+                <p style={{ fontSize: '0.85rem', color: '#475569', margin: 0 }}>
+                  💡 {retryResult.retry_feedback.improvement_tip}
+                </p>
+              )}
+              <button
+                onClick={() => onNext(retryAnswer)}
+                style={{
+                  marginTop: '0.75rem', width: '100%', padding: '0.875rem',
+                  background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                  color: '#fff', border: 'none', borderRadius: '10px',
+                  fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem',
+                  boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
+                }}
+              >
+                Accept & Continue →
+              </button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

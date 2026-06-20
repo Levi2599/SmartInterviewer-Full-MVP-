@@ -1,39 +1,7 @@
 import React, { useState } from 'react';
-import InterviewGuideExport from './InterviewGuideExport';
 
-const styles = {
-  layout: { display: 'flex', flexDirection: 'column', gap: '1.5rem' },
-  card: { backgroundColor: '#fff', borderRadius: '8px', padding: '1.5rem', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' },
-  formGroup: { display: 'flex', flexDirection: 'column', gap: '0.25rem' },
-  label: { fontSize: '0.875rem', fontWeight: '600', color: '#475569' },
-  input: { padding: '0.5rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '1rem' },
-  textarea: { width: '100%', height: '80px', padding: '0.5rem', borderRadius: '4px', border: '1px solid #cbd5e1', boxSizing: 'border-box', fontFamily: 'inherit' },
-  button: { backgroundColor: '#2563eb', color: '#fff', padding: '0.75rem 1.5rem', border: 'none', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', alignSelf: 'flex-start' },
-  loading: { color: '#64748b', fontWeight: '500' },
-  error: { color: '#dc2626', backgroundColor: '#fee2e2', padding: '0.75rem', borderRadius: '6px' },
-  questionItem: { borderBottom: '1px solid #f1f5f9', paddingBottom: '1rem', marginBottom: '1rem' },
-  metaContainer: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' },
-  tag: { fontSize: '0.75rem', fontWeight: '600', padding: '0.25rem 0.5rem', borderRadius: '4px', backgroundColor: '#f1f5f9', color: '#475569' },
-  spinnerContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '3rem 1.5rem',
-    gap: '1.5rem',
-    backgroundColor: '#ffffff',
-    borderRadius: '8px',
-    border: '1px solid #e2e8f0',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-  },
-  spinnerText: {
-    fontSize: '1.1rem',
-    fontWeight: '600',
-    color: '#1e293b',
-    textAlign: 'center',
-  }
-};
+const INDIGO = '#4f46e5';
+const INDIGO_LIGHT = '#f5f3ff';
 
 const spinnerKeyframes = `
   @keyframes spin {
@@ -46,19 +14,22 @@ export default function QuestionBankScreen() {
   const [jobRole, setJobRole] = useState('');
   const [industry, setIndustry] = useState('');
   const [seniorityLevel, setSeniorityLevel] = useState('Mid');
-  const [questionCount, setQuestionCount] = useState(3);
+  const [questionCount, setQuestionCount] = useState(5);
   const [jdText, setJdText] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [questionBankId, setQuestionBankId] = useState(null);
   const [questions, setQuestions] = useState([]);
+  const [basket, setBasket] = useState([]);
+  const [exporting, setExporting] = useState(false);
 
   const handleGenerate = async (e) => {
     e.preventDefault();
-    setLoading('מייצר את בנק השאלות המותאם אישית עבורך...');
+    setLoading(true);
     setError('');
     setQuestions([]);
+    setBasket([]);
     try {
       const res = await fetch('/api/questionBank/generate', {
         method: 'POST',
@@ -71,7 +42,7 @@ export default function QuestionBankScreen() {
           question_count: Number(questionCount),
         }),
       });
-      if (!res.ok) throw new Error('Could not assemble target criteria details.');
+      if (!res.ok) throw new Error('Could not generate questions.');
       const data = await res.json();
       setQuestionBankId(data.question_bank_id);
       setQuestions(data.questions || []);
@@ -82,90 +53,440 @@ export default function QuestionBankScreen() {
     }
   };
 
+  const addToBasket = (q) => {
+    setBasket(prev => prev.find(b => b.text === q.text) ? prev : [...prev, q]);
+  };
+
+  const removeFromBasket = (idx) => {
+    setBasket(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleExport = async () => {
+    if (!questionBankId) return;
+    setExporting(true);
+    try {
+      const res = await fetch(`/api/questionBank/export/${questionBankId}`);
+      if (!res.ok) throw new Error('Export failed.');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'interview-guide.json');
+      document.body.appendChild(link);
+      link.click();
+      if (link.parentNode) link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(`Export error: ${err.message}`);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
-    <div style={styles.layout}>
-      <div style={styles.card}>
-        <h2 style={{ marginTop: 0, marginBottom: '1rem' }}>Generate Target Interview Blueprint</h2>
-        <form onSubmit={handleGenerate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={styles.grid}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Job Title / Role</label>
-              <input style={styles.input} type="text" value={jobRole} onChange={(e) => setJobRole(e.target.value)} placeholder="e.g. Frontend Developer" required />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <style>{spinnerKeyframes}</style>
+
+      {/* Page Header */}
+      <div>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.25rem', letterSpacing: '-0.02em' }}>
+          📋 Question Bank Generator
+        </h1>
+        <p style={{ color: '#64748b', fontSize: '0.95rem' }}>
+          Generate AI-tailored interview question blueprints for any role and seniority level.
+        </p>
+      </div>
+
+      {/* Filters Card */}
+      <div style={{
+        backgroundColor: '#fff', borderRadius: '16px',
+        border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+        padding: '1.5rem',
+      }}>
+        <form onSubmit={handleGenerate}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: '1rem',
+            marginBottom: '1rem',
+          }}>
+            {/* Job Role */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
+                JOB ROLE
+              </label>
+              <input
+                type="text"
+                value={jobRole}
+                onChange={e => setJobRole(e.target.value)}
+                placeholder="e.g. Frontend Developer"
+                required
+                style={{
+                  width: '100%', padding: '0.65rem 0.875rem',
+                  borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                  fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
+                  boxSizing: 'border-box', transition: 'border-color 0.15s',
+                }}
+                onFocus={e => e.target.style.borderColor = INDIGO}
+                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+              />
             </div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Industry Focus</label>
-              <input style={styles.input} type="text" value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="e.g. FinTech" required />
+            {/* Industry */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
+                INDUSTRY
+              </label>
+              <input
+                type="text"
+                value={industry}
+                onChange={e => setIndustry(e.target.value)}
+                placeholder="e.g. FinTech"
+                required
+                style={{
+                  width: '100%', padding: '0.65rem 0.875rem',
+                  borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                  fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
+                  boxSizing: 'border-box', transition: 'border-color 0.15s',
+                }}
+                onFocus={e => e.target.style.borderColor = INDIGO}
+                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+              />
             </div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Seniority Level</label>
-              <select style={styles.input} value={seniorityLevel} onChange={(e) => setSeniorityLevel(e.target.value)}>
+            {/* Seniority */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
+                SENIORITY LEVEL
+              </label>
+              <select
+                value={seniorityLevel}
+                onChange={e => setSeniorityLevel(e.target.value)}
+                style={{
+                  width: '100%', padding: '0.65rem 0.875rem',
+                  borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                  fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
+                  boxSizing: 'border-box', backgroundColor: '#fff', cursor: 'pointer',
+                  transition: 'border-color 0.15s',
+                }}
+                onFocus={e => e.target.style.borderColor = INDIGO}
+                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+              >
                 <option value="Junior">Junior Track</option>
                 <option value="Mid">Mid Profile</option>
                 <option value="Senior">Senior Leadership</option>
               </select>
             </div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Target Count</label>
-              <input style={styles.input} type="number" min="1" max="10" value={questionCount} onChange={(e) => setQuestionCount(e.target.value)} />
+            {/* Count */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
+                QUESTION COUNT
+              </label>
+              <input
+                type="number" min="1" max="10"
+                value={questionCount}
+                onChange={e => setQuestionCount(e.target.value)}
+                style={{
+                  width: '100%', padding: '0.65rem 0.875rem',
+                  borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                  fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
+                  boxSizing: 'border-box', transition: 'border-color 0.15s',
+                }}
+                onFocus={e => e.target.style.borderColor = INDIGO}
+                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+              />
             </div>
           </div>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Contextual Job Description (Optional)</label>
-            <textarea style={styles.textarea} value={jdText} onChange={(e) => setJdText(e.target.value)} placeholder="Paste additional specification criteria details..." />
+
+          {/* Optional JD text */}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
+              OPTIONAL — JOB DESCRIPTION CONTEXT
+            </label>
+            <textarea
+              value={jdText}
+              onChange={e => setJdText(e.target.value)}
+              placeholder="Paste job requirements, tech stack, or role description for more targeted questions..."
+              style={{
+                width: '100%', height: '70px', padding: '0.65rem 0.875rem',
+                borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
+                boxSizing: 'border-box', resize: 'vertical', lineHeight: '1.5',
+                transition: 'border-color 0.15s',
+              }}
+              onFocus={e => e.target.style.borderColor = INDIGO}
+              onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+            />
           </div>
-          <button type="submit" style={styles.button} disabled={loading}>
-            {loading ? 'Assembling Guide Blueprint...' : 'Compile Question Blueprint'}
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+              width: '100%', padding: '0.9rem',
+              background: loading ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+              color: '#fff', border: 'none', borderRadius: '12px',
+              fontWeight: '700', fontSize: '0.95rem', cursor: loading ? 'not-allowed' : 'pointer',
+              boxShadow: loading ? 'none' : '0 4px 14px rgba(79,70,229,0.35)',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            {loading ? (
+              <>
+                <div style={{
+                  width: '18px', height: '18px',
+                  border: '2.5px solid rgba(255,255,255,0.4)',
+                  borderTopColor: '#fff', borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite',
+                }} />
+                Generating...
+              </>
+            ) : '✨ Generate Questions'}
           </button>
         </form>
       </div>
 
-      {error && <div style={styles.error}>{error}</div>}
-
-      {loading && (
-        <div style={styles.spinnerContainer}>
-          <style>{spinnerKeyframes}</style>
-          <svg width="50" height="50" viewBox="0 0 50 50" style={{ animation: 'spin 1s linear infinite' }}>
-            <circle cx="25" cy="25" r="20" fill="none" stroke="#e2e8f0" strokeWidth="5" />
-            <circle cx="25" cy="25" r="20" fill="none" stroke="#2563eb" strokeWidth="5" strokeDasharray="31.4 31.4" strokeLinecap="round" />
-          </svg>
-          <div style={styles.spinnerText}>{loading}</div>
+      {error && (
+        <div style={{
+          backgroundColor: '#fef2f2', border: '1px solid #fecaca',
+          color: '#b91c1c', padding: '0.875rem 1rem',
+          borderRadius: '10px', fontWeight: '500', fontSize: '0.9rem',
+        }}>
+          ⚠️ {error}
         </div>
       )}
 
+      {/* Split Layout */}
       {questions.length > 0 && (
-        <div style={styles.card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-            <h3 style={{ margin: 0 }}>Compiled Questions</h3>
-            <InterviewGuideExport question_bank_id={questionBankId} />
+        <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-start' }}>
+          {/* LEFT – AI Generated Questions (65%) */}
+          <div style={{ flex: '0 0 65%', minWidth: 0 }}>
+            <div style={{
+              backgroundColor: '#fff', borderRadius: '16px',
+              border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+              overflow: 'hidden',
+            }}>
+              {/* Section header */}
+              <div style={{
+                padding: '1rem 1.5rem', borderBottom: '1px solid #e2e8f0',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                backgroundColor: '#fafafa',
+              }}>
+                <span style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>
+                  🤖 AI Generated Questions ({questions.length})
+                </span>
+                <span style={{
+                  fontSize: '0.75rem', color: INDIGO,
+                  backgroundColor: INDIGO_LIGHT, padding: '0.2rem 0.6rem',
+                  borderRadius: '6px', fontWeight: '600',
+                }}>
+                  Click + to add to basket
+                </span>
+              </div>
+
+              <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {questions.map((q, idx) => {
+                  const isTechnical = q.type === 'technical';
+                  const inBasket = basket.some(b => b.text === q.text);
+                  return (
+                    <div key={idx} style={{
+                      backgroundColor: '#f8fafc',
+                      border: `1px solid ${inBasket ? '#c7d2fe' : '#e2e8f0'}`,
+                      borderRadius: '12px',
+                      padding: '1rem',
+                      position: 'relative',
+                      transition: 'all 0.15s',
+                    }}>
+                      {/* Type tag + Add button row */}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                          {/* Type tag */}
+                          <span style={{
+                            fontSize: '0.7rem', fontWeight: '700', padding: '0.2rem 0.6rem',
+                            borderRadius: '20px',
+                            backgroundColor: isTechnical ? '#dbeafe' : '#dcfce7',
+                            color: isTechnical ? '#1d4ed8' : '#166534',
+                          }}>
+                            {isTechnical ? '⚙️ Technical' : '💬 Behavioral'}
+                          </span>
+                          {q.methodology_expectation && (
+                            <span style={{
+                              fontSize: '0.7rem', fontWeight: '700', padding: '0.2rem 0.6rem',
+                              borderRadius: '20px', backgroundColor: INDIGO_LIGHT, color: INDIGO,
+                            }}>
+                              {q.methodology_expectation}
+                            </span>
+                          )}
+                        </div>
+                        {/* Add to basket button */}
+                        <button
+                          type="button"
+                          onClick={() => addToBasket(q)}
+                          disabled={inBasket}
+                          style={{
+                            width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
+                            border: 'none', cursor: inBasket ? 'not-allowed' : 'pointer',
+                            backgroundColor: inBasket ? '#e0d9ff' : '#3b82f6',
+                            color: '#fff', fontWeight: '800', fontSize: '1.1rem',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: inBasket ? 'none' : '0 2px 8px rgba(59,130,246,0.35)',
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          {inBasket ? '✓' : '+'}
+                        </button>
+                      </div>
+
+                      {/* Question text */}
+                      <p style={{ fontWeight: '600', fontSize: '0.95rem', color: '#1e293b', margin: '0 0 0.6rem 0', lineHeight: '1.45' }}>
+                        {idx + 1}. {q.text}
+                      </p>
+
+                      {/* Keywords */}
+                      {q.hr_keywords && q.hr_keywords.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginBottom: '0.5rem' }}>
+                          {(Array.isArray(q.hr_keywords) ? q.hr_keywords : String(q.hr_keywords).split(',')).map((kw, ki) => (
+                            <span key={ki} style={{
+                              fontSize: '0.7rem', padding: '0.15rem 0.5rem',
+                              backgroundColor: '#f1f5f9', color: '#475569',
+                              borderRadius: '6px', fontWeight: '500',
+                            }}>
+                              {kw.trim()}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Red Flags */}
+                      {q.red_flags && q.red_flags.length > 0 && (
+                        <div style={{
+                          marginTop: '0.5rem', padding: '0.5rem 0.75rem',
+                          backgroundColor: '#fef2f2', borderRadius: '8px',
+                          borderLeft: '3px solid #ef4444',
+                        }}>
+                          <div style={{ fontSize: '0.72rem', fontWeight: '700', color: '#dc2626', marginBottom: '0.25rem' }}>
+                            🚩 RED FLAGS TO WATCH FOR
+                          </div>
+                          <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.8rem', color: '#b91c1c', lineHeight: '1.4' }}>
+                            {q.red_flags.map((f, fi) => <li key={fi}>{f}</li>)}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Follow-ups */}
+                      {q.follow_ups && q.follow_ups.length > 0 && (
+                        <div style={{
+                          marginTop: '0.5rem', padding: '0.5rem 0.75rem',
+                          backgroundColor: '#f1f5f9', borderRadius: '8px',
+                          borderLeft: '3px solid #94a3b8',
+                        }}>
+                          <div style={{ fontSize: '0.72rem', fontWeight: '700', color: '#64748b', marginBottom: '0.25rem' }}>
+                            🔍 FOLLOW-UP PROBES
+                          </div>
+                          <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.8rem', color: '#475569', lineHeight: '1.4' }}>
+                            {q.follow_ups.map((f, fi) => <li key={fi}>{f}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-          <div>
-            {questions.map((q, idx) => (
-              <div key={idx} style={styles.questionItem}>
-                <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: '0 0 0.5rem 0', color: '#1e293b' }}>{idx + 1}. {q.text}</p>
-                <div style={styles.metaContainer}>
-                  {q.type && <span style={{ ...styles.tag, backgroundColor: q.type === 'technical' ? '#fee2e2' : '#fef3c7', color: q.type === 'technical' ? '#991b1b' : '#92400e' }}>Type: {q.type}</span>}
-                  {q.competency && <span style={styles.tag}>Competency: {q.competency}</span>}
-                  {q.methodology_expectation && <span style={{ ...styles.tag, backgroundColor: '#e0f2fe', color: '#0369a1' }}>Method: {q.methodology_expectation}</span>}
-                  {q.hr_keywords && <span style={{ ...styles.tag, backgroundColor: '#f0fdf4', color: '#166534' }}>Keywords: {Array.isArray(q.hr_keywords) ? q.hr_keywords.join(', ') : String(q.hr_keywords)}</span>}
-                </div>
-                {q.red_flags && q.red_flags.length > 0 && (
-                  <div style={{ marginTop: '0.5rem', paddingLeft: '1rem', borderLeft: '2px solid #ef4444', backgroundColor: '#fef2f2', padding: '0.5rem', borderRadius: '4px' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#dc2626' }}>Red Flags to Watch For:</span>
-                    <ul style={{ margin: '0.25rem 0 0 0', paddingLeft: '1.25rem', fontSize: '0.9rem', color: '#b91c1c' }}>
-                      {q.red_flags.map((f, fIdx) => <li key={fIdx}>{f}</li>)}
-                    </ul>
+
+          {/* RIGHT – Interview Basket (35%) */}
+          <div style={{ flex: '0 0 35%', position: 'sticky', top: '80px', minWidth: 0 }}>
+            <div style={{
+              backgroundColor: '#fff', borderRadius: '16px',
+              border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+              overflow: 'hidden',
+            }}>
+              {/* Basket header */}
+              <div style={{
+                padding: '1rem 1.25rem', borderBottom: '1px solid #e2e8f0',
+                backgroundColor: '#fafafa',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <span style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>
+                  🗂 Interview Basket
+                </span>
+                <span style={{
+                  backgroundColor: INDIGO_LIGHT, color: INDIGO,
+                  borderRadius: '20px', padding: '0.15rem 0.6rem',
+                  fontSize: '0.78rem', fontWeight: '700',
+                }}>
+                  {basket.length} selected
+                </span>
+              </div>
+
+              {/* Basket items */}
+              <div style={{ padding: '0.75rem', minHeight: '120px' }}>
+                {basket.length === 0 ? (
+                  <div style={{
+                    textAlign: 'center', padding: '2rem 1rem',
+                    color: '#94a3b8', fontSize: '0.85rem', lineHeight: '1.5',
+                  }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🗃️</div>
+                    Your basket is empty.<br />Click <strong>+</strong> on a question to add it here.
                   </div>
-                )}
-                {q.follow_ups && q.follow_ups.length > 0 && (
-                  <div style={{ marginTop: '0.5rem', paddingLeft: '1rem', borderLeft: '2px solid #cbd5e1' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#64748b' }}>Probing Follow-Ups:</span>
-                    <ul style={{ margin: '0.25rem 0 0 0', paddingLeft: '1.25rem', fontSize: '0.9rem', color: '#475569' }}>
-                      {q.follow_ups.map((f, fIdx) => <li key={fIdx}>{f}</li>)}
-                    </ul>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {basket.map((q, i) => (
+                      <div key={i} style={{
+                        display: 'flex', alignItems: 'flex-start', gap: '0.5rem',
+                        padding: '0.6rem 0.75rem',
+                        backgroundColor: '#f8fafc', borderRadius: '8px',
+                        border: '1px solid #e2e8f0',
+                      }}>
+                        <p style={{ flex: 1, margin: 0, fontSize: '0.8rem', color: '#334155', lineHeight: '1.4', fontWeight: '500' }}>
+                          {q.text.length > 80 ? q.text.slice(0, 80) + '...' : q.text}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => removeFromBasket(i)}
+                          style={{
+                            width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0,
+                            border: 'none', cursor: 'pointer',
+                            backgroundColor: '#f1f5f9', color: '#94a3b8',
+                            fontWeight: '700', fontSize: '0.8rem',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            transition: 'all 0.15s',
+                          }}
+                          onMouseEnter={e => { e.target.style.backgroundColor = '#fee2e2'; e.target.style.color = '#dc2626'; }}
+                          onMouseLeave={e => { e.target.style.backgroundColor = '#f1f5f9'; e.target.style.color = '#94a3b8'; }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
-            ))}
+
+              {/* Export */}
+              {questionBankId && (
+                <div style={{ padding: '0.75rem 0.75rem 1rem' }}>
+                  <button
+                    onClick={handleExport}
+                    disabled={exporting}
+                    style={{
+                      width: '100%', padding: '0.875rem',
+                      background: exporting ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                      color: '#fff', border: 'none', borderRadius: '10px',
+                      fontWeight: '700', fontSize: '0.9rem', cursor: exporting ? 'not-allowed' : 'pointer',
+                      boxShadow: exporting ? 'none' : '0 4px 12px rgba(79,70,229,0.3)',
+                      transition: 'all 0.2s',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
+                    }}
+                  >
+                    {exporting ? '⏳ Exporting...' : '📤 Export Guide'}
+                  </button>
+                  <p style={{ textAlign: 'center', fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.4rem' }}>
+                    Download as JSON (PDF/DOCX coming soon)
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

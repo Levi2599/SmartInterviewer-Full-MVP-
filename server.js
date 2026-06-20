@@ -7,6 +7,7 @@ const { connectDB } = require("./database/db.js");
 
 const questionGenerator = require("./server/simulator/questionGenerator");
 const transcriptionService = require("./server/simulator/transcriptionService");
+const fileParserService = require("./server/simulator/fileParserService");
 
 const coachEngine = require("./server/coach/coachEngine");
 const retryHandler = require("./server/coach/retryHandler");
@@ -38,6 +39,7 @@ app.get("/health", (req, res) => {
 // ─── Routes ──────────────────────────────────────────────────
 app.use("/api/simulator/generate-question", questionGenerator);
 app.use("/api/simulator/transcribe", transcriptionService);
+app.use("/api/simulator/parse-file", fileParserService);
 
 app.use("/api/coach/analyze", coachEngine);
 app.use("/api/coach/retry", retryHandler);

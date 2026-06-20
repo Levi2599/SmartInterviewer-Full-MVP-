@@ -1,38 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+} from 'recharts';
+import { useNavigate } from 'react-router-dom';
 
-const styles = {
-  container: { display: 'flex', flexDirection: 'column', gap: '1.5rem' },
-  card: { backgroundColor: '#fff', borderRadius: '8px', padding: '1.5rem', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' },
-  row: { display: 'flex', gap: '1.5rem', flexWrap: 'wrap' },
-  col: { flex: 1, minWidth: '300px' },
-  metricHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' },
-  scoreBadge: { fontSize: '2.5rem', fontWeight: 'bold', color: '#2563eb' },
-  list: { paddingLeft: '1.25rem', margin: '0.5rem 0' },
-  listItem: { marginBottom: '0.5rem', lineHeight: '1.4' },
-  emptyState: { textAlign: 'center', padding: '3rem 1rem', color: '#64748b' },
-  loading: { fontSize: '1.1rem', color: '#64748b', textAlign: 'center', marginTop: '2rem' },
-  error: { color: '#dc2626', backgroundColor: '#fee2e2', padding: '1rem', borderRadius: '6px' }
-};
+const INDIGO = '#4f46e5';
+const INDIGO_LIGHT = '#f5f3ff';
+
+function StatCard({ label, value, sub, icon, delta }) {
+  return (
+    <div style={{
+      backgroundColor: '#fff', borderRadius: '14px',
+      border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+      padding: '1.25rem', flex: '1 1 180px', minWidth: '150px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', letterSpacing: '0.05em' }}>
+          {label}
+        </span>
+        <span style={{ fontSize: '1.2rem' }}>{icon}</span>
+      </div>
+      <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1 }}>
+        {value}
+      </div>
+      {delta !== undefined && (
+        <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: '600', marginTop: '0.3rem' }}>
+          ▲ Trending up
+        </div>
+      )}
+      {sub && <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.3rem' }}>{sub}</div>}
+    </div>
+  );
+}
+
+function ProgressBar({ label, score, color }) {
+  return (
+    <div style={{ marginBottom: '0.75rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', fontWeight: '600', marginBottom: '0.3rem' }}>
+        <span style={{ color: '#1e293b' }}>{label}</span>
+        <span style={{ color }}>{score}/100</span>
+      </div>
+      <div style={{ height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+        <div style={{
+          height: '100%', width: `${score}%`,
+          backgroundColor: color, borderRadius: '4px',
+          transition: 'width 0.5s ease',
+        }} />
+      </div>
+    </div>
+  );
+}
 
 export default function ProgressDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProgress = async () => {
       try {
         const res = await fetch('/api/progress/user-001');
-
-if (res.status === 404) {
-  setData(null);
-  return;
-}
-
-if (!res.ok) {
-  throw new Error('Failed to retrieve performance progression data.');
-}
+        if (res.status === 404) { setData(null); return; }
+        if (!res.ok) throw new Error('Failed to retrieve progress data.');
         const json = await res.json();
         setData(json);
       } catch (err) {
@@ -44,73 +75,279 @@ if (!res.ok) {
     fetchProgress();
   }, []);
 
-  if (loading) return <div style={styles.loading}>Analyzing analytics telemetry...</div>;
-  if (error) return <div style={styles.error}><strong>Telemetry error:</strong> {error}</div>;
+  if (loading) return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'center', padding: '5rem 2rem', gap: '1rem',
+    }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div style={{
+        width: '44px', height: '44px', border: '4px solid #e0d9ff',
+        borderTopColor: INDIGO, borderRadius: '50%', animation: 'spin 0.9s linear infinite',
+      }} />
+      <div style={{ fontWeight: '600', color: '#64748b' }}>Loading analytics...</div>
+    </div>
+  );
 
-  // Render empty state if profile telemetry is uninitialized
+  if (error) return (
+    <div style={{
+      backgroundColor: '#fef2f2', border: '1px solid #fecaca',
+      color: '#b91c1c', padding: '1rem', borderRadius: '10px', fontWeight: '500',
+    }}>
+      ⚠️ {error}
+    </div>
+  );
+
   if (!data || (!data.session_history?.length && !data.readiness_score)) {
     return (
-      <div style={styles.card}>
-        <div style={styles.emptyState}>
-          <h2>No Simulation Progress Tracked Yet</h2>
-          <p>Complete your first active simulation interview cycle to initialize historical breakdown profiling.</p>
-        </div>
+      <div style={{
+        textAlign: 'center', padding: '4rem 2rem',
+        backgroundColor: '#fff', borderRadius: '16px',
+        border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+      }}>
+        <span style={{ fontSize: '3rem' }}>📊</span>
+        <h2 style={{ marginTop: '1rem', color: '#1e293b', fontWeight: '800' }}>No Progress Yet</h2>
+        <p style={{ color: '#64748b', marginTop: '0.5rem', maxWidth: '380px', margin: '0.5rem auto 1.5rem' }}>
+          Complete your first interview simulation to see your performance analytics here.
+        </p>
+        <button
+          onClick={() => navigate('/')}
+          style={{
+            background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+            color: '#fff', border: 'none', borderRadius: '10px',
+            padding: '0.75rem 2rem', fontWeight: '700', cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
+          }}
+        >
+          Start Your First Simulation →
+        </button>
       </div>
     );
   }
 
-  // Map star structural score metrics for chart rendering
-  const chartData = data.star_breakdown ? Object.entries(data.star_breakdown).map(([key, val]) => ({
-    name: key.toUpperCase(),
-    Score: val
-  })) : [];
+  const sessions = data.session_history || [];
+  const star = data.star_breakdown || {};
+  const S = star.S ?? 0, T = star.T ?? 0, A = star.A ?? 0, R = star.R ?? 0;
+  const bestScore = sessions.reduce((max, s) => Math.max(max, s.readiness_score ?? 0), 0);
+  const avgStar = Math.round((S + T + A + R) / 4);
+
+  // Area chart data – readiness trend
+  const trendData = sessions.map((s, i) => ({
+    session: `#${i + 1}`,
+    Score: s.readiness_score ?? 0,
+  }));
+
+  // Radar chart data
+  const radarData = [
+    { subject: 'Situation', score: S },
+    { subject: 'Task', score: T },
+    { subject: 'Action', score: A },
+    { subject: 'Result', score: R },
+    { subject: 'Reflection', score: Math.round((S + R) / 2) },
+  ];
+
+  const getBarColor = (score) => {
+    if (score >= 70) return '#10b981';
+    if (score >= 40) return '#f59e0b';
+    return '#ef4444';
+  };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.row}>
-        <div style={{ ...styles.card, flex: '1 1 250px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-          <span style={{ fontSize: '1rem', fontWeight: '600', color: '#64748b', textAlign: 'center' }}>Global Profile Readiness</span>
-          <div style={styles.scoreBadge}>{data.readiness_score}%</div>
-        </div>
-
-        {chartData.length > 0 && (
-          <div style={{ ...styles.card, flex: '2 1 450px' }}>
-            <h3 style={{ margin: '0 0 1rem 0' }}>STAR Structural Component Breakdown</h3>
-            <div style={{ width: '100%', height: 200 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Bar dataKey="Score" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* Page header */}
+      <div>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
+          📊 My Progress Dashboard
+        </h1>
+        <p style={{ color: '#64748b', fontSize: '0.95rem' }}>
+          Track your interview readiness and AI coach recommendations.
+        </p>
       </div>
 
-      <div style={styles.row}>
+      {/* ─── Stats Grid ─── */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+        <StatCard
+          label="OVERALL SCORE"
+          value={`${data.readiness_score}%`}
+          icon="🎯"
+          delta={true}
+        />
+        <StatCard
+          label="SIMULATIONS"
+          value={sessions.length}
+          icon="🎤"
+          sub="completed sessions"
+        />
+        <StatCard
+          label="AVG. STAR SCORE"
+          value={avgStar}
+          icon="⭐"
+          sub="across all components"
+        />
+        <StatCard
+          label="BEST SCORE"
+          value={`${bestScore}%`}
+          icon="🏆"
+          sub="personal best"
+        />
+      </div>
+
+      {/* ─── Score Trend Chart ─── */}
+      {trendData.length > 0 && (
+        <div style={{
+          backgroundColor: '#fff', borderRadius: '16px',
+          border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+          padding: '1.5rem',
+        }}>
+          <div style={{ marginBottom: '1rem' }}>
+            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>
+              📈 Score Trend
+            </h2>
+            <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>
+              Readiness score over your simulation sessions
+            </p>
+          </div>
+          <div style={{ width: '100%', height: 200 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={trendData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="session" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  labelStyle={{ fontWeight: '700', color: '#1e293b' }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="Score"
+                  stroke="#6366f1"
+                  strokeWidth={2.5}
+                  fill="url(#colorScore)"
+                  dot={{ fill: '#6366f1', r: 4, strokeWidth: 2, stroke: '#fff' }}
+                  activeDot={{ r: 6, fill: '#4f46e5' }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* ─── STAR Breakdown ─── */}
+      <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
+        {/* Radar chart */}
+        <div style={{
+          flex: '1 1 280px',
+          backgroundColor: '#fff', borderRadius: '16px',
+          border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+          padding: '1.5rem',
+        }}>
+          <h2 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>
+            🕸 Framework Balance
+          </h2>
+          <div style={{ width: '100%', height: 220 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={radarData}>
+                <PolarGrid stroke="#e2e8f0" />
+                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#64748b', fontWeight: '600' }} />
+                <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+                <Radar
+                  dataKey="score"
+                  stroke="#4f46e5"
+                  fill="#6366f1"
+                  fillOpacity={0.2}
+                  strokeWidth={2}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Progress bars */}
+        <div style={{
+          flex: '1 1 280px',
+          backgroundColor: '#fff', borderRadius: '16px',
+          border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+          padding: '1.5rem',
+        }}>
+          <h2 style={{ margin: '0 0 1.25rem 0', fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>
+            📊 Component Scores
+          </h2>
+          <ProgressBar label="Situation" score={S} color={getBarColor(S)} />
+          <ProgressBar label="Task" score={T} color={getBarColor(T)} />
+          <ProgressBar label="Action" score={A} color={getBarColor(A)} />
+          <ProgressBar label="Result" score={R} color={getBarColor(R)} />
+        </div>
+      </div>
+
+      {/* ─── Weakness + Recommendations ─── */}
+      <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
+        {/* Weakness card */}
         {data.weakness_profile && data.weakness_profile.length > 0 && (
-          <div style={{ ...styles.card, ...styles.col }}>
-            <h3 style={{ margin: '0 0 0.5rem 0', color: '#991b1b' }}>Identified Growth Factors</h3>
-            <ul style={styles.list}>
+          <div style={{
+            flex: '1 1 280px',
+            backgroundColor: '#fff', borderRadius: '16px',
+            border: '1px solid #fecaca', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            padding: '1.5rem',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '8px',
+                backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', fontSize: '1rem',
+              }}>⚠️</div>
+              <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#991b1b' }}>
+                Weakness Profile
+              </h2>
+            </div>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {data.weakness_profile.map((item, idx) => (
-                <li key={idx} style={styles.listItem}>{item}</li>
+                <li key={idx} style={{ fontSize: '0.875rem', color: '#334155', lineHeight: '1.45' }}>{item}</li>
               ))}
             </ul>
           </div>
         )}
 
+        {/* Recommendations card */}
         {data.training_plan && data.training_plan.length > 0 && (
-          <div style={{ ...styles.card, ...styles.col }}>
-            <h3 style={{ margin: '0 0 0.5rem 0', color: '#166534' }}>Target Execution Blueprint</h3>
-            <ul style={styles.list}>
+          <div style={{
+            flex: '1 1 280px',
+            backgroundColor: '#fff', borderRadius: '16px',
+            border: '1px solid #bfdbfe', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            padding: '1.5rem',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '8px',
+                backgroundColor: '#dbeafe', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', fontSize: '1rem',
+              }}>🎯</div>
+              <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#1d4ed8' }}>
+                Recommended Training
+              </h2>
+            </div>
+            <ul style={{ margin: '0 0 1rem 0', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {data.training_plan.map((item, idx) => (
-                <li key={idx} style={styles.listItem}>{item}</li>
+                <li key={idx} style={{ fontSize: '0.875rem', color: '#334155', lineHeight: '1.45' }}>{item}</li>
               ))}
             </ul>
+            <button
+              onClick={() => navigate('/')}
+              style={{
+                width: '100%', padding: '0.75rem',
+                background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                color: '#fff', border: 'none', borderRadius: '10px',
+                fontWeight: '700', fontSize: '0.875rem', cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
+              }}
+            >
+              🚀 Practice This
+            </button>
           </div>
         )}
       </div>
