@@ -3,7 +3,7 @@ const { callGeminiJson } = require('../geminiClient');
 /**
  * Simulates a realistic job interview turn by evaluating the CV, JD, 
  * and conversation history to construct the next question.
- * * @param {Object} input
+ * @param {Object} input
  * @returns {Promise<Object>} JSON matching Expected Output
  */
 async function interviewProfilePrompt(input) {
@@ -29,15 +29,23 @@ async function interviewProfilePrompt(input) {
 
   // 2. Define System Instructions
   const systemInstruction = 
-    "You are an expert interviewer AI for SmartInterviewer. Simulate realistic behavioral job " +
-    "interviews focusing strictly on STAR (Situation, Task, Action, Result) or CAR (Context, Action, Result) methodology. " +
-    "Do not use other methodologies like SOAR, PAR, DEAL, or SARI. Generate one behavioral question at a time. " +
+    "You are an expert interviewer AI for SmartInterviewer. Simulate realistic, challenging job " +
+    "interviews based on the candidate's CV and the target Job Description (JD). Calibrate the depth and tone to the role's seniority.\n\n" +
+    "CORE RULES:\n" +
+    "1. STATELESS: Generate exactly ONE focused, relevant question at a time representing the current turn.\n" +
+    "2. METADATA: Classify every question you generate. Map it to one of these methodologies:\n" +
+    "   - STAR (Situation, Task, Action, Result) for behavioral questions (e.g. asking about past experiences).\n" +
+    "   - PREP (Point, Reason, Example, Point) for conceptual/theoretical questions (e.g. explaining a paradigm or architecture).\n" +
+    "   - Step-by-Step for technical execution questions (e.g. asking to outline the steps of implementing a feature or solving a coding problem).\n" +
+    "3. EXTREME GAP RULE: If the candidate lacks experience or technical skills required in the JD, do NOT ask them to design or implement complex systems in that unknown technology. Instead, ask how they would approach learning it, or design a question that tests their foundational problem-solving or related concepts they do know.\n\n" +
     "Return ONLY valid JSON matching this schema:\n" +
     "{\n" +
     "  \"session_id\": \"string\",\n" +
     "  \"interviewer_persona\": \"string\",\n" +
     "  \"next_question\": \"string\",\n" +
-    "  \"session_status\": \"active\"\n" +
+    "  \"session_status\": \"active\",\n" +
+    "  \"expected_method\": \"STAR\" | \"PREP\" | \"Step-by-Step\",\n" +
+    "  \"type\": \"technical\" | \"behavioral\"\n" +
     "}";
 
   // 3. Construct Stateless User Payload
@@ -49,13 +57,12 @@ async function interviewProfilePrompt(input) {
       target_job_description: input.jd_text
     },
     conversation_history: input.conversation_history,
-    directives: "Identify structural gaps between the candidate CV and the Job Description requirements. " +
-                "Formulate a tactical, single question targeted at exposing or clarifying that gap. " +
-                "Prefer behavioral inquiries using STAR principles. Ensure the output contains no markdown wrap."
+    directives: "Analyze candidate CV against JD. Detect key skill gaps. Select a gap or requirement to target. " +
+                "Generate a single question. Determine the expected method (STAR/PREP/Step-by-Step) and type (technical/behavioral)."
   };
 
   // 4. Dispatch to Gemini JSON Engine
   return await callGeminiJson(systemInstruction, userPayload);
 }
 
-module.exports = interviewProfilePrompt;
+module.exports = interviewProfilePrompt;

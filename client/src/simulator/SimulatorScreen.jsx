@@ -54,6 +54,7 @@ export default function SimulatorScreen() {
   const [persona, setPersona] = useState('');
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [answerText, setAnswerText] = useState('');
+  const [expectedMethod, setExpectedMethod] = useState('STAR');
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -81,6 +82,7 @@ export default function SimulatorScreen() {
       const data = await res.json();
       setCurrentQuestion(data.next_question);
       if (data.interviewer_persona) setPersona(data.interviewer_persona);
+      if (data.expected_method) setExpectedMethod(data.expected_method);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -104,6 +106,7 @@ export default function SimulatorScreen() {
         body: JSON.stringify({
           answer_text: answerText,
           question_text: currentQuestion,
+          expected_method: expectedMethod,
           star_target: 'all',
           topic_tag: 'technical_behavioral',
           session_id: sessionId
@@ -187,6 +190,7 @@ export default function SimulatorScreen() {
           originalAnswer={answerText}
           questionText={currentQuestion}
           sessionId={sessionId}
+          expectedMethod={expectedMethod}
           onNext={handleNextQuestion} 
         />
       )}

@@ -81,22 +81,36 @@ router.get('/:userId', async (req, res) => {
 
     const { weakness_profile, lowest_component } = await detectWeaknesses(aggregateStarScores);
 
+    const clean_history = history.map(h => ({
+      date: h.date,
+      readiness_score: h.readiness_score,
+      star_breakdown: h.star_breakdown,
+      weakness_tags: h.weakness_tags
+    }));
+
     // Call AI Engine layer for programmatic synthesis reports
     const aiRecommendation = await recommendationPrompt({
       star_breakdown,
       weakness_profile,
       lowest_component,
-      session_count: recordCount
+      session_count: recordCount,
+      session_history: clean_history
     });
+
+    const calculated_readiness = Math.max(0, Math.min(100, Math.round((star_breakdown.S + star_breakdown.T + star_breakdown.A + star_breakdown.R) / 4)));
+
+    const weaknessPattern = aiRecommendation.detected_weakness_pattern || `Growth needed in ${lowest_component}.`;
+    const focusArea = (aiRecommendation.strategic_recommendation && aiRecommendation.strategic_recommendation.focus_area) || lowest_component;
+    const actionableSteps = (aiRecommendation.strategic_recommendation && aiRecommendation.strategic_recommendation.actionable_steps) || ["Practice structuring mockups."];
 
     return res.json({
       user_id: userId,
       session_history: history,
       star_breakdown,
-      weakness_profile,
-      training_plan: aiRecommendation.training_plan || ["Focus on building structured frameworks."],
-      priority_focus: aiRecommendation.priority_focus || lowest_component,
-      readiness_score: aiRecommendation.readiness_score || 70
+      weakness_profile: [weaknessPattern], // Ensure array wrapper to prevent frontend map crash
+      training_plan: actionableSteps,
+      priority_focus: focusArea,
+      readiness_score: calculated_readiness
     });
   } catch (e) {
     return res.status(500).json({ error: e.message });

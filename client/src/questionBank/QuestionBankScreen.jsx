@@ -143,10 +143,19 @@ export default function QuestionBankScreen() {
               <div key={idx} style={styles.questionItem}>
                 <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: '0 0 0.5rem 0', color: '#1e293b' }}>{idx + 1}. {q.text}</p>
                 <div style={styles.metaContainer}>
+                  {q.type && <span style={{ ...styles.tag, backgroundColor: q.type === 'technical' ? '#fee2e2' : '#fef3c7', color: q.type === 'technical' ? '#991b1b' : '#92400e' }}>Type: {q.type}</span>}
                   {q.competency && <span style={styles.tag}>Competency: {q.competency}</span>}
-                  {q.star_expectation && <span style={{ ...styles.tag, backgroundColor: '#e0f2fe', color: '#0369a1' }}>Target Strategy: {q.star_expectation}</span>}
-                  {q.hr_keywords && <span style={{ ...styles.tag, backgroundColor: '#f0fdf4', color: '#166534' }}>Keywords: {q.hr_keywords}</span>}
+                  {q.methodology_expectation && <span style={{ ...styles.tag, backgroundColor: '#e0f2fe', color: '#0369a1' }}>Method: {q.methodology_expectation}</span>}
+                  {q.hr_keywords && <span style={{ ...styles.tag, backgroundColor: '#f0fdf4', color: '#166534' }}>Keywords: {Array.isArray(q.hr_keywords) ? q.hr_keywords.join(', ') : String(q.hr_keywords)}</span>}
                 </div>
+                {q.red_flags && q.red_flags.length > 0 && (
+                  <div style={{ marginTop: '0.5rem', paddingLeft: '1rem', borderLeft: '2px solid #ef4444', backgroundColor: '#fef2f2', padding: '0.5rem', borderRadius: '4px' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#dc2626' }}>Red Flags to Watch For:</span>
+                    <ul style={{ margin: '0.25rem 0 0 0', paddingLeft: '1.25rem', fontSize: '0.9rem', color: '#b91c1c' }}>
+                      {q.red_flags.map((f, fIdx) => <li key={fIdx}>{f}</li>)}
+                    </ul>
+                  </div>
+                )}
                 {q.follow_ups && q.follow_ups.length > 0 && (
                   <div style={{ marginTop: '0.5rem', paddingLeft: '1rem', borderLeft: '2px solid #cbd5e1' }}>
                     <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#64748b' }}>Probing Follow-Ups:</span>

@@ -2,7 +2,7 @@ const { callGeminiJson } = require('../geminiClient');
 
 /**
  * Automates high-fidelity structured question generation for the application's question repository.
- * * @param {Object} input
+ * @param {Object} input
  * @returns {Promise<Array>} JSON Array matching Expected Output
  */
 async function questionGenPrompt(input) {
@@ -31,15 +31,17 @@ async function questionGenPrompt(input) {
   // 2. Define System Instructions
   const systemInstruction = 
     "You are an expert HR consultant AI for SmartInterviewer. Generate high-quality structured " +
-    "interview questions for recruiters using behavioral best practices. Return ONLY a valid JSON " +
+    "interview questions for recruiters using behavioral and technical best practices. Return ONLY a valid JSON " +
     "array where every element matches the following item schema exactly:\n" +
     "[\n" +
     "  {\n" +
     "    \"text\": \"string\",\n" +
+    "    \"type\": \"technical\" | \"behavioral\",\n" +
     "    \"competency\": \"string\",\n" +
-    "    \"star_expectation\": \"string\",\n" +
+    "    \"methodology_expectation\": \"STAR\" | \"PREP\" | \"Step-by-Step\",\n" +
     "    \"follow_ups\": [\"string\"],\n" +
-    "    \"hr_keywords\": [\"string\"]\n" +
+    "    \"hr_keywords\": [\"string\"],\n" +
+    "    \"red_flags\": [\"string\"]\n" +
     "  }\n" +
     "]";
 
@@ -54,7 +56,9 @@ async function questionGenPrompt(input) {
     generation_constraints: {
       exact_question_count_to_generate: input.question_count,
       follow_ups_per_question: 2,
-      required_action: "Ensure absolute deduplication across the array. Calibrate structural depth to the seniority level."
+      required_action: "Ensure absolute deduplication across the array. Calibrate structural depth to the seniority level. " +
+                       "Classify each question as technical or behavioral. Set methodology_expectation (STAR for behavioral, PREP for conceptual/theory, Step-by-Step for technical/coding). " +
+                       "List Red Flags to watch out for in poor answers."
     }
   };
 
@@ -62,4 +66,4 @@ async function questionGenPrompt(input) {
   return await callGeminiJson(systemInstruction, userPayload);
 }
 
-module.exports = questionGenPrompt;
+module.exports = questionGenPrompt;

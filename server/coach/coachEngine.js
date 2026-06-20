@@ -8,7 +8,7 @@ const { detectWeaknesses } = require("../progress/weaknessDetector");
 router.post('/', async (req, res) => {
   const start = Date.now();
   try {
-    const { answer_text, question_text, star_target, topic_tag, session_id } = req.body;
+    const { answer_text, question_text, expected_method, star_target, topic_tag, session_id } = req.body;
 
     if (!answer_text || !question_text) {
       return res.status(400).json({ error: "answer_text and question_text are required." });
@@ -26,6 +26,7 @@ router.post('/', async (req, res) => {
     const feedbackResult = await coachFeedbackPrompt({
       answer_text,
       question_text,
+      expected_method: expected_method || "STAR",
       star_target,
       topic_tag,
       previous_feedback_history

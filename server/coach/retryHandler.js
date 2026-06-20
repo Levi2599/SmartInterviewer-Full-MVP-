@@ -7,16 +7,18 @@ const { detectWeaknesses } = require("../progress/weaknessDetector");
 
 router.post('/', async (req, res) => {
   try {
-    const { original_answer, retry_answer, question_text, session_id } = req.body;
+    const { original_answer, retry_answer, question_text, expected_method, session_id } = req.body;
 
     if (!original_answer || !retry_answer || !question_text) {
       return res.status(400).json({ error: "original_answer, retry_answer, and question_text are required." });
     }
 
+    const method = expected_method || "STAR";
+
     // Process evaluation for both attempts in parallel
     const [originalFeedback, retryFeedback] = await Promise.all([
-      coachFeedbackPrompt({ answer_text: original_answer, question_text, session_id, previous_feedback_history: [] }),
-      coachFeedbackPrompt({ answer_text: retry_answer, question_text, session_id, previous_feedback_history: [] })
+      coachFeedbackPrompt({ answer_text: original_answer, question_text, session_id, previous_feedback_history: [], expected_method: method }),
+      coachFeedbackPrompt({ answer_text: retry_answer, question_text, session_id, previous_feedback_history: [], expected_method: method })
     ]);
 
     // Safely extract scores falling back to 0 if nested improperly in AI layer return

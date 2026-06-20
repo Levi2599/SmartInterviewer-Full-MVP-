@@ -2,9 +2,12 @@ const mongoose = require('mongoose');
 
 const IndividualQuestionSchema = new mongoose.Schema({
   text: { type: String, required: true },
+  type: { type: String, enum: ['technical', 'behavioral'], default: 'behavioral' },
   competency: { type: String },
+  methodology_expectation: { type: String, enum: ['STAR', 'PREP', 'Step-by-Step'], default: 'STAR' },
   follow_ups: { type: [String], default: [] },
-  hr_keywords: { type: [String], default: [] }
+  hr_keywords: { type: [String], default: [] },
+  red_flags: { type: [String], default: [] }
 }, { _id: false });
 
 const QuestionBankSchema = new mongoose.Schema({

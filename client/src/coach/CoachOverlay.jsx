@@ -122,13 +122,14 @@ const styles = {
   },
 };
 
-export default function CoachOverlay({ feedback, originalAnswer, questionText, sessionId, onNext }) {
+export default function CoachOverlay({ feedback, originalAnswer, questionText, sessionId, expectedMethod, onNext }) {
   const {
     overall_score,
     framework_detected,
     framework_analysis,
     star_breakdown,
     missing_components,
+    fillers_detected,
     improvement_tip,
   } = feedback;
 
@@ -151,7 +152,8 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           original_answer: originalAnswer,
           retry_answer: retryAnswer,
           question_text: questionText,
-          session_id: sessionId
+          session_id: sessionId,
+          expected_method: expectedMethod || "STAR"
         })
       });
       if (!res.ok) throw new Error('Failed to process retry analysis.');
@@ -166,24 +168,51 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
 
   const renderFrameworkAnalysis = (analysis, star) => {
     if (star) {
-      const components = {
-        S: { label: 'Situation (S)', color: '#3b82f6' },
-        T: { label: 'Task (T)', color: '#10b981' },
-        A: { label: 'Action (A)', color: '#f59e0b' },
-        R: { label: 'Result (R)', color: '#8b5cf6' }
+      const method = framework_detected || expectedMethod || 'STAR';
+      let labels = {
+        S: 'Situation (S)',
+        T: 'Task (T)',
+        A: 'Action (A)',
+        R: 'Result (R)'
       };
+      
+      if (method === 'PREP') {
+        labels = {
+          S: 'Point (P)',
+          T: 'Reason (R)',
+          A: 'Example (E)',
+          R: 'Point (P)'
+        };
+      } else if (method === 'Step-by-Step') {
+        labels = {
+          S: 'Goal (G)',
+          T: 'Strategy (S)',
+          A: 'Analysis (A)',
+          R: 'Reporting (R)'
+        };
+      }
+
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {Object.entries(components).map(([key, info]) => {
+          {Object.entries(labels).map(([key, label]) => {
             const score = star[key] ?? 0;
+            
+            // Dynamic bar coloring based on score
+            let barColor = '#ef4444'; // Red for < 40 (Missing)
+            if (score >= 70) {
+              barColor = '#10b981'; // Green for >= 70 (Success)
+            } else if (score >= 40) {
+              barColor = '#f59e0b'; // Yellow/Orange for 40-69 (Weak)
+            }
+
             return (
               <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', fontWeight: '600' }}>
-                  <span>{info.label}</span>
+                  <span>{label}</span>
                   <span>{score} / 100</span>
                 </div>
                 <div style={{ width: '100%', height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div style={{ width: `${score}%`, height: '100%', backgroundColor: info.color, borderRadius: '4px', transition: 'width 0.3s ease' }} />
+                  <div style={{ width: `${score}%`, height: '100%', backgroundColor: barColor, borderRadius: '4px', transition: 'width 0.3s ease' }} />
                 </div>
               </div>
             );
@@ -232,6 +261,19 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           <div>
             {missing_components.map((comp, idx) => (
               <span key={idx} style={styles.missingItem}>✕ {comp}</span>
+            ))}
+          </div>
+        </>
+      )}
+
+      {fillers_detected && fillers_detected.length > 0 && (
+        <>
+          <div style={styles.sectionTitle}>Filler Words Detected</div>
+          <div>
+            {fillers_detected.map((filler, idx) => (
+              <span key={idx} style={{ ...styles.missingItem, color: '#a16207', backgroundColor: '#fef9c3', border: '1px solid #fef08a' }}>
+                ⚠ "{filler}"
+              </span>
             ))}
           </div>
         </>
@@ -310,6 +352,19 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
               <div>
                 {retryResult.retry_feedback.missing_components.map((comp, idx) => (
                   <span key={idx} style={styles.missingItem}>✕ {comp}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {retryResult.retry_feedback.fillers_detected && retryResult.retry_feedback.fillers_detected.length > 0 && (
+            <div style={{ marginTop: '0.5rem' }}>
+              <div style={{ ...styles.sectionTitle, margin: '0 0 0.25rem 0', fontSize: '0.9rem' }}>Filler Words Detected in Revision</div>
+              <div>
+                {retryResult.retry_feedback.fillers_detected.map((filler, idx) => (
+                  <span key={idx} style={{ ...styles.missingItem, color: '#a16207', backgroundColor: '#fef9c3', border: '1px solid #fef08a' }}>
+                    ⚠ "{filler}"
+                  </span>
                 ))}
               </div>
             </div>
