@@ -5,7 +5,6 @@ import CoachOverlay from '../coach/CoachOverlay';
 const styles = {
   container: { display: 'flex', flexDirection: 'column', gap: '1.5rem' },
   card: { backgroundColor: '#fff', borderRadius: '8px', padding: '1.5rem', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' },
-  personaBadge: { display: 'inline-block', backgroundColor: '#f1f5f9', color: '#475569', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.875rem', fontWeight: '500', marginBottom: '1rem' },
   questionText: { fontSize: '1.25rem', fontWeight: '600', color: '#1e293b', marginBottom: '1.5rem', lineHeight: '1.5' },
   textarea: { width: '100%', height: '120px', padding: '0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', marginBottom: '1rem', boxSizing: 'border-box', fontFamily: 'inherit' },
   button: { backgroundColor: '#2563eb', color: '#fff', padding: '0.75rem 1.5rem', border: 'none', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' },
@@ -62,8 +61,8 @@ export default function SimulatorScreen() {
 
   const fetchQuestion = async (currentTurn, currentHistory) => {
     const msg = currentTurn === 1 
-      ? 'טוען את נתוני הסימולציה ומייצר שאלת פתיחה...' 
-      : 'שומר את תשובתך ומייצר את שאלת הראיון הבאה...';
+      ? 'Loading simulation data and generating opening question...' 
+      : 'Saving response and generating next interview question...';
     setLoading(msg);
     setError('');
     try {
@@ -97,7 +96,7 @@ export default function SimulatorScreen() {
   const handleAnswerSubmit = async (e) => {
     e.preventDefault();
     if (!answerText.trim()) return;
-    setLoading('המאמן האישי מנתח את תשובתך ומחשב ציוני STAR/CAR...');
+    setLoading('AI Coach is analyzing your response and calculating STAR/PREP/Step-by-Step scores...');
     setError('');
     try {
       const res = await fetch('/api/coach/analyze', {
@@ -164,7 +163,6 @@ export default function SimulatorScreen() {
       <div style={styles.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontWeight: '600', color: '#64748b' }}>Turn {turnNumber}</span>
-          {persona && <span style={styles.personaBadge}>Persona: {persona}</span>}
         </div>
         <div style={styles.questionText}>{currentQuestion}</div>
         

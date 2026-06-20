@@ -291,7 +291,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           <button onClick={() => onNext()} style={{ ...styles.button, marginTop: 0, flex: 1, backgroundColor: '#64748b' }}>
             Keep & Continue →
           </button>
-          <button onClick={() => { setIsRetrying(true); setRetryAnswer(originalAnswer); }} style={{ ...styles.button, marginTop: 0, flex: 1, backgroundColor: '#2563eb' }}>
+          <button onClick={() => { setIsRetrying(true); setRetryAnswer(''); }} style={{ ...styles.button, marginTop: 0, flex: 1, backgroundColor: '#2563eb' }}>
             Retry Answer ↻
           </button>
         </div>
