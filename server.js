@@ -47,7 +47,7 @@ app.use("/api/simulator/parse-file", authenticate, fileParserService);
 app.use("/api/coach/analyze", authenticate, coachEngine);
 app.use("/api/coach/retry", authenticate, retryHandler);
 
-app.use("/api/questionBank/generate", authenticate, bankService);
+app.use("/api/questionBank", authenticate, bankService);
 app.use("/api/questionBank/export", authenticate, guideExporter);
 
 app.use("/api/progress", authenticate, progressService);

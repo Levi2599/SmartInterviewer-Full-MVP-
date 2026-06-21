@@ -4,6 +4,8 @@ import UploadResumeForm from './simulator/UploadResumeForm';
 import SimulatorScreen from './simulator/SimulatorScreen';
 import QuestionBankScreen from './questionBank/QuestionBankScreen';
 import ProgressDashboard from './progress/ProgressDashboard';
+import RecruiterDashboard from './questionBank/RecruiterDashboard';
+import SettingsScreen from './settings/SettingsScreen';
 
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem('token'));
@@ -16,6 +18,8 @@ export default function App() {
   const [selectedRole, setSelectedRole] = useState('candidate');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -84,6 +88,7 @@ export default function App() {
     setUserId(null);
     setUsername('User');
     setRole('candidate');
+    setMenuOpen(false);
   };
 
   if (!token) {
@@ -332,32 +337,49 @@ export default function App() {
                   </NavLink>
                 </>
               ) : (
-                <NavLink
-                  to="/"
-                  end
-                  style={({ isActive }) => ({
-                    padding: '0.45rem 1rem',
-                    borderRadius: '8px',
-                    fontWeight: '600',
-                    fontSize: '0.875rem',
-                    color: isActive ? '#4f46e5' : '#64748b',
-                    backgroundColor: isActive ? '#f5f3ff' : 'transparent',
-                    textDecoration: 'none',
-                    transition: 'all 0.15s ease',
-                    border: isActive ? '1px solid #e0d9ff' : '1px solid transparent',
-                  })}
-                >
-                  📋 Recruiter Question Bank
-                </NavLink>
+                <>
+                  <NavLink
+                    to="/"
+                    end
+                    style={({ isActive }) => ({
+                      padding: '0.45rem 1rem',
+                      borderRadius: '8px',
+                      fontWeight: '600',
+                      fontSize: '0.875rem',
+                      color: isActive ? '#4f46e5' : '#64748b',
+                      backgroundColor: isActive ? '#f5f3ff' : 'transparent',
+                      textDecoration: 'none',
+                      transition: 'all 0.15s ease',
+                      border: isActive ? '1px solid #e0d9ff' : '1px solid transparent',
+                    })}
+                  >
+                    🏠 Recruiter Dashboard
+                  </NavLink>
+                  <NavLink
+                    to="/questions"
+                    style={({ isActive }) => ({
+                      padding: '0.45rem 1rem',
+                      borderRadius: '8px',
+                      fontWeight: '600',
+                      fontSize: '0.875rem',
+                      color: isActive ? '#4f46e5' : '#64748b',
+                      backgroundColor: isActive ? '#f5f3ff' : 'transparent',
+                      textDecoration: 'none',
+                      transition: 'all 0.15s ease',
+                      border: isActive ? '1px solid #e0d9ff' : '1px solid transparent',
+                    })}
+                  >
+                    📋 Question Generator
+                  </NavLink>
+                </>
               )}
             </div>
 
-            {/* Quick Demo Switcher */}
             <button
               onClick={() => {
                 const newRole = role === 'candidate' ? 'interviewer' : 'candidate';
-                setRole(newRole);
                 localStorage.setItem('role', newRole);
+                window.location.href = '/';
               }}
               style={{
                 padding: '0.45rem 0.85rem',
@@ -374,28 +396,58 @@ export default function App() {
               🔄 Switch to {role === 'candidate' ? 'Recruiter' : 'Candidate'}
             </button>
 
-            {/* User Pill & Logout */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '0.5rem',
-              borderLeft: '1px solid #e2e8f0', paddingLeft: '1rem',
-            }}>
-              <span style={{
-                fontSize: '0.85rem', fontWeight: '700', color: '#475569',
-                backgroundColor: '#f1f5f9', padding: '0.35rem 0.75rem', borderRadius: '20px',
-              }}>
-                👤 {username}
-              </span>
+            {/* User Dropdown Pill */}
+            <div style={{ position: 'relative' }}>
               <button
-                onClick={handleLogout}
+                onClick={() => setMenuOpen(!menuOpen)}
                 style={{
-                  padding: '0.35rem 0.75rem', borderRadius: '8px',
-                  backgroundColor: '#fee2e2', color: '#dc2626',
-                  border: '1px solid #fecaca', fontSize: '0.8rem', fontWeight: '700',
-                  cursor: 'pointer', transition: 'all 0.15s',
+                  display: 'flex', alignItems: 'center', gap: '0.5rem',
+                  border: 'none', background: '#f1f5f9', cursor: 'pointer',
+                  fontSize: '0.85rem', fontWeight: '700', color: '#475569',
+                  padding: '0.45rem 1rem', borderRadius: '20px',
+                  transition: 'all 0.15s',
                 }}
               >
-                Logout
+                👤 {username} <span style={{ fontSize: '0.7rem' }}>▼</span>
               </button>
+
+              {menuOpen && (
+                <div style={{
+                  position: 'absolute', right: 0, marginTop: '0.5rem',
+                  backgroundColor: '#ffffff', border: '1px solid #e2e8f0',
+                  borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  width: '150px', zIndex: 200, display: 'flex', flexDirection: 'column',
+                  padding: '0.4rem 0',
+                }}>
+                  <NavLink
+                    to="/settings"
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      padding: '0.5rem 1rem', textDecoration: 'none', color: '#334155',
+                      fontSize: '0.85rem', fontWeight: '600', display: 'flex', alignItems: 'center',
+                      gap: '0.5rem', transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={e => e.target.style.backgroundColor = '#f8fafc'}
+                    onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
+                  >
+                    <span>⚙️ Settings</span>
+                  </NavLink>
+                  <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '0.3rem 0' }} />
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      padding: '0.5rem 1rem', background: 'none', border: 'none',
+                      color: '#dc2626', fontSize: '0.85rem', fontWeight: '700',
+                      textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                      gap: '0.5rem', width: '100%',
+                    }}
+                    onMouseEnter={e => e.target.style.backgroundColor = '#fef2f2'}
+                    onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
+                  >
+                    🚪 Logout
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </nav>
@@ -407,11 +459,12 @@ export default function App() {
           padding: '2rem 1.5rem',
         }}>
           <Routes>
-            <Route path="/" element={role === 'candidate' ? <ProgressDashboard /> : <QuestionBankScreen />} />
+            <Route path="/" element={role === 'candidate' ? <ProgressDashboard /> : <RecruiterDashboard />} />
             <Route path="/prepare" element={<UploadResumeForm />} />
             <Route path="/simulator" element={<SimulatorScreen />} />
             <Route path="/questions" element={<QuestionBankScreen />} />
             <Route path="/progress" element={<ProgressDashboard />} />
+            <Route path="/settings" element={<SettingsScreen />} />
           </Routes>
         </main>
       </div>

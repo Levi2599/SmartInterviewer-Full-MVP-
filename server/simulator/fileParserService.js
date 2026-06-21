@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const pdfParse = require('pdf-parse');
+const { PDFParse } = require('pdf-parse');
 const mammoth = require('mammoth');
 
 // Use memory storage so files are not persisted to disk
@@ -42,7 +42,8 @@ router.post('/', upload.single('file'), async (req, res) => {
       const result = await mammoth.extractRawText({ buffer });
       text = result.value;
     } else if (mimetype === 'application/pdf' || originalname.endsWith('.pdf')) {
-      const result = await pdfParse(buffer);
+      const parser = new PDFParse({ data: buffer });
+      const result = await parser.getText();
       text = result.text || '';
     } else {
       return res.status(400).json({ error: 'Unsupported file type.' });

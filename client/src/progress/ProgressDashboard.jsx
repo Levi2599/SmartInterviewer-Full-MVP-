@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ReferenceLine
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 
@@ -251,6 +251,12 @@ export default function ProgressDashboard() {
                 <Tooltip
                   contentStyle={{ borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   labelStyle={{ fontWeight: '700', color: '#1e293b' }}
+                />
+                <ReferenceLine 
+                  y={Number(localStorage.getItem('pref-readiness-threshold') || '75')} 
+                  label={{ value: `Target (${localStorage.getItem('pref-readiness-threshold') || '75'}%)`, fill: '#ef4444', fontSize: 10, position: 'top' }} 
+                  stroke="#ef4444" 
+                  strokeDasharray="3 3" 
                 />
                 <Area
                   type="monotone"

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, Link } from 'react-router-dom';
 
 const INDIGO = '#4f46e5';
 const INDIGO_LIGHT = '#f5f3ff';
@@ -14,7 +15,7 @@ export default function QuestionBankScreen() {
   const [jobRole, setJobRole] = useState('');
   const [industry, setIndustry] = useState('');
   const [seniorityLevel, setSeniorityLevel] = useState('Mid');
-  const [questionCount, setQuestionCount] = useState(5);
+  const [questionCount, setQuestionCount] = useState(() => Number(localStorage.getItem('pref-recruiter-qcount') || '5'));
   const [jdText, setJdText] = useState('');
 
   const [loading, setLoading] = useState(false);
@@ -23,6 +24,20 @@ export default function QuestionBankScreen() {
   const [questions, setQuestions] = useState([]);
   const [basket, setBasket] = useState([]);
   const [exporting, setExporting] = useState(false);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state && location.state.resumeGuide) {
+      const g = location.state.resumeGuide;
+      setJobRole(g.job_role || '');
+      setIndustry(g.industry || '');
+      setSeniorityLevel(g.seniority_level || 'Mid');
+      setQuestions(g.questions_array || []);
+      setBasket(g.questions_array || []);
+      setQuestionBankId(g.question_id);
+    }
+  }, [location.state]);
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -65,7 +80,9 @@ export default function QuestionBankScreen() {
     if (!questionBankId) return;
     setExporting(format);
     try {
-      const urlQuery = format === 'pdf' ? '?format=pdf' : '';
+      const brand = localStorage.getItem('pref-recruiter-company') || 'SmartInterviewer AI';
+      const brandQuery = `&brand=${encodeURIComponent(brand)}`;
+      const urlQuery = format === 'pdf' ? `?format=pdf${brandQuery}` : '';
       const filename = format === 'pdf' ? 'interview-guide.pdf' : 'interview-guide.json';
       const res = await fetch(`/api/questionBank/export/${questionBankId}${urlQuery}`);
       if (!res.ok) throw new Error('Export failed.');
@@ -90,13 +107,26 @@ export default function QuestionBankScreen() {
       <style>{spinnerKeyframes}</style>
 
       {/* Page Header */}
-      <div>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.25rem', letterSpacing: '-0.02em' }}>
-          📋 Question Bank Generator
-        </h1>
-        <p style={{ color: '#64748b', fontSize: '0.95rem' }}>
-          Generate AI-tailored interview question blueprints for any role and seniority level.
-        </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.25rem', letterSpacing: '-0.02em' }}>
+            📋 Question Bank Generator
+          </h1>
+          <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0 }}>
+            Generate AI-tailored interview question blueprints for any role and seniority level.
+          </p>
+        </div>
+        <Link
+          to="/"
+          style={{
+            display: 'inline-block',
+            backgroundColor: '#fff', color: '#64748b',
+            padding: '0.5rem 1.25rem', borderRadius: '10px', fontWeight: '700',
+            border: '1px solid #e2e8f0', textDecoration: 'none', fontSize: '0.9rem',
+          }}
+        >
+          ← Back to Dashboard
+        </Link>
       </div>
 
       {/* Filters Card */}

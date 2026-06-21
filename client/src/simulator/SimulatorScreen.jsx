@@ -31,7 +31,7 @@ export default function SimulatorScreen() {
       const rec = new SpeechRecognition();
       rec.continuous = true;
       rec.interimResults = true;
-      rec.lang = 'en-US';
+      rec.lang = localStorage.getItem('pref-stt-lang') || 'en-US';
 
       rec.onresult = (event) => {
         let transcript = '';
@@ -69,6 +69,22 @@ export default function SimulatorScreen() {
     }
     return () => clearInterval(timer);
   }, [isRecording]);
+
+  // Native Text-to-Speech (TTS) for accessibility
+  useEffect(() => {
+    const isTtsEnabled = localStorage.getItem('pref-tts-enabled') === 'true';
+    if (isTtsEnabled && currentQuestion && window.speechSynthesis) {
+      window.speechSynthesis.cancel(); // cancel current speech
+      const utterance = new SpeechSynthesisUtterance(currentQuestion);
+      utterance.lang = 'en-US';
+      window.speechSynthesis.speak(utterance);
+    }
+    return () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [currentQuestion]);
 
   const toggleRecording = () => {
     if (!recognition) {
@@ -228,6 +244,50 @@ export default function SimulatorScreen() {
     <div>
       <Stepper activeStep={activeStep} />
 
+      {/* Global Session Control Header */}
+      <div style={{
+        backgroundColor: '#fff',
+        borderRadius: '16px',
+        border: '1px solid #e2e8f0',
+        padding: '1rem 1.5rem',
+        marginBottom: '1.5rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ fontSize: '1.2rem' }}>🎤</span>
+          <div>
+            <span style={{ fontWeight: '800', color: '#0f172a', fontSize: '0.95rem', display: 'block' }}>
+              Live Job Interview Simulation
+            </span>
+            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>
+              Turn {turnNumber} — {expectedMethod} Framework Target
+            </span>
+          </div>
+        </div>
+        <Link
+          to="/"
+          onClick={(e) => {
+            if (!window.confirm('Are you sure you want to exit the current interview simulation? Your progress will be saved.')) {
+              e.preventDefault();
+            }
+          }}
+          style={{
+            backgroundColor: '#fee2e2', color: '#dc2626',
+            padding: '0.45rem 1rem', borderRadius: '8px',
+            fontSize: '0.8rem', fontWeight: '700', textDecoration: 'none',
+            border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '0.25rem',
+            transition: 'opacity 0.15s',
+          }}
+          onMouseEnter={e => e.target.style.opacity = 0.9}
+          onMouseLeave={e => e.target.style.opacity = 1}
+        >
+          🚪 Exit Session
+        </Link>
+      </div>
+
       {error && (
         <div style={{
           backgroundColor: '#fef2f2', border: '1px solid #fecaca',
@@ -248,18 +308,10 @@ export default function SimulatorScreen() {
           {/* Interview Header */}
           <div style={{
             background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-            padding: '1.25rem 1.5rem',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '1rem 1.5rem',
           }}>
-            <span style={{ color: '#c7d2fe', fontWeight: '600', fontSize: '0.85rem' }}>
-              🎤 Live Simulation — Turn {turnNumber}
-            </span>
-            <span style={{
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              color: '#fff', padding: '0.25rem 0.75rem',
-              borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700',
-            }}>
-              {expectedMethod} Expected
+            <span style={{ color: '#fff', fontWeight: '800', fontSize: '0.9rem' }}>
+              Current Interviewer Question
             </span>
           </div>
 
@@ -288,10 +340,36 @@ export default function SimulatorScreen() {
                 }}>
                   AI INTERVIEWER
                 </div>
-                <div style={{
-                  fontSize: '1.05rem', fontWeight: '600', color: '#1e293b', lineHeight: '1.55',
-                }}>
-                  {currentQuestion}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                  <div style={{
+                    fontSize: '1.05rem', fontWeight: '600', color: '#1e293b', lineHeight: '1.55',
+                    flex: 1
+                  }}>
+                    {currentQuestion}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.speechSynthesis) {
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance(currentQuestion);
+                        utterance.lang = 'en-US';
+                        window.speechSynthesis.speak(utterance);
+                      }
+                    }}
+                    style={{
+                      backgroundColor: '#f1f5f9', color: '#475569',
+                      border: '1px solid #e2e8f0', borderRadius: '50%',
+                      width: '36px', height: '36px', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '1rem', transition: 'all 0.15s', flexShrink: 0
+                    }}
+                    onMouseEnter={e => e.target.style.backgroundColor = '#e2e8f0'}
+                    onMouseLeave={e => e.target.style.backgroundColor = '#f1f5f9'}
+                    title="Read question aloud"
+                  >
+                    🔊
+                  </button>
                 </div>
               </div>
             </div>

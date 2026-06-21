@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const questionGenPrompt = require("../../ai/questionBank/questionGenPrompt");
 const { saveQuestionSet } = require("../../database/questionBank/questionBankDB");
 
-router.post('/', async (req, res) => {
+router.post('/generate', async (req, res) => {
   try {
     const { job_role, industry, seniority_level, jd_text, question_count } = req.body;
 
@@ -37,6 +37,28 @@ router.post('/', async (req, res) => {
       question_bank_id,
       questions: aiQuestions
     });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/questionBank
+router.get('/', async (req, res) => {
+  try {
+    const { QuestionBankModel } = require("../../database/questionBank/questionBankDB");
+    const records = await QuestionBankModel.find({}).sort({ created_at: -1 }).exec();
+    return res.json(records);
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+// DELETE /api/questionBank/:id
+router.delete('/:id', async (req, res) => {
+  try {
+    const { QuestionBankModel } = require("../../database/questionBank/questionBankDB");
+    const result = await QuestionBankModel.deleteOne({ question_id: req.params.id }).exec();
+    return res.json({ success: true, deletedCount: result.deletedCount });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }

@@ -21,7 +21,8 @@ router.get('/:id', async (req, res) => {
       doc.pipe(res);
       
       // Document Title Header
-      doc.fillColor('#1e1b4b').fontSize(24).font('Helvetica-Bold').text('SmartInterviewer AI', { align: 'center' });
+      const brandName = req.query.brand || 'SmartInterviewer AI';
+      doc.fillColor('#1e1b4b').fontSize(24).font('Helvetica-Bold').text(brandName, { align: 'center' });
       doc.fillColor('#4f46e5').fontSize(13).font('Helvetica-Bold').text('RECRUITER INTERVIEW BLUEPRINT GUIDE', { align: 'center', paragraphGap: 20 });
       
       doc.strokeColor('#e2e8f0').lineWidth(1).moveTo(50, doc.y).lineTo(560, doc.y).stroke();

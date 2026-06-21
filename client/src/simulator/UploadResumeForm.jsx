@@ -161,8 +161,15 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, onFi
 }
 
 export default function UploadResumeForm() {
-  const [cvText, setCvText] = useState('');
-  const [jdText, setJdText] = useState('');
+  const [autoSaveCv, setAutoSaveCv] = useState(() => localStorage.getItem('pref-auto-save-cv') === 'true');
+  const [cvText, setCvText] = useState(() => {
+    const autoSave = localStorage.getItem('pref-auto-save-cv') === 'true';
+    return autoSave ? (localStorage.getItem('cached-cv') || '') : '';
+  });
+  const [jdText, setJdText] = useState(() => {
+    const autoSave = localStorage.getItem('pref-auto-save-cv') === 'true';
+    return autoSave ? (localStorage.getItem('cached-jd') || '') : '';
+  });
   const [cvMode, setCvMode] = useState('paste');
   const [jdMode, setJdMode] = useState('paste');
   const [cvLoading, setCvLoading] = useState(false);
@@ -205,6 +212,17 @@ export default function UploadResumeForm() {
       return;
     }
     setError('');
+
+    // Auto-save logic
+    const autoSave = localStorage.getItem('pref-auto-save-cv') === 'true';
+    if (autoSave) {
+      localStorage.setItem('cached-cv', cvText);
+      localStorage.setItem('cached-jd', jdText);
+    } else {
+      localStorage.removeItem('cached-cv');
+      localStorage.removeItem('cached-jd');
+    }
+
     navigate('/simulator', { state: { cv_text: cvText, jd_text: jdText } });
   };
 
@@ -276,6 +294,26 @@ export default function UploadResumeForm() {
               if (file) parseFile(file, setJdText, setJdLoading, false);
             }}
           />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.25rem', marginBottom: '1.25rem' }}>
+          <input
+            type="checkbox"
+            id="remember-cv"
+            checked={autoSaveCv}
+            onChange={e => {
+              setAutoSaveCv(e.target.checked);
+              localStorage.setItem('pref-auto-save-cv', String(e.target.checked));
+              if (!e.target.checked) {
+                localStorage.removeItem('cached-cv');
+                localStorage.removeItem('cached-jd');
+              }
+            }}
+            style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+          />
+          <label htmlFor="remember-cv" style={{ fontSize: '0.85rem', color: '#475569', fontWeight: '600', cursor: 'pointer' }}>
+            💾 Remember my CV and Job Description for next session
+          </label>
         </div>
 
         <button
