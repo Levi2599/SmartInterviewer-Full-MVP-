@@ -60,7 +60,7 @@ router.post('/', async (req, res) => {
         await existingSession.save();
 
         if (retryFeedback.star_breakdown) {
-          const userId = existingSession.user_id || session_id.split('-').slice(0, 2).join('-');
+          const userId = existingSession.user_id || session_id.split('-')[0];
           const weaknessEvaluation = await detectWeaknesses([retryFeedback.star_breakdown]);
           const s = retryFeedback.star_breakdown.S || 0;
           const t = retryFeedback.star_breakdown.T || 0;

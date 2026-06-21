@@ -8,7 +8,12 @@ const INDIGO = '#4f46e5';
 export default function SimulatorScreen() {
   const location = useLocation();
   const state = location.state || {};
-  const { cv_text, jd_text } = state;
+
+  // Persist cv_text/jd_text in sessionStorage so a page refresh doesn't lose them
+  const cv_text = state.cv_text || sessionStorage.getItem('sim-cv') || '';
+  const jd_text = state.jd_text || sessionStorage.getItem('sim-jd') || '';
+  if (state.cv_text) sessionStorage.setItem('sim-cv', state.cv_text);
+  if (state.jd_text) sessionStorage.setItem('sim-jd', state.jd_text);
 
   // All hooks declared before any conditional return (React Rules of Hooks)
   const [sessionId] = useState(() => `${localStorage.getItem('userId') || 'user-001'}-${Date.now()}`);
@@ -125,7 +130,7 @@ export default function SimulatorScreen() {
           cv_text, jd_text,
           session_id: sessionId,
           turn_number: currentTurn,
-          conversation_history: currentHistory,
+          conversation_history: currentHistory.slice(-6),
         }),
       });
       if (!res.ok) throw new Error('Failed to retrieve next question.');

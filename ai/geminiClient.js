@@ -9,8 +9,8 @@ const clients = config.GOOGLE_API_KEYS.map((key) => new GoogleGenAI({ apiKey: ke
 let activeClientIndex = 0;
 
 const MODELS = [
-  "gemini-2.5-flash",
   "gemini-1.5-flash",
+  "gemini-2.5-flash",
 ];
 
 function sleep(ms) {
