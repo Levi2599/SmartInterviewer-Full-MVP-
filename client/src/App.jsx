@@ -9,8 +9,11 @@ export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem('token'));
   const [username, setUsername] = useState(() => localStorage.getItem('username') || 'User');
   const [userId, setUserId] = useState(() => localStorage.getItem('userId'));
+  const [role, setRole] = useState(() => localStorage.getItem('role') || 'candidate');
 
   const [inputUsername, setInputUsername] = useState('');
+  const [inputPassword, setInputPassword] = useState('');
+  const [selectedRole, setSelectedRole] = useState('candidate');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -23,16 +26,22 @@ export default function App() {
       const res = await window.fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: inputUsername }),
+        body: JSON.stringify({ 
+          username: inputUsername,
+          password: inputPassword,
+          role: selectedRole 
+        }),
       });
       if (!res.ok) throw new Error('Authentication failed.');
       const data = await res.json();
       localStorage.setItem('token', data.token);
       localStorage.setItem('userId', data.userId);
       localStorage.setItem('username', data.username);
+      localStorage.setItem('role', data.role);
       setToken(data.token);
       setUserId(data.userId);
       setUsername(data.username);
+      setRole(data.role);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -47,15 +56,18 @@ export default function App() {
       const res = await window.fetch('/api/auth/guest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: selectedRole }),
       });
       if (!res.ok) throw new Error('Authentication failed.');
       const data = await res.json();
       localStorage.setItem('token', data.token);
       localStorage.setItem('userId', data.userId);
       localStorage.setItem('username', 'Guest');
+      localStorage.setItem('role', data.role);
       setToken(data.token);
       setUserId(data.userId);
       setUsername('Guest');
+      setRole(data.role);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -67,9 +79,11 @@ export default function App() {
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     localStorage.removeItem('username');
+    localStorage.removeItem('role');
     setToken(null);
     setUserId(null);
     setUsername('User');
+    setRole('candidate');
   };
 
   if (!token) {
@@ -86,7 +100,7 @@ export default function App() {
       }}>
         <div style={{
           width: '100%',
-          maxWidth: '400px',
+          maxWidth: '420px',
           backgroundColor: '#ffffff',
           borderRadius: '16px',
           border: '1px solid #e2e8f0',
@@ -95,7 +109,7 @@ export default function App() {
           textAlign: 'center',
         }}>
           {/* Logo */}
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
             <div style={{
               width: '36px', height: '36px',
               background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
@@ -111,7 +125,7 @@ export default function App() {
           </div>
 
           <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>Welcome to SmartInterviewer</h2>
-          <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '1.5rem' }}>Sign in to access your interview simulator and recruiter portal.</p>
+          <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.25rem' }}>Sign in to access your interview simulator and recruiter portal.</p>
 
           {error && (
             <div style={{
@@ -124,11 +138,50 @@ export default function App() {
           )}
 
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {/* Role Selection Cards */}
+            <div style={{ textAlign: 'left', marginBottom: '0.5rem' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.5rem' }}>SELECT YOUR ROLE</label>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <div
+                  onClick={() => setSelectedRole('candidate')}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    border: `2px solid ${selectedRole === 'candidate' ? '#4f46e5' : '#e2e8f0'}`,
+                    backgroundColor: selectedRole === 'candidate' ? '#f5f3ff' : '#ffffff',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '0.25rem' }}>👨‍💻</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: '700', color: selectedRole === 'candidate' ? '#4f46e5' : '#475569' }}>Candidate</span>
+                </div>
+                <div
+                  onClick={() => setSelectedRole('interviewer')}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    border: `2px solid ${selectedRole === 'interviewer' ? '#4f46e5' : '#e2e8f0'}`,
+                    backgroundColor: selectedRole === 'interviewer' ? '#f5f3ff' : '#ffffff',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '0.25rem' }}>💼</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: '700', color: selectedRole === 'interviewer' ? '#4f46e5' : '#475569' }}>Interviewer</span>
+                </div>
+              </div>
+            </div>
+
             <div style={{ textAlign: 'left' }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>USERNAME</label>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>USERNAME / EMAIL</label>
               <input
                 type="text"
-                placeholder="Enter your username"
+                placeholder="Enter your username or email"
                 value={inputUsername}
                 onChange={e => setInputUsername(e.target.value)}
                 disabled={loading}
@@ -141,6 +194,24 @@ export default function App() {
                 }}
               />
             </div>
+
+            <div style={{ textAlign: 'left' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>PASSWORD</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={inputPassword}
+                onChange={e => setInputPassword(e.target.value)}
+                disabled={loading}
+                style={{
+                  width: '100%', padding: '0.65rem 0.875rem',
+                  borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                  fontSize: '0.9rem', outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
             <button
               type="submit"
               disabled={loading || !inputUsername.trim()}
@@ -151,7 +222,7 @@ export default function App() {
                 border: 'none', borderRadius: '10px', fontWeight: '700',
                 cursor: (!loading && inputUsername.trim()) ? 'pointer' : 'default',
                 boxShadow: (!loading && inputUsername.trim()) ? '0 4px 12px rgba(79,70,229,0.2)' : 'none',
-                marginTop: '0.25rem',
+                marginTop: '0.5rem',
               }}
             >
               {loading ? 'Signing In...' : 'Sign In'}
@@ -223,16 +294,47 @@ export default function App() {
 
           {/* Nav Links & User Pill */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ display: 'flex', gap: '0.25rem' }}>
-              {[
-                { to: '/', label: '🏠 Home', exact: true },
-                { to: '/questions', label: '📋 Question Bank' },
-                { to: '/progress', label: '📊 My Progress' },
-              ].map(({ to, label, exact }) => (
+            <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+              {role === 'candidate' ? (
+                <>
+                  <NavLink
+                    to="/"
+                    end
+                    style={({ isActive }) => ({
+                      padding: '0.45rem 1rem',
+                      borderRadius: '8px',
+                      fontWeight: '600',
+                      fontSize: '0.875rem',
+                      color: isActive ? '#4f46e5' : '#64748b',
+                      backgroundColor: isActive ? '#f5f3ff' : 'transparent',
+                      textDecoration: 'none',
+                      transition: 'all 0.15s ease',
+                      border: isActive ? '1px solid #e0d9ff' : '1px solid transparent',
+                    })}
+                  >
+                    🏠 Dashboard
+                  </NavLink>
+                  <NavLink
+                    to="/prepare"
+                    style={({ isActive }) => ({
+                      padding: '0.45rem 1rem',
+                      borderRadius: '8px',
+                      fontWeight: '600',
+                      fontSize: '0.875rem',
+                      color: isActive ? '#4f46e5' : '#64748b',
+                      backgroundColor: isActive ? '#f5f3ff' : 'transparent',
+                      textDecoration: 'none',
+                      transition: 'all 0.15s ease',
+                      border: isActive ? '1px solid #e0d9ff' : '1px solid transparent',
+                    })}
+                  >
+                    🚀 Practice Simulation
+                  </NavLink>
+                </>
+              ) : (
                 <NavLink
-                  key={to}
-                  to={to}
-                  end={exact}
+                  to="/"
+                  end
                   style={({ isActive }) => ({
                     padding: '0.45rem 1rem',
                     borderRadius: '8px',
@@ -245,10 +347,32 @@ export default function App() {
                     border: isActive ? '1px solid #e0d9ff' : '1px solid transparent',
                   })}
                 >
-                  {label}
+                  📋 Recruiter Question Bank
                 </NavLink>
-              ))}
+              )}
             </div>
+
+            {/* Quick Demo Switcher */}
+            <button
+              onClick={() => {
+                const newRole = role === 'candidate' ? 'interviewer' : 'candidate';
+                setRole(newRole);
+                localStorage.setItem('role', newRole);
+              }}
+              style={{
+                padding: '0.45rem 0.85rem',
+                borderRadius: '8px',
+                backgroundColor: '#f5f3ff',
+                color: '#4f46e5',
+                border: '1px solid #e0d9ff',
+                fontSize: '0.8rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              🔄 Switch to {role === 'candidate' ? 'Recruiter' : 'Candidate'}
+            </button>
 
             {/* User Pill & Logout */}
             <div style={{
@@ -283,7 +407,8 @@ export default function App() {
           padding: '2rem 1.5rem',
         }}>
           <Routes>
-            <Route path="/" element={<UploadResumeForm />} />
+            <Route path="/" element={role === 'candidate' ? <ProgressDashboard /> : <QuestionBankScreen />} />
+            <Route path="/prepare" element={<UploadResumeForm />} />
             <Route path="/simulator" element={<SimulatorScreen />} />
             <Route path="/questions" element={<QuestionBankScreen />} />
             <Route path="/progress" element={<ProgressDashboard />} />

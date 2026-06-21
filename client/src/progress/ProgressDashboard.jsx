@@ -120,7 +120,7 @@ export default function ProgressDashboard() {
           Complete your first interview simulation to see your performance analytics here.
         </p>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/prepare')}
           style={{
             background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
             color: '#fff', border: 'none', borderRadius: '10px',
@@ -168,14 +168,29 @@ export default function ProgressDashboard() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Page header */}
-      <div>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
-          📊 My Progress Dashboard
-        </h1>
-        <p style={{ color: '#64748b', fontSize: '0.95rem' }}>
-          Track your interview readiness and AI coach recommendations.
-        </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
+            📊 My Progress Dashboard
+          </h1>
+          <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0 }}>
+            Track your interview readiness and AI coach recommendations.
+          </p>
+        </div>
+        <button
+          onClick={() => navigate('/prepare')}
+          style={{
+            background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+            color: '#fff', border: 'none', borderRadius: '10px',
+            padding: '0.75rem 1.5rem', fontWeight: '700', cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
+            display: 'flex', alignItems: 'center', gap: '0.5rem',
+            fontSize: '0.9rem',
+          }}
+        >
+          <span>Start New Simulation</span>
+          <span>🚀</span>
+        </button>
       </div>
 
       {/* ─── Stats Grid ─── */}
@@ -351,7 +366,7 @@ export default function ProgressDashboard() {
               ))}
             </ul>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/prepare')}
               style={{
                 width: '100%', padding: '0.75rem',
                 background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
