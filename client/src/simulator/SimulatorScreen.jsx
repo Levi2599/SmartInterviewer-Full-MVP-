@@ -1,77 +1,99 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import CoachOverlay from '../coach/CoachOverlay';
 import Stepper from '../components/Stepper';
 
 const INDIGO = '#4f46e5';
 
-// Animated voice-wave SVG bars
-function VoiceWave({ active }) {
-  const heights = [0.4, 0.7, 1.0, 0.7, 0.5, 0.9, 0.6, 0.4, 0.8, 0.5, 1.0, 0.6, 0.4];
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', height: '36px' }}>
-      {heights.map((h, i) => (
-        <div
-          key={i}
-          style={{
-            width: '4px',
-            height: `${h * 36}px`,
-            backgroundColor: active ? '#ef4444' : '#cbd5e1',
-            borderRadius: '2px',
-            transition: 'height 0.1s ease',
-            animation: active ? `wave${i % 4} 0.8s ease-in-out infinite alternate` : 'none',
-            animationDelay: `${i * 0.05}s`,
-          }}
-        />
-      ))}
-      <style>{`
-        @keyframes wave0 { from { transform: scaleY(0.4); } to { transform: scaleY(1.0); } }
-        @keyframes wave1 { from { transform: scaleY(0.6); } to { transform: scaleY(0.9); } }
-        @keyframes wave2 { from { transform: scaleY(0.5); } to { transform: scaleY(1.1); } }
-        @keyframes wave3 { from { transform: scaleY(0.3); } to { transform: scaleY(0.85); } }
-      `}</style>
-    </div>
-  );
-}
-
 export default function SimulatorScreen() {
   const location = useLocation();
   const state = location.state || {};
   const { cv_text, jd_text } = state;
 
-  if (!cv_text || !jd_text) {
-    return (
-      <div style={{
-        background: '#fff', borderRadius: '16px', padding: '3rem 2rem',
-        border: '1px solid #e2e8f0', textAlign: 'center',
-      }}>
-        <span style={{ fontSize: '3rem' }}>📋</span>
-        <h3 style={{ marginTop: '1rem', color: '#1e293b' }}>Missing Setup Data</h3>
-        <p style={{ color: '#64748b', marginTop: '0.5rem' }}>
-          Please upload your CV and target Job Description to access the simulation.
-        </p>
-        <Link to="/" style={{
-          display: 'inline-block', marginTop: '1.5rem',
-          backgroundColor: INDIGO, color: '#fff',
-          padding: '0.75rem 1.5rem', borderRadius: '10px', fontWeight: '600',
-        }}>
-          ← Back to Setup
-        </Link>
-      </div>
-    );
-  }
-
-  const [sessionId] = useState(() => `user-001-${Date.now()}`);
+  // All hooks declared before any conditional return (React Rules of Hooks)
+  const [sessionId] = useState(() => `${localStorage.getItem('userId') || 'user-001'}-${Date.now()}`);
   const [turnNumber, setTurnNumber] = useState(1);
   const [conversationHistory, setConversationHistory] = useState([]);
-  const [persona, setPersona] = useState('');
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [answerText, setAnswerText] = useState('');
   const [expectedMethod, setExpectedMethod] = useState('STAR');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState(null);
+
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [recognition, setRecognition] = useState(null);
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const rec = new SpeechRecognition();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = 'en-US';
+
+      rec.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            transcript += event.results[i][0].transcript;
+          }
+        }
+        if (transcript) {
+          setAnswerText(prev => prev + (prev.endsWith(' ') || prev === '' ? '' : ' ') + transcript);
+        }
+      };
+
+      rec.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsRecording(false);
+      };
+
+      rec.onend = () => {
+        setIsRecording(false);
+      };
+
+      setRecognition(rec);
+    }
+  }, []);
+
+  useEffect(() => {
+    let timer;
+    if (isRecording) {
+      timer = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+    } else {
+      setRecordingDuration(0);
+    }
+    return () => clearInterval(timer);
+  }, [isRecording]);
+
+  const toggleRecording = () => {
+    if (!recognition) {
+      alert("Speech recognition is not supported in this browser. Please type your response.");
+      return;
+    }
+
+    if (isRecording) {
+      recognition.stop();
+      setIsRecording(false);
+    } else {
+      try {
+        recognition.start();
+        setIsRecording(true);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  const formatTime = (sec) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
 
   const fetchQuestion = async (currentTurn, currentHistory) => {
     const msg = currentTurn === 1
@@ -93,7 +115,6 @@ export default function SimulatorScreen() {
       if (!res.ok) throw new Error('Failed to retrieve next question.');
       const data = await res.json();
       setCurrentQuestion(data.next_question);
-      if (data.interviewer_persona) setPersona(data.interviewer_persona);
       if (data.expected_method) setExpectedMethod(data.expected_method);
     } catch (err) {
       setError(err.message);
@@ -102,7 +123,34 @@ export default function SimulatorScreen() {
     }
   };
 
-  useEffect(() => { fetchQuestion(1, []); }, []);
+  useEffect(() => {
+    if (cv_text && jd_text) {
+      fetchQuestion(1, []);
+    }
+  }, []);
+
+  // Guard after all hooks are declared
+  if (!cv_text || !jd_text) {
+    return (
+      <div style={{
+        background: '#fff', borderRadius: '16px', padding: '3rem 2rem',
+        border: '1px solid #e2e8f0', textAlign: 'center',
+      }}>
+        <span style={{ fontSize: '3rem' }}>📋</span>
+        <h3 style={{ marginTop: '1rem', color: '#1e293b' }}>Missing Setup Data</h3>
+        <p style={{ color: '#64748b', marginTop: '0.5rem' }}>
+          Please upload your CV and target Job Description to access the simulation.
+        </p>
+        <Link to="/" style={{
+          display: 'inline-block', marginTop: '1.5rem',
+          backgroundColor: INDIGO, color: '#fff',
+          padding: '0.75rem 1.5rem', borderRadius: '10px', fontWeight: '600',
+        }}>
+          ← Back to Setup
+        </Link>
+      </div>
+    );
+  }
 
   const handleAnswerSubmit = async (e) => {
     e.preventDefault();
@@ -127,6 +175,7 @@ export default function SimulatorScreen() {
       setFeedback(data);
     } catch (err) {
       setError(err.message);
+    } finally {
       setLoading(false);
     }
   };
@@ -146,8 +195,10 @@ export default function SimulatorScreen() {
     fetchQuestion(nextTurn, updatedHistory);
   };
 
-  // Loading spinner
-  if (loading && !feedback) {
+  // Step logic: 2=Question loading, 3=Answering, 4=Feedback
+  const activeStep = loading ? 2 : feedback ? 4 : 3;
+
+  if (loading) {
     return (
       <div>
         <Stepper activeStep={2} />
@@ -175,7 +226,7 @@ export default function SimulatorScreen() {
 
   return (
     <div>
-      <Stepper activeStep={feedback ? 4 : 2} />
+      <Stepper activeStep={activeStep} />
 
       {error && (
         <div style={{
@@ -215,7 +266,6 @@ export default function SimulatorScreen() {
           <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* AI Interviewer avatar + chat bubble */}
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-              {/* Avatar */}
               <div style={{
                 width: '52px', height: '52px', borderRadius: '50%',
                 background: 'linear-gradient(135deg, #a78bfa, #818cf8)',
@@ -225,14 +275,12 @@ export default function SimulatorScreen() {
               }}>
                 👩‍💼
               </div>
-              {/* Chat bubble */}
               <div style={{
                 flex: 1,
                 backgroundColor: '#f8fafc',
                 borderRadius: '0 16px 16px 16px',
                 padding: '1rem 1.25rem',
                 border: '1px solid #e2e8f0',
-                position: 'relative',
               }}>
                 <div style={{
                   fontSize: '0.7rem', color: '#a78bfa', fontWeight: '700',
@@ -248,102 +296,98 @@ export default function SimulatorScreen() {
               </div>
             </div>
 
-            {/* Voice recorder widget */}
+            {/* Text answer area */}
             <div style={{
               border: '1px solid #e2e8f0', borderRadius: '14px',
               overflow: 'hidden', backgroundColor: '#fafafa',
             }}>
-              {/* Simulated recorder header */}
-              <div style={{
-                padding: '1rem 1.25rem',
-                display: 'flex', alignItems: 'center', gap: '1rem',
-                borderBottom: '1px solid #e2e8f0',
-                backgroundColor: isRecording ? '#fff5f5' : '#f8fafc',
-              }}>
-                {/* Mic button */}
-                <button
-                  type="button"
-                  onClick={() => setIsRecording(!isRecording)}
-                  style={{
-                    width: '52px', height: '52px', borderRadius: '50%', border: 'none',
-                    background: isRecording
-                      ? 'linear-gradient(135deg, #dc2626, #b91c1c)'
-                      : 'linear-gradient(135deg, #ef4444, #dc2626)',
-                    color: '#fff', fontSize: '1.2rem',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: isRecording
-                      ? '0 0 0 6px rgba(239,68,68,0.2)'
-                      : '0 4px 12px rgba(239,68,68,0.35)',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  {isRecording ? '⏹' : '🎙️'}
-                </button>
-                <div style={{ flex: 1 }}>
-                  <div style={{
-                    fontSize: '0.8rem', fontWeight: '700',
-                    color: isRecording ? '#dc2626' : '#64748b',
-                    marginBottom: '0.35rem',
+              <form onSubmit={handleAnswerSubmit} style={{ padding: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <label style={{
+                    fontSize: '0.75rem', fontWeight: '700',
+                    color: '#94a3b8', letterSpacing: '0.05em',
                   }}>
-                    {isRecording ? '● Recording...' : 'Tap to start recording'}
+                    YOUR ANSWER
+                  </label>
+                  
+                  {/* Mic Controls & Animated Waves */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    {isRecording && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {/* Wave container */}
+                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: '14px' }}>
+                          <style>{`
+                            @keyframes bounce {
+                              0%, 100% { height: 4px; }
+                              50% { height: 14px; }
+                            }
+                          `}</style>
+                          {[0.4, 0.2, 0.6, 0.3, 0.5].map((delay, idx) => (
+                            <div key={idx} style={{
+                              width: '3px',
+                              backgroundColor: '#ef4444',
+                              borderRadius: '2px',
+                              animation: 'bounce 0.8s ease-in-out infinite',
+                              animationDelay: `${delay}s`,
+                            }} />
+                          ))}
+                        </div>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#ef4444', fontFamily: 'monospace' }}>
+                          {formatTime(recordingDuration)}
+                        </span>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={toggleRecording}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.35rem',
+                        padding: '0.3rem 0.65rem', borderRadius: '20px',
+                        border: '1.5px solid #e2e8f0', backgroundColor: isRecording ? '#fee2e2' : '#fff',
+                        cursor: 'pointer', transition: 'all 0.2s',
+                        fontSize: '0.75rem', fontWeight: '700',
+                        color: isRecording ? '#dc2626' : '#64748b',
+                      }}
+                    >
+                      {isRecording ? '🔴 Stop' : '🎤 Mic'}
+                    </button>
                   </div>
-                  <VoiceWave active={isRecording} />
                 </div>
-                {isRecording && (
-                  <span style={{
-                    fontSize: '0.7rem', color: '#ef4444', fontWeight: '700',
-                    animation: 'blink 1s step-end infinite',
-                  }}>
-                    LIVE
-                    <style>{`@keyframes blink { 50% { opacity: 0; } }`}</style>
-                  </span>
-                )}
-              </div>
 
-              {/* Text answer area */}
-              <form onSubmit={handleAnswerSubmit} style={{ padding: '1rem 1.25rem' }}>
-                <label style={{
-                  display: 'block', fontSize: '0.75rem', fontWeight: '700',
-                  color: '#94a3b8', letterSpacing: '0.05em', marginBottom: '0.5rem',
-                }}>
-                  OR WRITE YOUR ANSWER BELOW
-                </label>
                 <textarea
                   value={answerText}
                   onChange={(e) => setAnswerText(e.target.value)}
                   placeholder="Structure your response (e.g. Situation: ... Task: ... Action: ... Result: ...)"
-                  disabled={!!loading}
                   style={{
-                    width: '100%', height: '120px',
+                    width: '100%', height: '140px',
                     padding: '0.875rem', borderRadius: '10px',
                     border: '1.5px solid #e2e8f0', fontFamily: 'inherit',
                     fontSize: '0.95rem', color: '#334155', resize: 'vertical',
                     outline: 'none', lineHeight: '1.5',
                     transition: 'border-color 0.15s',
+                    boxSizing: 'border-box',
                   }}
                   onFocus={e => e.target.style.borderColor = INDIGO}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'}
                 />
                 <button
                   type="submit"
-                  disabled={!!loading || !answerText.trim()}
+                  disabled={!answerText.trim()}
                   style={{
                     marginTop: '0.75rem', width: '100%', padding: '0.875rem',
-                    background: (!loading && answerText.trim())
+                    background: answerText.trim()
                       ? 'linear-gradient(135deg, #4f46e5, #7c3aed)'
                       : '#e2e8f0',
-                    color: (!loading && answerText.trim()) ? '#fff' : '#94a3b8',
+                    color: answerText.trim() ? '#fff' : '#94a3b8',
                     border: 'none', borderRadius: '10px',
-                    fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer',
-                    boxShadow: (!loading && answerText.trim())
+                    fontWeight: '700', fontSize: '0.95rem', cursor: answerText.trim() ? 'pointer' : 'default',
+                    boxShadow: answerText.trim()
                       ? '0 4px 14px rgba(79,70,229,0.35)'
                       : 'none',
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  {loading ? 'Analyzing response...' : '✓ Submit Answer'}
+                  ✓ Submit Answer
                 </button>
               </form>
             </div>

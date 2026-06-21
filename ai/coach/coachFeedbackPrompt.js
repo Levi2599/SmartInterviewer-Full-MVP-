@@ -24,33 +24,45 @@ async function coachFeedbackPrompt(input) {
   const expectedMethod = input.expected_method || "STAR";
 
   // 2. Define System Instructions
-  const systemInstruction = 
+  const systemInstruction =
     "You are an expert interview coach AI for SmartInterviewer. Evaluate the candidate's answer using the expected methodology.\n\n" +
     `EXPECTED METHODOLOGY: ${expectedMethod}\n\n` +
-    "METHODOLOGY COMPONENT RULES:\n" +
+    "METHODOLOGY COMPONENT DEFINITIONS:\n" +
     "1. STAR: Situation (S), Task (T), Action (A), Result (R)\n" +
-    "2. PREP: Point (P), Reason (R), Example (E), Point (P)\n" +
-    "3. Step-by-Step: Goal (G), Strategy (S), Analysis (A), Reporting (R)\n\n" +
-    "SCORING RULE (Base 100):\n" +
-    "- Start at 100 points.\n" +
-    "- Deduct 20 points for each missing component in the target methodology. Assess which components are present and which are missing.\n" +
-    "- Deduct 5 points for each filler word detected in the answer. Filler words include conversational pauses or crutch words such as: 'אממ', 'כאילו', 'like', 'so', 'um', 'uh', etc.\n" +
-    "- Ensure overall_score is calculated as: 100 - (20 * number of missing components) - (5 * number of filler words detected). Clamped between 0 and 100.\n\n" +
-    "UI COMPATIBILITY BRIDGE (MANDATORY):\n" +
-    "To prevent breaking the frontend charts, you MUST map the score (0-100) of each component of the target methodology to the S, T, A, R fields in the 'star_breakdown' object as follows:\n" +
-    "- For STAR: Map Situation to S, Task to T, Action to A, Result to R.\n" +
-    "- For PREP: Map Point 1 to S, Reason to T, Example to A, Point 2 to R.\n" +
-    "- For Step-by-Step: Map Goal to S, Strategy to T, Analysis to A, Reporting to R.\n\n" +
-    "Return ONLY valid JSON matching this schema:\n" +
+    "2. CAR: Context (S), Action (A), Result (R) -- Note: Task (T) is not used in CAR.\n" +
+    "3. PREP: Point (S), Reason (T), Example (A), Point-Revisited (R)\n" +
+    "4. Step-by-Step: Goal (S), Strategy (T), Analysis (A), Reporting (R)\n\n" +
+    "STEP 1 — COMPONENT QUALITY SCORING (score each 0–100):\n" +
+    "Assess the QUALITY of each component in the candidate's answer:\n" +
+    "  0   : Component is COMPLETELY ABSENT — not mentioned at all.\n" +
+    "  1–39: Component is mentioned but extremely vague, too brief, or unclear.\n" +
+    "  40–69: Component is present and adequate but lacks depth, specifics, or impact.\n" +
+    "  70–89: Component is clearly present with good detail and relevant context.\n" +
+    "  90–100: Component is excellent — highly specific, measurable, and directly relevant to the question.\n" +
+    "Important: score components based on whether they appear in the answer, not on whether the answer's content matches the question topic perfectly.\n" +
+    "If the methodology is STAR, PREP, or Step-by-Step, score S, T, A, R.\n" +
+    "If the methodology is CAR, score Context as S, Action as A, Result as R. You must score T as 0.\n\n" +
+    "STEP 2 — MISSING COMPONENTS:\n" +
+    "Add a component's name to missing_components ONLY if its score is 0 (completely absent).\n" +
+    "For CAR: only assess Context, Action, Result. Do NOT include Task (T) in missing_components.\n\n" +
+    "STEP 3 — FILLER WORDS:\n" +
+    "Detect conversational crutch words: 'um', 'uh', 'like', 'so', 'you know', 'kind of', 'sort of', 'basically', 'אממ', 'כאילו', 'בעצם'.\n\n" +
+    "STEP 4 — OVERALL SCORE CALCULATION (MANDATORY FORMULA):\n" +
+    "For STAR, PREP, and Step-by-Step:\n" +
+    "  overall_score = Math.round((S + T + A + R) / 4) - (5 * number_of_filler_words)\n" +
+    "For CAR:\n" +
+    "  overall_score = Math.round((S + A + R) / 3) - (5 * number_of_filler_words)\n" +
+    "Clamp the result between 0 and 100.\n\n" +
+    "COMPONENT → FIELD MAPPING (MANDATORY for UI compatibility):\n" +
+    "- For STAR      : Situation→S, Task→T, Action→A, Result→R\n" +
+    "- For CAR       : Context→S, Task→T (always 0), Action→A, Result→R\n" +
+    "- For PREP      : Point→S, Reason→T, Example→A, Point-Revisited→R\n" +
+    "- For Step-by-Step: Goal→S, Strategy→T, Analysis→A, Reporting→R\n\n" +
+    "Return ONLY valid JSON matching this exact schema:\n" +
     "{\n" +
     "  \"overall_score\": number,\n" +
-    "  \"framework_detected\": \"STAR\" | \"PREP\" | \"Step-by-Step\" | \"NONE\",\n" +
-    "  \"star_breakdown\": {\n" +
-    "    \"S\": number,\n" +
-    "    \"T\": number,\n" +
-    "    \"A\": number,\n" +
-    "    \"R\": number\n" +
-    "  },\n" +
+    "  \"framework_detected\": \"STAR\" | \"CAR\" | \"PREP\" | \"Step-by-Step\" | \"NONE\",\n" +
+    "  \"star_breakdown\": { \"S\": number, \"T\": number, \"A\": number, \"R\": number },\n" +
     "  \"missing_components\": [\"string\"],\n" +
     "  \"fillers_detected\": [\"string\"],\n" +
     "  \"improvement_tip\": \"string\"\n" +
@@ -71,4 +83,4 @@ async function coachFeedbackPrompt(input) {
   return await callGeminiJson(systemInstruction, userPayload);
 }
 
-module.exports = coachFeedbackPrompt;
+module.exports = coachFeedbackPrompt;

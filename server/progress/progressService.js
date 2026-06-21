@@ -39,6 +39,22 @@ router.post('/save', async (req, res) => {
   }
 });
 
+// DELETE /:userId - GDPR deletion of all progress and session records
+router.delete('/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { SessionModel } = require("../../database/simulator/sessionDB");
+    const { ProgressModel } = require("../../database/progress/progressDB");
+
+    await ProgressModel.deleteMany({ user_id: userId });
+    await SessionModel.deleteMany({ user_id: userId });
+
+    return res.json({ success: true, message: `All data for user ${userId} has been successfully deleted.` });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 router.get('/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
@@ -97,7 +113,9 @@ router.get('/:userId', async (req, res) => {
       session_history: clean_history
     });
 
-    const calculated_readiness = Math.max(0, Math.min(100, Math.round((star_breakdown.S + star_breakdown.T + star_breakdown.A + star_breakdown.R) / 4)));
+    const calculated_readiness = recordCount > 0
+      ? Math.max(0, Math.min(100, Math.round(history.reduce((sum, h) => sum + (h.readiness_score || 0), 0) / recordCount)))
+      : 0;
 
     const weaknessPattern = aiRecommendation.detected_weakness_pattern || `Growth needed in ${lowest_component}.`;
     const focusArea = (aiRecommendation.strategic_recommendation && aiRecommendation.strategic_recommendation.focus_area) || lowest_component;
@@ -105,7 +123,7 @@ router.get('/:userId', async (req, res) => {
 
     return res.json({
       user_id: userId,
-      session_history: history,
+      session_history: clean_history,
       star_breakdown,
       weakness_profile: [weaknessPattern], // Ensure array wrapper to prevent frontend map crash
       training_plan: actionableSteps,

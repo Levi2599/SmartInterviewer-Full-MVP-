@@ -7,6 +7,16 @@ const INDIGO_LIGHT = '#f5f3ff';
 const BORDER = '#e2e8f0';
 
 function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, onFileUpload }) {
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (isLoading) return;
+    const file = e.dataTransfer.files[0];
+    if (file) onFileUpload({ target: { files: [file] } });
+  };
+
   return (
     <div style={{
       background: '#fff',
@@ -90,19 +100,24 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, onFi
             onBlur={e => e.target.style.borderColor = BORDER}
           />
         ) : (
-          <div>
+          <div
+            onDragOver={(e) => { e.preventDefault(); if (!isLoading) setIsDragOver(true); }}
+            onDragLeave={() => setIsDragOver(false)}
+            onDrop={handleDrop}
+          >
             <label style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '0.5rem',
-              border: '2px dashed #c7d2fe',
+              border: isDragOver ? '2px dashed #4f46e5' : '2px dashed #c7d2fe',
               borderRadius: '12px',
               padding: '2rem 1rem',
               cursor: isLoading ? 'default' : 'pointer',
-              backgroundColor: INDIGO_LIGHT,
+              backgroundColor: isDragOver ? '#ede9fe' : INDIGO_LIGHT,
               transition: 'all 0.15s',
+              transform: isDragOver ? 'scale(1.01)' : 'scale(1)',
             }}>
               {isLoading ? (
                 <>
@@ -127,7 +142,7 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, onFi
                 <>
                   <span style={{ fontSize: '2rem' }}>{icon}</span>
                   <span style={{ color: INDIGO, fontWeight: '700', fontSize: '0.9rem' }}>Click to upload</span>
-                  <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Supports PDF, DOCX, TXT (max 10MB)</span>
+                  <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>PDF, DOCX, TXT · max 10MB · drag or click</span>
                 </>
               )}
               <input
@@ -155,7 +170,7 @@ export default function UploadResumeForm() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const parseFile = async (file, setText, setLoading) => {
+  const parseFile = async (file, setText, setLoading, isCv) => {
     setLoading(true);
     setError('');
     try {
@@ -172,7 +187,12 @@ export default function UploadResumeForm() {
       const data = await res.json();
       setText(data.text);
     } catch (err) {
-      setError(err.message);
+      setError(`Text extraction failed: "${err.message}". We have switched your session to General Interview Mode. Click 'Start Simulation' to begin.`);
+      if (isCv) {
+        setText("General Candidate Profile: Junior software developer with foundational knowledge in HTML, CSS, JavaScript, React, and Node.js.");
+      } else {
+        setText("General Job Requirements: Looking for a frontend developer to build responsive UI components, collaborate with team members, and learn new technologies.");
+      }
     } finally {
       setLoading(false);
     }
@@ -240,7 +260,7 @@ export default function UploadResumeForm() {
             isLoading={cvLoading}
             onFileUpload={(e) => {
               const file = e.target.files[0];
-              if (file) parseFile(file, setCvText, setCvLoading);
+              if (file) parseFile(file, setCvText, setCvLoading, true);
             }}
           />
           <UploadZone
@@ -253,7 +273,7 @@ export default function UploadResumeForm() {
             isLoading={jdLoading}
             onFileUpload={(e) => {
               const file = e.target.files[0];
-              if (file) parseFile(file, setJdText, setJdLoading);
+              if (file) parseFile(file, setJdText, setJdLoading, false);
             }}
           />
         </div>

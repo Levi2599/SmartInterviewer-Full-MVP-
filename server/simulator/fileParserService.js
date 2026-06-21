@@ -43,7 +43,7 @@ router.post('/', upload.single('file'), async (req, res) => {
       text = result.value;
     } else if (mimetype === 'application/pdf' || originalname.endsWith('.pdf')) {
       const result = await pdfParse(buffer);
-      text = result.text;
+      text = result.text || '';
     } else {
       return res.status(400).json({ error: 'Unsupported file type.' });
     }

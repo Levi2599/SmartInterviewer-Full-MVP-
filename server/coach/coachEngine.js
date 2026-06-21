@@ -62,7 +62,10 @@ router.post('/', async (req, res) => {
         const t = feedbackResult.star_breakdown.T || 0;
         const a = feedbackResult.star_breakdown.A || 0;
         const r = feedbackResult.star_breakdown.R || 0;
-        const readiness_score = Math.max(0, Math.min(100, Math.round((s + t + a + r) / 4)));
+        const isCAR = feedbackResult.framework_detected === 'CAR';
+        const readiness_score = isCAR
+          ? Math.max(0, Math.min(100, Math.round((s + a + r) / 3)))
+          : Math.max(0, Math.min(100, Math.round((s + t + a + r) / 4)));
 
         await saveProgress({
           user_id: userId,

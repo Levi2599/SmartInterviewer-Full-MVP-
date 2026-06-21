@@ -9,12 +9,21 @@ function getBarColor(score) {
 }
 
 function ComponentChecklist({ labels, star, missing_components }) {
+  const missingSet = new Set(
+    (missing_components || []).map(m => m.toLowerCase().trim())
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
       {Object.entries(labels).map(([key, label]) => {
         const score = star?.[key] ?? 0;
-        const isPresent = score >= 40;
         const barColor = getBarColor(score);
+
+        // Primary: use missing_components from AI; fallback: score threshold
+        const flaggedByAI = missingSet.size > 0
+          ? missingSet.has(label.toLowerCase()) || missingSet.has(key.toLowerCase())
+          : null;
+        const isPresent = flaggedByAI !== null ? !flaggedByAI : score >= 40;
 
         return (
           <div key={key} style={{
@@ -24,7 +33,6 @@ function ComponentChecklist({ labels, star, missing_components }) {
             border: `1px solid ${isPresent ? '#e2e8f0' : '#fecaca'}`,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-              {/* Status icon */}
               <div style={{
                 width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -45,7 +53,6 @@ function ComponentChecklist({ labels, star, missing_components }) {
               </div>
               <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b' }}>{score}/100</span>
             </div>
-            {/* Progress bar */}
             <div style={{ height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
               <div style={{
                 height: '100%', width: `${score}%`,
@@ -65,6 +72,8 @@ function ComponentChecklist({ labels, star, missing_components }) {
     </div>
   );
 }
+
+const HIGH_SCORE_THRESHOLD = 85;
 
 export default function CoachOverlay({ feedback, originalAnswer, questionText, sessionId, expectedMethod, onNext }) {
   const {
@@ -97,6 +106,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           question_text: questionText,
           session_id: sessionId,
           expected_method: expectedMethod || 'STAR',
+          original_score: overall_score,
         }),
       });
       if (!res.ok) throw new Error('Failed to process retry analysis.');
@@ -111,13 +121,15 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
 
   const method = framework_detected || expectedMethod || 'STAR';
   let labels = { S: 'Situation', T: 'Task', A: 'Action', R: 'Result' };
+  if (method === 'CAR') labels = { S: 'Context', A: 'Action', R: 'Result' };
   if (method === 'PREP') labels = { S: 'Point', T: 'Reason', A: 'Example', R: 'Point (Revisited)' };
   if (method === 'Step-by-Step') labels = { S: 'Goal', T: 'Strategy', A: 'Analysis', R: 'Reporting' };
 
   const isGood = overall_score >= 60;
+  const isExcellent = overall_score >= HIGH_SCORE_THRESHOLD;
   const statusColor = isGood ? '#166534' : '#b91c1c';
   const statusBg = isGood ? '#dcfce7' : '#fee2e2';
-  const statusText = isGood ? 'Good' : 'Needs Improvement';
+  const statusText = isExcellent ? 'Excellent' : isGood ? 'Good' : 'Needs Improvement';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -144,7 +156,6 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {/* Status badge */}
             <span style={{
               backgroundColor: statusBg, color: statusColor,
               padding: '0.3rem 0.8rem', borderRadius: '20px',
@@ -152,7 +163,6 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
             }}>
               {isGood ? '✓' : '!'} {statusText}
             </span>
-            {/* Score badge */}
             <div style={{
               backgroundColor: 'rgba(255,255,255,0.15)',
               color: '#fff', padding: '0.4rem 0.9rem',
@@ -164,6 +174,24 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
         </div>
 
         <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+          {/* Excellent score banner */}
+          {isExcellent && (
+            <div style={{
+              backgroundColor: '#f0fdf4', border: '1px solid #86efac',
+              borderRadius: '10px', padding: '0.875rem 1rem',
+              display: 'flex', alignItems: 'center', gap: '0.75rem',
+            }}>
+              <span style={{ fontSize: '1.5rem' }}>🏆</span>
+              <div>
+                <div style={{ fontWeight: '700', color: '#166534', fontSize: '0.9rem' }}>Outstanding Answer!</div>
+                <div style={{ color: '#15803d', fontSize: '0.8rem', marginTop: '0.1rem' }}>
+                  Your score of {overall_score}/100 is excellent — no revisions needed. Keep up the great work!
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Method tag */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>
@@ -207,8 +235,8 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
             </div>
           )}
 
-          {/* Improvement tip */}
-          {improvement_tip && (
+          {/* Improvement tip — only shown when score < 85 */}
+          {improvement_tip && !isExcellent && (
             <div style={{
               backgroundColor: '#fffbeb',
               border: '1px solid #fde68a',
@@ -231,27 +259,33 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                 onClick={() => onNext()}
                 style={{
                   flex: 1, padding: '0.875rem',
-                  backgroundColor: '#f1f5f9', color: '#475569',
-                  border: '1px solid #e2e8f0', borderRadius: '10px',
+                  backgroundColor: isExcellent ? INDIGO : '#f1f5f9',
+                  color: isExcellent ? '#fff' : '#475569',
+                  border: isExcellent ? 'none' : '1px solid #e2e8f0',
+                  borderRadius: '10px',
                   fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem',
+                  boxShadow: isExcellent ? '0 4px 14px rgba(79,70,229,0.35)' : 'none',
                   transition: 'all 0.15s',
                 }}
               >
-                Keep & Continue →
+                {isExcellent ? '🚀 Continue to Next Question →' : 'Keep & Continue →'}
               </button>
-              <button
-                onClick={() => { setIsRetrying(true); setRetryAnswer(''); }}
-                style={{
-                  flex: 1, padding: '0.875rem',
-                  background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-                  color: '#fff', border: 'none', borderRadius: '10px',
-                  fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem',
-                  boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
-                  transition: 'all 0.15s',
-                }}
-              >
-                ↻ Retry Answer
-              </button>
+              {/* Retry only available when score < 85 */}
+              {!isExcellent && (
+                <button
+                  onClick={() => { setIsRetrying(true); setRetryAnswer(''); }}
+                  style={{
+                    flex: 1, padding: '0.875rem',
+                    background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                    color: '#fff', border: 'none', borderRadius: '10px',
+                    fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem',
+                    boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  ↻ Retry Answer
+                </button>
+              )}
             </div>
           )}
 
@@ -279,6 +313,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                   fontFamily: 'inherit', fontSize: '0.9rem', resize: 'vertical',
                   outline: 'none', lineHeight: '1.5',
                   transition: 'border-color 0.15s',
+                  boxSizing: 'border-box',
                 }}
                 onFocus={e => e.target.style.borderColor = INDIGO}
                 onBlur={e => e.target.style.borderColor = '#e2e8f0'}
@@ -327,11 +362,13 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           {/* Retry results */}
           {retryResult && (
             <div style={{
-              backgroundColor: '#f0fdf4', borderRadius: '12px',
-              border: '1px solid #bbf7d0', padding: '1.25rem',
+              backgroundColor: retryResult.improvement ? '#f0fdf4' : '#fef2f2',
+              borderRadius: '12px',
+              border: `1px solid ${retryResult.improvement ? '#bbf7d0' : '#fecaca'}`,
+              padding: '1.25rem',
             }}>
-              <div style={{ fontWeight: '700', color: '#166534', marginBottom: '0.75rem' }}>
-                ✅ Revision Comparison
+              <div style={{ fontWeight: '700', color: retryResult.improvement ? '#166534' : '#991b1b', marginBottom: '0.75rem' }}>
+                {retryResult.improvement ? '✅ Revision Comparison' : '📊 Revision Comparison'}
               </div>
               <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
                 <div style={{
@@ -340,7 +377,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                 }}>
                   <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#991b1b', marginBottom: '0.2rem' }}>ORIGINAL</div>
                   <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#dc2626' }}>
-                    {retryResult.original_feedback?.overall_score ?? 0}
+                    {retryResult.original_score ?? 0}
                   </div>
                 </div>
                 <div style={{
@@ -368,23 +405,47 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                   </div>
                 )}
               </div>
-              {retryResult.retry_feedback?.improvement_tip && (
-                <p style={{ fontSize: '0.85rem', color: '#475569', margin: 0 }}>
+              {!retryResult.improvement && (
+                <div style={{
+                  backgroundColor: '#fff7ed', border: '1px solid #fed7aa',
+                  borderRadius: '8px', padding: '0.75rem',
+                  fontSize: '0.83rem', color: '#9a3412', marginBottom: '0.75rem',
+                }}>
+                  💡 Your revision didn't improve the score this time. Try incorporating all {method} components clearly and submit again.
+                </div>
+              )}
+              {retryResult.retry_feedback?.improvement_tip && retryResult.improvement && (
+                <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 0.75rem 0' }}>
                   💡 {retryResult.retry_feedback.improvement_tip}
                 </p>
               )}
-              <button
-                onClick={() => onNext(retryAnswer)}
-                style={{
-                  marginTop: '0.75rem', width: '100%', padding: '0.875rem',
-                  background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-                  color: '#fff', border: 'none', borderRadius: '10px',
-                  fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem',
-                  boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
-                }}
-              >
-                Accept & Continue →
-              </button>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                {!retryResult.improvement && (
+                  <button
+                    onClick={() => { setRetryResult(null); setRetryAnswer(''); }}
+                    style={{
+                      flex: 1, padding: '0.875rem',
+                      backgroundColor: '#f1f5f9', color: '#475569',
+                      border: '1px solid #e2e8f0', borderRadius: '10px',
+                      fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem',
+                    }}
+                  >
+                    ↻ Try Again
+                  </button>
+                )}
+                <button
+                  onClick={() => onNext(retryAnswer)}
+                  style={{
+                    flex: 2, padding: '0.875rem',
+                    background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                    color: '#fff', border: 'none', borderRadius: '10px',
+                    fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem',
+                    boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
+                  }}
+                >
+                  {retryResult.improvement ? 'Accept & Continue →' : 'Continue Anyway →'}
+                </button>
+              </div>
             </div>
           )}
         </div>

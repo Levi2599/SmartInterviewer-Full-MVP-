@@ -7,7 +7,7 @@ const { detectWeaknesses } = require("../progress/weaknessDetector");
 
 router.post('/', async (req, res) => {
   try {
-    const { original_answer, retry_answer, question_text, expected_method, session_id } = req.body;
+    const { original_answer, retry_answer, question_text, expected_method, session_id, original_score } = req.body;
 
     if (!original_answer || !retry_answer || !question_text) {
       return res.status(400).json({ error: "original_answer, retry_answer, and question_text are required." });
@@ -15,22 +15,24 @@ router.post('/', async (req, res) => {
 
     const method = expected_method || "STAR";
 
-    // Process evaluation for both attempts in parallel
-    const [originalFeedback, retryFeedback] = await Promise.all([
-      coachFeedbackPrompt({ answer_text: original_answer, question_text, session_id, previous_feedback_history: [], expected_method: method }),
-      coachFeedbackPrompt({ answer_text: retry_answer, question_text, session_id, previous_feedback_history: [], expected_method: method })
-    ]);
+    // Evaluate only the retry answer — original score comes from the client
+    // to prevent non-deterministic re-evaluation causing score inconsistency
+    const retryFeedback = await coachFeedbackPrompt({
+      answer_text: retry_answer,
+      question_text,
+      session_id,
+      previous_feedback_history: [],
+      expected_method: method
+    });
 
-    // Safely extract scores falling back to 0 if nested improperly in AI layer return
-    const originalScore = originalFeedback.overall_score || 0;
+    const originalScoreVal = typeof original_score === 'number' ? original_score : 0;
     const retryScore = retryFeedback.overall_score || 0;
-    const score_delta = retryScore - originalScore;
+    const score_delta = retryScore - originalScoreVal;
 
-    // Save improved retry result to database
+    // Save improved retry result to database only when score improved
     if (session_id && score_delta > 0) {
       const existingSession = await findBySessionId(session_id);
       if (existingSession) {
-        // Replace or append candidate retry answer
         const origStr = `candidate: ${original_answer}`;
         const index = existingSession.transcript.indexOf(origStr);
         if (index !== -1) {
@@ -64,7 +66,10 @@ router.post('/', async (req, res) => {
           const t = retryFeedback.star_breakdown.T || 0;
           const a = retryFeedback.star_breakdown.A || 0;
           const r = retryFeedback.star_breakdown.R || 0;
-          const readiness_score = Math.max(0, Math.min(100, Math.round((s + t + a + r) / 4)));
+          const isCAR = retryFeedback.framework_detected === 'CAR';
+          const readiness_score = isCAR
+            ? Math.max(0, Math.min(100, Math.round((s + a + r) / 3)))
+            : Math.max(0, Math.min(100, Math.round((s + t + a + r) / 4)));
 
           await saveProgress({
             user_id: userId,
@@ -80,7 +85,7 @@ router.post('/', async (req, res) => {
     return res.json({
       score_delta,
       improvement: score_delta > 0,
-      original_feedback: originalFeedback,
+      original_score: originalScoreVal,
       retry_feedback: retryFeedback
     });
   } catch (e) {

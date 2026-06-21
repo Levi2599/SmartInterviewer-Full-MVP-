@@ -34,7 +34,8 @@ async function interviewProfilePrompt(input) {
     "CORE RULES:\n" +
     "1. STATELESS: Generate exactly ONE focused, relevant question at a time representing the current turn.\n" +
     "2. METADATA: Classify every question you generate. Map it to one of these methodologies:\n" +
-    "   - STAR (Situation, Task, Action, Result) for behavioral questions (e.g. asking about past experiences).\n" +
+    "   - STAR (Situation, Task, Action, Result) for standard behavioral questions (e.g. asking about past experiences).\n" +
+    "   - CAR (Context, Action, Result) for concise behavioral questions (e.g. focusing on context and direct action/impact).\n" +
     "   - PREP (Point, Reason, Example, Point) for conceptual/theoretical questions (e.g. explaining a paradigm or architecture).\n" +
     "   - Step-by-Step for technical execution questions (e.g. asking to outline the steps of implementing a feature or solving a coding problem).\n" +
     "3. EXTREME GAP RULE: If the candidate lacks experience or technical skills required in the JD, do NOT ask them to design or implement complex systems in that unknown technology. Instead, ask how they would approach learning it, or design a question that tests their foundational problem-solving or related concepts they do know.\n\n" +
@@ -44,7 +45,7 @@ async function interviewProfilePrompt(input) {
     "  \"interviewer_persona\": \"string\",\n" +
     "  \"next_question\": \"string\",\n" +
     "  \"session_status\": \"active\",\n" +
-    "  \"expected_method\": \"STAR\" | \"PREP\" | \"Step-by-Step\",\n" +
+    "  \"expected_method\": \"STAR\" | \"CAR\" | \"PREP\" | \"Step-by-Step\",\n" +
     "  \"type\": \"technical\" | \"behavioral\"\n" +
     "}";
 

@@ -6,7 +6,6 @@ const config = require("./config.js");
 const { connectDB } = require("./database/db.js");
 
 const questionGenerator = require("./server/simulator/questionGenerator");
-const transcriptionService = require("./server/simulator/transcriptionService");
 const fileParserService = require("./server/simulator/fileParserService");
 
 const coachEngine = require("./server/coach/coachEngine");
@@ -16,6 +15,9 @@ const bankService = require("./server/questionBank/bankService");
 const guideExporter = require("./server/questionBank/guideExporter");
 
 const progressService = require("./server/progress/progressService");
+
+const authController = require("./server/controllers/authController");
+const { authenticate } = require("./auth.js");
 
 const app = express();
 
@@ -37,17 +39,18 @@ app.get("/health", (req, res) => {
 });
 
 // ─── Routes ──────────────────────────────────────────────────
-app.use("/api/simulator/generate-question", questionGenerator);
-app.use("/api/simulator/transcribe", transcriptionService);
-app.use("/api/simulator/parse-file", fileParserService);
+app.use("/api/auth", authController);
 
-app.use("/api/coach/analyze", coachEngine);
-app.use("/api/coach/retry", retryHandler);
+app.use("/api/simulator/generate-question", authenticate, questionGenerator);
+app.use("/api/simulator/parse-file", authenticate, fileParserService);
 
-app.use("/api/questionBank/generate", bankService);
-app.use("/api/questionBank/export", guideExporter);
+app.use("/api/coach/analyze", authenticate, coachEngine);
+app.use("/api/coach/retry", authenticate, retryHandler);
 
-app.use("/api/progress", progressService);
+app.use("/api/questionBank/generate", authenticate, bankService);
+app.use("/api/questionBank/export", authenticate, guideExporter);
+
+app.use("/api/progress", authenticate, progressService);
 
 // ─── Start Server ─────────────────────────────────────────────
 if (require.main === module) {

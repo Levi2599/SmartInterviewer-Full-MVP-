@@ -4,7 +4,7 @@ import React from 'react';
  * Stepper component – shows the current phase of the interview simulation.
  * @param {number} activeStep - 1-indexed step number (1-5)
  */
-const STEPS = ['Upload', 'Question', 'Record', 'Feedback', 'Next'];
+const STEPS = ['Upload', 'Question', 'Answer', 'Feedback', 'Next'];
 
 export default function Stepper({ activeStep = 1 }) {
   return (

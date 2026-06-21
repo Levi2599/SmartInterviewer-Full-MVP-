@@ -9,6 +9,9 @@ const INDIGO = '#4f46e5';
 const INDIGO_LIGHT = '#f5f3ff';
 
 function StatCard({ label, value, sub, icon, delta }) {
+  const trendUp = delta !== null && delta !== undefined && delta > 0;
+  const trendDown = delta !== null && delta !== undefined && delta < 0;
+
   return (
     <div style={{
       backgroundColor: '#fff', borderRadius: '14px',
@@ -24,9 +27,14 @@ function StatCard({ label, value, sub, icon, delta }) {
       <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1 }}>
         {value}
       </div>
-      {delta !== undefined && (
+      {trendUp && (
         <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: '600', marginTop: '0.3rem' }}>
-          ▲ Trending up
+          ▲ Trending up (+{delta})
+        </div>
+      )}
+      {trendDown && (
+        <div style={{ fontSize: '0.75rem', color: '#dc2626', fontWeight: '600', marginTop: '0.3rem' }}>
+          ▼ Trending down ({delta})
         </div>
       )}
       {sub && <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.3rem' }}>{sub}</div>}
@@ -60,8 +68,9 @@ export default function ProgressDashboard() {
 
   useEffect(() => {
     const fetchProgress = async () => {
+      const activeUserId = localStorage.getItem('userId') || 'user-001';
       try {
-        const res = await fetch('/api/progress/user-001');
+        const res = await fetch(`/api/progress/${activeUserId}`);
         if (res.status === 404) { setData(null); return; }
         if (!res.ok) throw new Error('Failed to retrieve progress data.');
         const json = await res.json();
@@ -131,6 +140,11 @@ export default function ProgressDashboard() {
   const bestScore = sessions.reduce((max, s) => Math.max(max, s.readiness_score ?? 0), 0);
   const avgStar = Math.round((S + T + A + R) / 4);
 
+  // Compute actual trend from last two sessions
+  const scoreTrend = sessions.length >= 2
+    ? (sessions[sessions.length - 1].readiness_score ?? 0) - (sessions[sessions.length - 2].readiness_score ?? 0)
+    : null;
+
   // Area chart data – readiness trend
   const trendData = sessions.map((s, i) => ({
     session: `#${i + 1}`,
@@ -170,7 +184,7 @@ export default function ProgressDashboard() {
           label="OVERALL SCORE"
           value={`${data.readiness_score}%`}
           icon="🎯"
-          delta={true}
+          delta={scoreTrend}
         />
         <StatCard
           label="SIMULATIONS"
@@ -350,6 +364,53 @@ export default function ProgressDashboard() {
             </button>
           </div>
         )}
+      </div>
+
+      {/* GDPR Data Deletion */}
+      <div style={{
+        marginTop: '2rem',
+        backgroundColor: '#fff',
+        borderRadius: '16px',
+        border: '1px solid #fecaca',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+        padding: '1.5rem',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+          <span style={{ fontSize: '1.2rem' }}>🔒</span>
+          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#991b1b' }}>
+            Data Privacy & Deletion (GDPR)
+          </h2>
+        </div>
+        <p style={{ fontSize: '0.85rem', color: '#64748b', lineHeight: '1.5', margin: '0 0 1rem 0' }}>
+          In accordance with GDPR compliance, your transcripts and performance scores are stored securely. You can permanently delete all your data from our database at any time. This action is irreversible.
+        </p>
+        <button
+          onClick={async () => {
+            const confirmed = window.confirm("Are you sure you want to permanently delete all your data? This cannot be undone.");
+            if (!confirmed) return;
+            try {
+              const activeUserId = localStorage.getItem('userId') || 'user-001';
+              const res = await fetch(`/api/progress/${activeUserId}`, {
+                method: 'DELETE'
+              });
+              if (!res.ok) throw new Error("Deletion failed.");
+              alert("Your data has been successfully deleted.");
+              localStorage.clear();
+              window.location.href = "/";
+            } catch (err) {
+              alert(`Error: ${err.message}`);
+            }
+          }}
+          style={{
+            padding: '0.65rem 1.25rem',
+            backgroundColor: '#fee2e2', color: '#dc2626',
+            border: '1px solid #fecaca', borderRadius: '10px',
+            fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer',
+            transition: 'all 0.15s',
+          }}
+        >
+          🗑️ Delete All My Data Permanently
+        </button>
       </div>
     </div>
   );

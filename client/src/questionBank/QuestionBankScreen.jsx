@@ -61,17 +61,19 @@ export default function QuestionBankScreen() {
     setBasket(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const handleExport = async () => {
+  const handleExport = async (format = 'json') => {
     if (!questionBankId) return;
-    setExporting(true);
+    setExporting(format);
     try {
-      const res = await fetch(`/api/questionBank/export/${questionBankId}`);
+      const urlQuery = format === 'pdf' ? '?format=pdf' : '';
+      const filename = format === 'pdf' ? 'interview-guide.pdf' : 'interview-guide.json';
+      const res = await fetch(`/api/questionBank/export/${questionBankId}${urlQuery}`);
       if (!res.ok) throw new Error('Export failed.');
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'interview-guide.json');
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       if (link.parentNode) link.parentNode.removeChild(link);
@@ -465,25 +467,37 @@ export default function QuestionBankScreen() {
 
               {/* Export */}
               {questionBankId && (
-                <div style={{ padding: '0.75rem 0.75rem 1rem' }}>
+                <div style={{ padding: '0.75rem 0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <button
-                    onClick={handleExport}
-                    disabled={exporting}
+                    onClick={() => handleExport('json')}
+                    disabled={!!exporting}
                     style={{
-                      width: '100%', padding: '0.875rem',
-                      background: exporting ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                      width: '100%', padding: '0.75rem',
+                      background: exporting === 'json' ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #7c3aed)',
                       color: '#fff', border: 'none', borderRadius: '10px',
-                      fontWeight: '700', fontSize: '0.9rem', cursor: exporting ? 'not-allowed' : 'pointer',
-                      boxShadow: exporting ? 'none' : '0 4px 12px rgba(79,70,229,0.3)',
+                      fontWeight: '700', fontSize: '0.85rem', cursor: exporting ? 'not-allowed' : 'pointer',
+                      boxShadow: exporting ? 'none' : '0 2px 8px rgba(79,70,229,0.2)',
                       transition: 'all 0.2s',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
                     }}
                   >
-                    {exporting ? '⏳ Exporting...' : '📤 Export Guide'}
+                    {exporting === 'json' ? '⏳ Exporting...' : '📤 Export JSON Guide'}
                   </button>
-                  <p style={{ textAlign: 'center', fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.4rem' }}>
-                    Download as JSON (PDF/DOCX coming soon)
-                  </p>
+                  <button
+                    onClick={() => handleExport('pdf')}
+                    disabled={!!exporting}
+                    style={{
+                      width: '100%', padding: '0.75rem',
+                      background: exporting === 'pdf' ? '#a7f3d0' : 'linear-gradient(135deg, #10b981, #059669)',
+                      color: '#fff', border: 'none', borderRadius: '10px',
+                      fontWeight: '700', fontSize: '0.85rem', cursor: exporting ? 'not-allowed' : 'pointer',
+                      boxShadow: exporting ? 'none' : '0 2px 8px rgba(16,185,129,0.2)',
+                      transition: 'all 0.2s',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
+                    }}
+                  >
+                    {exporting === 'pdf' ? '⏳ Exporting...' : '📄 Export PDF Guide'}
+                  </button>
                 </div>
               )}
             </div>
