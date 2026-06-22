@@ -21,7 +21,7 @@ router.post('/', async (req, res, next) => { // Handled standard express params
     });
 
     // Save session snapshot to the database layer
-    const userId = session_id ? session_id.split('-')[0] : 'user-001';
+    const userId = session_id ? session_id.split('-').slice(0, -1).join('-') : 'user-001';
     const transcript = (conversation_history || []).map(item => `${item.role}: ${item.text}`);
 
     await saveSession({
