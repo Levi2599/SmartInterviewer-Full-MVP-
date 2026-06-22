@@ -172,173 +172,264 @@ export default function App() {
     );
   }
 
+  const loginForm = (
+    <>
+      {error && (
+        <div style={{
+          backgroundColor: '#fef2f2', border: '1px solid #fecaca',
+          color: '#b91c1c', padding: '0.75rem', borderRadius: '10px',
+          fontSize: '0.85rem', marginBottom: '1rem', fontWeight: '500',
+        }}>
+          ⚠️ {error}
+        </div>
+      )}
+
+      <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ textAlign: 'left', marginBottom: '0.5rem' }}>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.5rem' }}>SELECT YOUR ROLE</label>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <div
+              onClick={() => setSelectedRole('candidate')}
+              style={{
+                flex: 1, padding: '0.75rem', borderRadius: '10px',
+                border: `2px solid ${selectedRole === 'candidate' ? '#4f46e5' : '#e2e8f0'}`,
+                backgroundColor: selectedRole === 'candidate' ? '#f5f3ff' : '#ffffff',
+                cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease',
+              }}
+            >
+              <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '0.25rem' }}>👨‍💻</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: '700', color: selectedRole === 'candidate' ? '#4f46e5' : '#475569' }}>Candidate</span>
+            </div>
+            <div
+              onClick={() => setSelectedRole('interviewer')}
+              style={{
+                flex: 1, padding: '0.75rem', borderRadius: '10px',
+                border: `2px solid ${selectedRole === 'interviewer' ? '#4f46e5' : '#e2e8f0'}`,
+                backgroundColor: selectedRole === 'interviewer' ? '#f5f3ff' : '#ffffff',
+                cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease',
+              }}
+            >
+              <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '0.25rem' }}>💼</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: '700', color: selectedRole === 'interviewer' ? '#4f46e5' : '#475569' }}>Interviewer</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ textAlign: 'left' }}>
+          <label htmlFor="login-username" style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>USERNAME / EMAIL</label>
+          <input
+            id="login-username"
+            name="username"
+            type="text"
+            placeholder="Enter your username or email"
+            value={inputUsername}
+            onChange={e => setInputUsername(e.target.value)}
+            disabled={loading}
+            required
+            style={{
+              width: '100%', padding: '0.65rem 0.875rem',
+              borderRadius: '10px', border: '1.5px solid #e2e8f0',
+              fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box',
+            }}
+          />
+        </div>
+
+        <div style={{ textAlign: 'left' }}>
+          <label htmlFor="login-password" style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>PASSWORD</label>
+          <input
+            id="login-password"
+            name="password"
+            type="password"
+            placeholder="••••••••"
+            value={inputPassword}
+            onChange={e => setInputPassword(e.target.value)}
+            disabled={loading}
+            style={{
+              width: '100%', padding: '0.65rem 0.875rem',
+              borderRadius: '10px', border: '1.5px solid #e2e8f0',
+              fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box',
+            }}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading || !inputUsername.trim()}
+          style={{
+            width: '100%', padding: '0.75rem',
+            background: (!loading && inputUsername.trim()) ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : '#e2e8f0',
+            color: (!loading && inputUsername.trim()) ? '#fff' : '#94a3b8',
+            border: 'none', borderRadius: '10px', fontWeight: '700',
+            fontSize: '0.95rem',
+            cursor: (!loading && inputUsername.trim()) ? 'pointer' : 'default',
+            boxShadow: (!loading && inputUsername.trim()) ? '0 4px 12px rgba(79,70,229,0.2)' : 'none',
+            marginTop: '0.5rem',
+          }}
+        >
+          {loading ? 'Signing In...' : 'Sign In'}
+        </button>
+      </form>
+
+      <div style={{ display: 'flex', alignItems: 'center', margin: '1rem 0' }}>
+        <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
+        <span style={{ padding: '0 0.5rem', fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' }}>OR</span>
+        <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
+      </div>
+
+      <button
+        type="button"
+        onClick={handleGuest}
+        disabled={loading}
+        style={{
+          width: '100%', padding: '0.75rem',
+          backgroundColor: '#f8fafc', color: '#475569',
+          border: '1px solid #e2e8f0', borderRadius: '10px', fontWeight: '600',
+          cursor: 'pointer', transition: 'background-color 0.15s',
+        }}
+      >
+        Continue as Guest
+      </button>
+    </>
+  );
+
   if (!token) {
+    if (isMobile) {
+      return (
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          fontFamily: 'Inter, sans-serif',
+          padding: '1.5rem',
+          boxSizing: 'border-box',
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '420px',
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 10px 25px -5px rgba(79, 70, 229, 0.1)',
+            padding: '2rem 1.5rem',
+            textAlign: 'center',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+              <div style={{
+                width: '36px', height: '36px',
+                background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                borderRadius: '10px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '18px',
+              }}>🎯</div>
+              <span style={{ fontSize: '1.3rem', fontWeight: '800', color: '#0f172a' }}>
+                Smart<span style={{ color: '#4f46e5' }}>Interviewer</span>
+              </span>
+            </div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>Welcome back</h2>
+            <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.25rem' }}>Sign in to access your interview simulator and recruiter portal.</p>
+            {loginForm}
+          </div>
+        </div>
+      );
+    }
+
+    // Desktop: two-column layout
     return (
       <div style={{
         minHeight: '100vh',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
         fontFamily: 'Inter, sans-serif',
-        padding: '1.5rem',
-        boxSizing: 'border-box',
+        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
       }}>
+        {/* Left panel — branding */}
         <div style={{
-          width: '100%',
-          maxWidth: '420px',
-          backgroundColor: '#ffffff',
-          borderRadius: '16px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 10px 25px -5px rgba(79, 70, 229, 0.1), 0 8px 10px -6px rgba(79, 70, 229, 0.1)',
-          padding: '2rem 1.5rem',
-          textAlign: 'center',
+          flex: 1,
+          background: 'linear-gradient(145deg, #4f46e5 0%, #7c3aed 60%, #6d28d9 100%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '3rem',
+          color: '#fff',
+          position: 'relative',
+          overflow: 'hidden',
         }}>
+          {/* Decorative circles */}
+          <div style={{
+            position: 'absolute', top: '-80px', left: '-80px',
+            width: '320px', height: '320px', borderRadius: '50%',
+            background: 'rgba(255,255,255,0.06)',
+          }} />
+          <div style={{
+            position: 'absolute', bottom: '-60px', right: '-60px',
+            width: '240px', height: '240px', borderRadius: '50%',
+            background: 'rgba(255,255,255,0.06)',
+          }} />
+
           {/* Logo */}
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2.5rem', zIndex: 1 }}>
             <div style={{
-              width: '36px', height: '36px',
-              background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-              borderRadius: '10px',
+              width: '52px', height: '52px',
+              background: 'rgba(255,255,255,0.2)',
+              backdropFilter: 'blur(8px)',
+              borderRadius: '14px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '18px',
-            }}>
-              🎯
-            </div>
-            <span style={{ fontSize: '1.3rem', fontWeight: '800', color: '#0f172a' }}>
-              Smart<span style={{ color: '#4f46e5' }}>Interviewer</span>
+              fontSize: '26px',
+              border: '1px solid rgba(255,255,255,0.3)',
+            }}>🎯</div>
+            <span style={{ fontSize: '1.8rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
+              Smart<span style={{ color: '#c4b5fd' }}>Interviewer</span>
             </span>
           </div>
 
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>Welcome to SmartInterviewer</h2>
-          <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.25rem' }}>Sign in to access your interview simulator and recruiter portal.</p>
+          <h1 style={{ fontSize: '2rem', fontWeight: '800', textAlign: 'center', marginBottom: '1rem', lineHeight: 1.2, zIndex: 1 }}>
+            Ace Your Next<br />Interview
+          </h1>
+          <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.8)', textAlign: 'center', maxWidth: '340px', lineHeight: 1.6, zIndex: 1, marginBottom: '2.5rem' }}>
+            AI-powered interview practice with real-time STAR feedback, personalized coaching, and recruiter tools.
+          </p>
 
-          {error && (
-            <div style={{
-              backgroundColor: '#fef2f2', border: '1px solid #fecaca',
-              color: '#b91c1c', padding: '0.75rem', borderRadius: '10px',
-              fontSize: '0.85rem', marginBottom: '1rem', fontWeight: '500',
-            }}>
-              ⚠️ {error}
-            </div>
-          )}
-
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {/* Role Selection Cards */}
-            <div style={{ textAlign: 'left', marginBottom: '0.5rem' }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.5rem' }}>SELECT YOUR ROLE</label>
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <div
-                  onClick={() => setSelectedRole('candidate')}
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem',
-                    borderRadius: '10px',
-                    border: `2px solid ${selectedRole === 'candidate' ? '#4f46e5' : '#e2e8f0'}`,
-                    backgroundColor: selectedRole === 'candidate' ? '#f5f3ff' : '#ffffff',
-                    cursor: 'pointer',
-                    textAlign: 'center',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '0.25rem' }}>👨‍💻</span>
-                  <span style={{ fontSize: '0.8rem', fontWeight: '700', color: selectedRole === 'candidate' ? '#4f46e5' : '#475569' }}>Candidate</span>
-                </div>
-                <div
-                  onClick={() => setSelectedRole('interviewer')}
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem',
-                    borderRadius: '10px',
-                    border: `2px solid ${selectedRole === 'interviewer' ? '#4f46e5' : '#e2e8f0'}`,
-                    backgroundColor: selectedRole === 'interviewer' ? '#f5f3ff' : '#ffffff',
-                    cursor: 'pointer',
-                    textAlign: 'center',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '0.25rem' }}>💼</span>
-                  <span style={{ fontSize: '0.8rem', fontWeight: '700', color: selectedRole === 'interviewer' ? '#4f46e5' : '#475569' }}>Interviewer</span>
-                </div>
+          {/* Feature bullets */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', zIndex: 1, width: '100%', maxWidth: '340px' }}>
+            {[
+              { icon: '🚀', text: 'Realistic interview simulations' },
+              { icon: '📊', text: 'STAR-method scoring & feedback' },
+              { icon: '🧠', text: 'AI coaching after every answer' },
+              { icon: '💼', text: 'Recruiter dashboard & question bank' },
+            ].map(f => (
+              <div key={f.text} style={{
+                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                background: 'rgba(255,255,255,0.1)',
+                borderRadius: '10px', padding: '0.65rem 1rem',
+                border: '1px solid rgba(255,255,255,0.15)',
+              }}>
+                <span style={{ fontSize: '1.1rem' }}>{f.icon}</span>
+                <span style={{ fontSize: '0.9rem', fontWeight: '600', color: 'rgba(255,255,255,0.9)' }}>{f.text}</span>
               </div>
-            </div>
-
-            <div style={{ textAlign: 'left' }}>
-              <label htmlFor="login-username" style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>USERNAME / EMAIL</label>
-              <input
-                id="login-username"
-                name="username"
-                type="text"
-                placeholder="Enter your username or email"
-                value={inputUsername}
-                onChange={e => setInputUsername(e.target.value)}
-                disabled={loading}
-                required
-                style={{
-                  width: '100%', padding: '0.65rem 0.875rem',
-                  borderRadius: '10px', border: '1.5px solid #e2e8f0',
-                  fontSize: '0.9rem', outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-
-            <div style={{ textAlign: 'left' }}>
-              <label htmlFor="login-password" style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>PASSWORD</label>
-              <input
-                id="login-password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                value={inputPassword}
-                onChange={e => setInputPassword(e.target.value)}
-                disabled={loading}
-                style={{
-                  width: '100%', padding: '0.65rem 0.875rem',
-                  borderRadius: '10px', border: '1.5px solid #e2e8f0',
-                  fontSize: '0.9rem', outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading || !inputUsername.trim()}
-              style={{
-                width: '100%', padding: '0.75rem',
-                background: (!loading && inputUsername.trim()) ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : '#e2e8f0',
-                color: (!loading && inputUsername.trim()) ? '#fff' : '#94a3b8',
-                border: 'none', borderRadius: '10px', fontWeight: '700',
-                cursor: (!loading && inputUsername.trim()) ? 'pointer' : 'default',
-                boxShadow: (!loading && inputUsername.trim()) ? '0 4px 12px rgba(79,70,229,0.2)' : 'none',
-                marginTop: '0.5rem',
-              }}
-            >
-              {loading ? 'Signing In...' : 'Sign In'}
-            </button>
-          </form>
-
-          <div style={{ display: 'flex', alignItems: 'center', margin: '1rem 0' }}>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
-            <span style={{ padding: '0 0.5rem', fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' }}>OR</span>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
+            ))}
           </div>
+        </div>
 
-          <button
-            type="button"
-            onClick={handleGuest}
-            disabled={loading}
-            style={{
-              width: '100%', padding: '0.75rem',
-              backgroundColor: '#f8fafc', color: '#475569',
-              border: '1px solid #e2e8f0', borderRadius: '10px', fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'background-color 0.15s',
-            }}
-          >
-            Continue as Guest
-          </button>
+        {/* Right panel — form */}
+        <div style={{
+          width: '480px',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '3rem 2.5rem',
+          backgroundColor: '#ffffff',
+          boxShadow: '-4px 0 24px rgba(0,0,0,0.06)',
+        }}>
+          <div style={{ width: '100%', maxWidth: '380px' }}>
+            <h2 style={{ fontSize: '1.6rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.4rem' }}>Welcome back</h2>
+            <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1.75rem' }}>
+              Sign in to your account or continue as a guest.
+            </p>
+            {loginForm}
+          </div>
         </div>
       </div>
     );
