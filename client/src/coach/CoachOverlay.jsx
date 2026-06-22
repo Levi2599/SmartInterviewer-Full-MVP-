@@ -146,6 +146,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           padding: '1.25rem 1.5rem',
           background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: '0.75rem',
         }}>
           <div>
             <div style={{ fontSize: '0.65rem', color: '#a5b4fc', letterSpacing: '0.1em', fontWeight: '700', marginBottom: '0.2rem' }}>
@@ -254,7 +255,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
 
           {/* Action buttons */}
           {!isRetrying && !retryResult && (
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               <button
                 onClick={() => onNext()}
                 style={{

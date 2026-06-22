@@ -233,7 +233,7 @@ export default function UploadResumeForm() {
       {/* Hero Header */}
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
         <h1 style={{
-          fontSize: '2rem',
+          fontSize: 'clamp(1.35rem, 5vw, 2rem)',
           fontWeight: '800',
           color: '#0f172a',
           letterSpacing: '-0.03em',

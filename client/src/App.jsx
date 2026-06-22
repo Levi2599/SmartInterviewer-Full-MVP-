@@ -6,6 +6,7 @@ import QuestionBankScreen from './questionBank/QuestionBankScreen';
 import ProgressDashboard from './progress/ProgressDashboard';
 import RecruiterDashboard from './questionBank/RecruiterDashboard';
 import SettingsScreen from './settings/SettingsScreen';
+import { useIsMobile } from './hooks/useIsMobile';
 
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem('token'));
@@ -20,6 +21,8 @@ export default function App() {
   const [error, setError] = useState('');
   
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -90,6 +93,71 @@ export default function App() {
     setRole('candidate');
     setMenuOpen(false);
   };
+
+  const handleSwitchRole = () => {
+    const newRole = role === 'candidate' ? 'interviewer' : 'candidate';
+    localStorage.setItem('role', newRole);
+    setMobileMenuOpen(false);
+    window.location.href = '/';
+  };
+
+  const navLinkStyle = (isActive) => ({
+    padding: '0.45rem 1rem', borderRadius: '8px', fontWeight: '600',
+    fontSize: '0.875rem', color: isActive ? '#4f46e5' : '#64748b',
+    backgroundColor: isActive ? '#f5f3ff' : 'transparent',
+    textDecoration: 'none', transition: 'all 0.15s ease',
+    border: isActive ? '1px solid #e0d9ff' : '1px solid transparent',
+  });
+
+  const mobileNavLinkStyle = (isActive) => ({
+    display: 'block', padding: '0.75rem 1rem', borderRadius: '8px',
+    fontWeight: '600', fontSize: '0.9rem',
+    color: isActive ? '#4f46e5' : '#334155',
+    backgroundColor: isActive ? '#f5f3ff' : 'transparent',
+    textDecoration: 'none', transition: 'background 0.15s',
+  });
+
+  const switchBtnStyle = {
+    padding: '0.45rem 0.85rem', borderRadius: '8px',
+    backgroundColor: '#f5f3ff', color: '#4f46e5',
+    border: '1px solid #e0d9ff', fontSize: '0.8rem',
+    fontWeight: '700', cursor: 'pointer',
+  };
+
+  function UserDropdown({ onClose, onLogout }) {
+    return (
+      <div style={{
+        position: 'absolute', right: 0, marginTop: '0.5rem',
+        backgroundColor: '#ffffff', border: '1px solid #e2e8f0',
+        borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+        width: '150px', zIndex: 200, display: 'flex', flexDirection: 'column',
+        padding: '0.4rem 0',
+      }}>
+        <NavLink
+          to="/settings"
+          onClick={onClose}
+          style={{
+            padding: '0.5rem 1rem', textDecoration: 'none', color: '#334155',
+            fontSize: '0.85rem', fontWeight: '600', display: 'flex',
+            alignItems: 'center', gap: '0.5rem',
+          }}
+        >
+          ⚙️ Settings
+        </NavLink>
+        <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '0.3rem 0' }} />
+        <button
+          onClick={onLogout}
+          style={{
+            padding: '0.5rem 1rem', background: 'none', border: 'none',
+            color: '#dc2626', fontSize: '0.85rem', fontWeight: '700',
+            textAlign: 'left', cursor: 'pointer', width: '100%',
+          }}
+        >
+          🚪 Logout
+        </button>
+      </div>
+    );
+  }
 
   if (!token) {
     return (
@@ -267,196 +335,129 @@ export default function App() {
           backgroundColor: '#ffffff',
           borderBottom: '1px solid #e8eaf0',
           boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-          padding: '0 2rem',
-          height: '64px',
+          padding: isMobile ? '0 1rem' : '0 2rem',
+          minHeight: '64px',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          flexDirection: 'column',
           position: 'sticky',
           top: 0,
           zIndex: 100,
         }}>
-          {/* Logo */}
-          <NavLink to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
-            <div style={{
-              width: '32px', height: '32px',
-              background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-              borderRadius: '8px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '16px',
-            }}>
-              🎯
-            </div>
-            <span style={{
-              fontSize: '1.1rem',
-              fontWeight: '700',
-              color: '#0f172a',
-              letterSpacing: '-0.02em',
-            }}>
-              Smart<span style={{ color: '#4f46e5' }}>Interviewer</span>
-            </span>
-          </NavLink>
+          {/* Top bar — always visible */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            height: '64px',
+          }}>
+            {/* Logo */}
+            <NavLink to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
+              <div style={{
+                width: '32px', height: '32px',
+                background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                borderRadius: '8px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '16px',
+              }}>
+                🎯
+              </div>
+              <span style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', letterSpacing: '-0.02em' }}>
+                Smart<span style={{ color: '#4f46e5' }}>Interviewer</span>
+              </span>
+            </NavLink>
 
-          {/* Nav Links & User Pill */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+            {isMobile ? (
+              /* Hamburger button */
+              <button
+                onClick={() => { setMobileMenuOpen(!mobileMenuOpen); setMenuOpen(false); }}
+                style={{
+                  background: 'none', border: '1px solid #e2e8f0', borderRadius: '8px',
+                  padding: '0.4rem 0.6rem', cursor: 'pointer', fontSize: '1.2rem',
+                  color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? '✕' : '☰'}
+              </button>
+            ) : (
+              /* Desktop nav */
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                  {role === 'candidate' ? (
+                    <>
+                      <NavLink to="/" end style={({ isActive }) => navLinkStyle(isActive)}>🏠 Dashboard</NavLink>
+                      <NavLink to="/prepare" style={({ isActive }) => navLinkStyle(isActive)}>🚀 Practice Simulation</NavLink>
+                    </>
+                  ) : (
+                    <>
+                      <NavLink to="/" end style={({ isActive }) => navLinkStyle(isActive)}>🏠 Recruiter Dashboard</NavLink>
+                      <NavLink to="/questions" style={({ isActive }) => navLinkStyle(isActive)}>📋 Question Generator</NavLink>
+                    </>
+                  )}
+                </div>
+
+                <button onClick={handleSwitchRole} style={switchBtnStyle}>
+                  🔄 Switch to {role === 'candidate' ? 'Recruiter' : 'Candidate'}
+                </button>
+
+                {/* User Dropdown Pill */}
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      border: 'none', background: '#f1f5f9', cursor: 'pointer',
+                      fontSize: '0.85rem', fontWeight: '700', color: '#475569',
+                      padding: '0.45rem 1rem', borderRadius: '20px',
+                    }}
+                  >
+                    👤 {username} <span style={{ fontSize: '0.7rem' }}>▼</span>
+                  </button>
+                  {menuOpen && <UserDropdown onClose={() => setMenuOpen(false)} onLogout={handleLogout} />}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile dropdown panel */}
+          {isMobile && mobileMenuOpen && (
+            <div style={{
+              borderTop: '1px solid #f1f5f9',
+              paddingBottom: '0.75rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.25rem',
+            }}>
               {role === 'candidate' ? (
                 <>
-                  <NavLink
-                    to="/"
-                    end
-                    style={({ isActive }) => ({
-                      padding: '0.45rem 1rem',
-                      borderRadius: '8px',
-                      fontWeight: '600',
-                      fontSize: '0.875rem',
-                      color: isActive ? '#4f46e5' : '#64748b',
-                      backgroundColor: isActive ? '#f5f3ff' : 'transparent',
-                      textDecoration: 'none',
-                      transition: 'all 0.15s ease',
-                      border: isActive ? '1px solid #e0d9ff' : '1px solid transparent',
-                    })}
-                  >
-                    🏠 Dashboard
-                  </NavLink>
-                  <NavLink
-                    to="/prepare"
-                    style={({ isActive }) => ({
-                      padding: '0.45rem 1rem',
-                      borderRadius: '8px',
-                      fontWeight: '600',
-                      fontSize: '0.875rem',
-                      color: isActive ? '#4f46e5' : '#64748b',
-                      backgroundColor: isActive ? '#f5f3ff' : 'transparent',
-                      textDecoration: 'none',
-                      transition: 'all 0.15s ease',
-                      border: isActive ? '1px solid #e0d9ff' : '1px solid transparent',
-                    })}
-                  >
-                    🚀 Practice Simulation
-                  </NavLink>
+                  <NavLink to="/" end onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>🏠 Dashboard</NavLink>
+                  <NavLink to="/prepare" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>🚀 Practice Simulation</NavLink>
                 </>
               ) : (
                 <>
-                  <NavLink
-                    to="/"
-                    end
-                    style={({ isActive }) => ({
-                      padding: '0.45rem 1rem',
-                      borderRadius: '8px',
-                      fontWeight: '600',
-                      fontSize: '0.875rem',
-                      color: isActive ? '#4f46e5' : '#64748b',
-                      backgroundColor: isActive ? '#f5f3ff' : 'transparent',
-                      textDecoration: 'none',
-                      transition: 'all 0.15s ease',
-                      border: isActive ? '1px solid #e0d9ff' : '1px solid transparent',
-                    })}
-                  >
-                    🏠 Recruiter Dashboard
-                  </NavLink>
-                  <NavLink
-                    to="/questions"
-                    style={({ isActive }) => ({
-                      padding: '0.45rem 1rem',
-                      borderRadius: '8px',
-                      fontWeight: '600',
-                      fontSize: '0.875rem',
-                      color: isActive ? '#4f46e5' : '#64748b',
-                      backgroundColor: isActive ? '#f5f3ff' : 'transparent',
-                      textDecoration: 'none',
-                      transition: 'all 0.15s ease',
-                      border: isActive ? '1px solid #e0d9ff' : '1px solid transparent',
-                    })}
-                  >
-                    📋 Question Generator
-                  </NavLink>
+                  <NavLink to="/" end onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>🏠 Recruiter Dashboard</NavLink>
+                  <NavLink to="/questions" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>📋 Question Generator</NavLink>
                 </>
               )}
-            </div>
-
-            <button
-              onClick={() => {
-                const newRole = role === 'candidate' ? 'interviewer' : 'candidate';
-                localStorage.setItem('role', newRole);
-                window.location.href = '/';
-              }}
-              style={{
-                padding: '0.45rem 0.85rem',
-                borderRadius: '8px',
-                backgroundColor: '#f5f3ff',
-                color: '#4f46e5',
-                border: '1px solid #e0d9ff',
-                fontSize: '0.8rem',
-                fontWeight: '700',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-            >
-              🔄 Switch to {role === 'candidate' ? 'Recruiter' : 'Candidate'}
-            </button>
-
-            {/* User Dropdown Pill */}
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.5rem',
-                  border: 'none', background: '#f1f5f9', cursor: 'pointer',
-                  fontSize: '0.85rem', fontWeight: '700', color: '#475569',
-                  padding: '0.45rem 1rem', borderRadius: '20px',
-                  transition: 'all 0.15s',
-                }}
-              >
-                👤 {username} <span style={{ fontSize: '0.7rem' }}>▼</span>
+              <NavLink to="/settings" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>⚙️ Settings</NavLink>
+              <button onClick={handleSwitchRole} style={{ ...mobileNavLinkStyle(false), textAlign: 'left', border: 'none', cursor: 'pointer', width: '100%' }}>
+                🔄 Switch to {role === 'candidate' ? 'Recruiter' : 'Candidate'}
               </button>
-
-              {menuOpen && (
-                <div style={{
-                  position: 'absolute', right: 0, marginTop: '0.5rem',
-                  backgroundColor: '#ffffff', border: '1px solid #e2e8f0',
-                  borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                  width: '150px', zIndex: 200, display: 'flex', flexDirection: 'column',
-                  padding: '0.4rem 0',
-                }}>
-                  <NavLink
-                    to="/settings"
-                    onClick={() => setMenuOpen(false)}
-                    style={{
-                      padding: '0.5rem 1rem', textDecoration: 'none', color: '#334155',
-                      fontSize: '0.85rem', fontWeight: '600', display: 'flex', alignItems: 'center',
-                      gap: '0.5rem', transition: 'background 0.15s',
-                    }}
-                    onMouseEnter={e => e.target.style.backgroundColor = '#f8fafc'}
-                    onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
-                  >
-                    <span>⚙️ Settings</span>
-                  </NavLink>
-                  <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '0.3rem 0' }} />
-                  <button
-                    onClick={handleLogout}
-                    style={{
-                      padding: '0.5rem 1rem', background: 'none', border: 'none',
-                      color: '#dc2626', fontSize: '0.85rem', fontWeight: '700',
-                      textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center',
-                      gap: '0.5rem', width: '100%',
-                    }}
-                    onMouseEnter={e => e.target.style.backgroundColor = '#fef2f2'}
-                    onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
-                  >
-                    🚪 Logout
-                  </button>
-                </div>
-              )}
+              <button
+                onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                style={{ ...mobileNavLinkStyle(false), textAlign: 'left', border: 'none', cursor: 'pointer', color: '#dc2626', width: '100%' }}
+              >
+                🚪 Logout
+              </button>
             </div>
-          </div>
+          )}
         </nav>
 
         {/* ─── Page Content ───────────────────────────────── */}
         <main style={{
           maxWidth: '1280px',
           margin: '0 auto',
-          padding: '2rem 1.5rem',
+          padding: isMobile ? '1rem' : '2rem 1.5rem',
         }}>
           <Routes>
             <Route path="/" element={role === 'candidate' ? <ProgressDashboard /> : <RecruiterDashboard />} />
