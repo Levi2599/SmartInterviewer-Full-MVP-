@@ -14,6 +14,14 @@ window.fetch = function (url, options = {}) {
   return originalFetch(url, options);
 };
 
+// Keep-alive ping every 9 minutes to prevent Render free tier cold starts
+setInterval(() => {
+  originalFetch('/health').catch(() => {});
+}, 9 * 60 * 1000);
+
+// Ping immediately on load to wake the server early
+originalFetch('/health').catch(() => {});
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />

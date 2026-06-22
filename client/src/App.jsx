@@ -24,22 +24,36 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
 
+  // Retry helper — handles Render cold start (server wakes up in ~30s)
+  const fetchWithRetry = async (url, options, retries = 3, delayMs = 8000) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const res = await window.fetch(url, options);
+        if (res.ok) return res;
+        if (attempt === retries) throw new Error('Authentication failed.');
+      } catch (err) {
+        if (attempt === retries) throw err;
+        setError(`Server is starting up, retrying… (${attempt}/${retries})`);
+        await new Promise(r => setTimeout(r, delayMs));
+      }
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!inputUsername.trim()) return;
     setLoading(true);
     setError('');
     try {
-      const res = await window.fetch('/api/auth/login', {
+      const res = await fetchWithRetry('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           username: inputUsername,
           password: inputPassword,
-          role: selectedRole 
+          role: selectedRole
         }),
       });
-      if (!res.ok) throw new Error('Authentication failed.');
       const data = await res.json();
       localStorage.setItem('token', data.token);
       localStorage.setItem('userId', data.userId);
@@ -60,12 +74,11 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      const res = await window.fetch('/api/auth/guest', {
+      const res = await fetchWithRetry('/api/auth/guest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: selectedRole }),
       });
-      if (!res.ok) throw new Error('Authentication failed.');
       const data = await res.json();
       localStorage.setItem('token', data.token);
       localStorage.setItem('userId', data.userId);
