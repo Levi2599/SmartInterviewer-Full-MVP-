@@ -9,8 +9,8 @@ const clients = config.GOOGLE_API_KEYS.map((key) => new GoogleGenAI({ apiKey: ke
 let activeClientIndex = 0;
 
 const MODELS = [
-  "gemini-1.5-flash",
   "gemini-2.5-flash",
+  "gemini-2.0-flash",
 ];
 
 function sleep(ms) {
@@ -28,6 +28,15 @@ function isRetryableGeminiError(error) {
     message.includes("429") ||
     message.includes("RESOURCE_EXHAUSTED") ||
     message.includes("exhausted")
+  );
+}
+
+function isModelNotFoundError(error) {
+  const message = error.message || "";
+  return (
+    message.includes('"code":404') ||
+    message.includes('"status":"NOT_FOUND"') ||
+    message.includes("is not found for API version")
   );
 }
 
@@ -95,8 +104,8 @@ async function callGeminiJson(systemInstruction, userPayload) {
     } catch (error) {
       lastError = error;
 
-      if (isRetryableGeminiError(error)) {
-        console.log(`Switching Gemini model after overload: ${model}`);
+      if (isRetryableGeminiError(error) || isModelNotFoundError(error)) {
+        console.log(`Switching Gemini model (${model} unavailable/overloaded), trying next...`);
         continue;
       }
 

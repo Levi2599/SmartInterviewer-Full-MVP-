@@ -146,6 +146,8 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, onFi
                 </>
               )}
               <input
+                id={`file-upload-${label.toLowerCase().replace(/\s+/g, '-')}`}
+                name={`file-upload-${label.toLowerCase().replace(/\s+/g, '-')}`}
                 type="file"
                 accept=".pdf,.docx,.doc,.txt"
                 style={{ display: 'none' }}

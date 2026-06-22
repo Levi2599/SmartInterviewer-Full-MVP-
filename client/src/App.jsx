@@ -264,8 +264,10 @@ export default function App() {
             </div>
 
             <div style={{ textAlign: 'left' }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>USERNAME / EMAIL</label>
+              <label htmlFor="login-username" style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>USERNAME / EMAIL</label>
               <input
+                id="login-username"
+                name="username"
                 type="text"
                 placeholder="Enter your username or email"
                 value={inputUsername}
@@ -282,8 +284,10 @@ export default function App() {
             </div>
 
             <div style={{ textAlign: 'left' }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>PASSWORD</label>
+              <label htmlFor="login-password" style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>PASSWORD</label>
               <input
+                id="login-password"
+                name="password"
                 type="password"
                 placeholder="••••••••"
                 value={inputPassword}
