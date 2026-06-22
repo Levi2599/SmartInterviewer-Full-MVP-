@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const INDIGO = '#4f46e5';
 
 export default function SettingsScreen() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [role] = useState(() => localStorage.getItem('role') || 'candidate');
   const [username] = useState(() => localStorage.getItem('username') || 'User');
   const [userId] = useState(() => localStorage.getItem('userId'));
@@ -110,20 +112,22 @@ export default function SettingsScreen() {
         {/* Profile Card */}
         <div style={{
           backgroundColor: '#fff', borderRadius: '16px',
-          border: '1px solid #e2e8f0', padding: '1.5rem',
+          border: '1px solid #e2e8f0', padding: '1.25rem 1.5rem',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: '0.75rem',
           boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{
-              width: '52px', height: '52px', borderRadius: '50%',
+              width: isMobile ? '44px' : '52px', height: isMobile ? '44px' : '52px', borderRadius: '50%',
               backgroundColor: '#f5f3ff', color: INDIGO, display: 'flex',
-              alignItems: 'center', justifyContent: 'center', fontSize: '1.75rem', fontWeight: 'bold'
+              alignItems: 'center', justifyContent: 'center', fontSize: isMobile ? '1.4rem' : '1.75rem', fontWeight: 'bold',
+              flexShrink: 0,
             }}>
               {role === 'candidate' ? '👨‍💻' : '💼'}
             </div>
             <div>
-              <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#1e293b' }}>{username}</div>
+              <div style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b' }}>{username}</div>
               <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', marginTop: '0.15rem' }}>
                 Logged in as {role}
               </div>
@@ -132,7 +136,7 @@ export default function SettingsScreen() {
           <span style={{
             fontSize: '0.75rem', fontWeight: '700', color: '#4f46e5',
             backgroundColor: '#f5f3ff', border: '1px solid #e0d9ff',
-            padding: '0.3rem 0.8rem', borderRadius: '20px'
+            padding: '0.3rem 0.8rem', borderRadius: '20px', whiteSpace: 'nowrap',
           }}>
             Active Session
           </span>
@@ -153,7 +157,7 @@ export default function SettingsScreen() {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {/* Font Size */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div>
                   <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>Font Size Scaling</div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Resize typography across the interface.</div>
@@ -163,7 +167,8 @@ export default function SettingsScreen() {
                   onChange={e => setFontSize(e.target.value)}
                   style={{
                     padding: '0.5rem 1rem', borderRadius: '8px', border: '1.5px solid #e2e8f0',
-                    fontSize: '0.85rem', fontWeight: '600', outline: 'none', minWidth: '150px'
+                    fontSize: '0.85rem', fontWeight: '600', outline: 'none',
+                    width: isMobile ? '100%' : 'auto', minWidth: isMobile ? 'unset' : '150px',
                   }}
                 >
                   <option value="small">Small (14px)</option>
@@ -191,7 +196,7 @@ export default function SettingsScreen() {
               <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: 0 }} />
 
               {/* STT Transcription Language */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div>
                   <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>Speech-to-Text Language</div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Configure candidate mic voice recognition.</div>
@@ -201,7 +206,8 @@ export default function SettingsScreen() {
                   onChange={e => setSttLang(e.target.value)}
                   style={{
                     padding: '0.5rem 1rem', borderRadius: '8px', border: '1.5px solid #e2e8f0',
-                    fontSize: '0.85rem', fontWeight: '600', outline: 'none', minWidth: '150px'
+                    fontSize: '0.85rem', fontWeight: '600', outline: 'none',
+                    width: isMobile ? '100%' : 'auto', minWidth: isMobile ? 'unset' : '150px',
                   }}
                 >
                   <option value="en-US">🇺🇸 English (US)</option>
@@ -227,14 +233,14 @@ export default function SettingsScreen() {
                     <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>Target Readiness Score</div>
                     <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Define your personal interview success score target.</div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: isMobile ? '100%' : 'auto' }}>
                     <input
                       type="range"
                       min="50"
                       max="100"
                       value={readinessThreshold}
                       onChange={e => setReadinessThreshold(e.target.value)}
-                      style={{ cursor: 'pointer', width: '120px' }}
+                      style={{ cursor: 'pointer', width: isMobile ? '100%' : '120px' }}
                     />
                     <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#4f46e5', minWidth: '35px', textAlign: 'right' }}>
                       {readinessThreshold}%
@@ -249,7 +255,7 @@ export default function SettingsScreen() {
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   {/* Brand Name */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <div>
                       <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>Company PDF branding</div>
                       <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Title used as document header for printed PDFs.</div>
@@ -260,7 +266,8 @@ export default function SettingsScreen() {
                       onChange={e => setCompanyName(e.target.value)}
                       style={{
                         padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1.5px solid #e2e8f0',
-                        fontSize: '0.9rem', outline: 'none', fontWeight: '600', minWidth: '180px',
+                        fontSize: '0.9rem', outline: 'none', fontWeight: '600',
+                        width: isMobile ? '100%' : 'auto', minWidth: isMobile ? 'unset' : '180px',
                         boxSizing: 'border-box'
                       }}
                     />
@@ -269,7 +276,7 @@ export default function SettingsScreen() {
                   <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: 0 }} />
 
                   {/* Question Counts */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <div>
                       <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>Default Question Count</div>
                       <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Number of AI questions generated per template request.</div>
@@ -279,7 +286,8 @@ export default function SettingsScreen() {
                       onChange={e => setDefaultQuestions(e.target.value)}
                       style={{
                         padding: '0.5rem 1rem', borderRadius: '8px', border: '1.5px solid #e2e8f0',
-                        fontSize: '0.85rem', fontWeight: '600', outline: 'none', minWidth: '180px'
+                        fontSize: '0.85rem', fontWeight: '600', outline: 'none',
+                        width: isMobile ? '100%' : 'auto', minWidth: isMobile ? 'unset' : '180px',
                       }}
                     >
                       <option value="3">3 Questions</option>

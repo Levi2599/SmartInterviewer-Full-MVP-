@@ -4,6 +4,7 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ReferenceLine
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const INDIGO = '#4f46e5';
 const INDIGO_LIGHT = '#f5f3ff';
@@ -65,6 +66,7 @@ export default function ProgressDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -168,12 +170,12 @@ export default function ProgressDashboard() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
+          <h1 style={{ fontSize: 'clamp(1.3rem, 5vw, 1.75rem)', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
             📊 My Progress Dashboard
           </h1>
-          <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0 }}>
+          <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>
             Track your interview readiness and AI coach recommendations.
           </p>
         </div>
@@ -186,6 +188,8 @@ export default function ProgressDashboard() {
             boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
             display: 'flex', alignItems: 'center', gap: '0.5rem',
             fontSize: '0.9rem',
+            width: isMobile ? '100%' : 'auto',
+            justifyContent: 'center',
           }}
         >
           <span>Start New Simulation</span>

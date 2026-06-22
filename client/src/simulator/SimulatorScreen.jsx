@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import CoachOverlay from '../coach/CoachOverlay';
 import Stepper from '../components/Stepper';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const INDIGO = '#4f46e5';
 
 export default function SimulatorScreen() {
   const location = useLocation();
   const state = location.state || {};
+  const isMobile = useIsMobile();
 
   // Persist cv_text/jd_text in sessionStorage so a page refresh doesn't lose them
   const cv_text = state.cv_text || sessionStorage.getItem('sim-cv') || '';
@@ -79,7 +81,7 @@ export default function SimulatorScreen() {
   useEffect(() => {
     const isTtsEnabled = localStorage.getItem('pref-tts-enabled') === 'true';
     if (isTtsEnabled && currentQuestion && window.speechSynthesis) {
-      window.speechSynthesis.cancel(); // cancel current speech
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(currentQuestion);
       utterance.lang = 'en-US';
       window.speechSynthesis.speak(utterance);
@@ -154,7 +156,7 @@ export default function SimulatorScreen() {
   if (!cv_text || !jd_text) {
     return (
       <div style={{
-        background: '#fff', borderRadius: '16px', padding: '3rem 2rem',
+        background: '#fff', borderRadius: '16px', padding: '3rem 1.5rem',
         border: '1px solid #e2e8f0', textAlign: 'center',
       }}>
         <span style={{ fontSize: '3rem' }}>📋</span>
@@ -225,7 +227,7 @@ export default function SimulatorScreen() {
         <Stepper activeStep={2} />
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          padding: '4rem 2rem', gap: '1.5rem',
+          padding: isMobile ? '3rem 1rem' : '4rem 2rem', gap: '1.5rem',
           backgroundColor: '#ffffff', borderRadius: '16px',
           border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
         }}>
@@ -237,7 +239,7 @@ export default function SimulatorScreen() {
             borderRadius: '50%',
             animation: 'spin 0.9s linear infinite',
           }} />
-          <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '1.05rem', textAlign: 'center' }}>
+          <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '1.05rem', textAlign: 'center', padding: '0 1rem' }}>
             {loading}
           </div>
         </div>
@@ -254,20 +256,22 @@ export default function SimulatorScreen() {
         backgroundColor: '#fff',
         borderRadius: '16px',
         border: '1px solid #e2e8f0',
-        padding: '1rem 1.5rem',
+        padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
         marginBottom: '1.5rem',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '0.75rem',
         boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontSize: '1.2rem' }}>🎤</span>
+          <span style={{ fontSize: isMobile ? '1rem' : '1.2rem' }}>🎤</span>
           <div>
-            <span style={{ fontWeight: '800', color: '#0f172a', fontSize: '0.95rem', display: 'block' }}>
+            <span style={{ fontWeight: '800', color: '#0f172a', fontSize: isMobile ? '0.85rem' : '0.95rem', display: 'block' }}>
               Live Job Interview Simulation
             </span>
-            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>
+            <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: '600' }}>
               Turn {turnNumber} — {expectedMethod} Framework Target
             </span>
           </div>
@@ -281,13 +285,13 @@ export default function SimulatorScreen() {
           }}
           style={{
             backgroundColor: '#fee2e2', color: '#dc2626',
-            padding: '0.45rem 1rem', borderRadius: '8px',
-            fontSize: '0.8rem', fontWeight: '700', textDecoration: 'none',
+            padding: '0.4rem 0.75rem', borderRadius: '8px',
+            fontSize: '0.78rem', fontWeight: '700', textDecoration: 'none',
             border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '0.25rem',
-            transition: 'opacity 0.15s',
+            transition: 'opacity 0.15s', whiteSpace: 'nowrap',
           }}
-          onMouseEnter={e => e.target.style.opacity = 0.9}
-          onMouseLeave={e => e.target.style.opacity = 1}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
         >
           🚪 Exit Session
         </Link>
@@ -298,6 +302,7 @@ export default function SimulatorScreen() {
           backgroundColor: '#fef2f2', border: '1px solid #fecaca',
           color: '#b91c1c', padding: '0.875rem 1rem',
           borderRadius: '10px', marginBottom: '1rem', fontWeight: '500',
+          fontSize: isMobile ? '0.875rem' : '1rem',
         }}>
           ⚠️ {error}
         </div>
@@ -313,30 +318,33 @@ export default function SimulatorScreen() {
           {/* Interview Header */}
           <div style={{
             background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-            padding: '1rem 1.5rem',
+            padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
           }}>
-            <span style={{ color: '#fff', fontWeight: '800', fontSize: '0.9rem' }}>
+            <span style={{ color: '#fff', fontWeight: '800', fontSize: isMobile ? '0.82rem' : '0.9rem' }}>
               Current Interviewer Question
             </span>
           </div>
 
-          <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div style={{ padding: isMobile ? '1rem' : '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             {/* AI Interviewer avatar + chat bubble */}
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-              <div style={{
-                width: '52px', height: '52px', borderRadius: '50%',
-                background: 'linear-gradient(135deg, #a78bfa, #818cf8)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.5rem', flexShrink: 0,
-                boxShadow: '0 2px 8px rgba(124,58,237,0.3)',
-              }}>
-                👩‍💼
-              </div>
+            <div style={{ display: 'flex', gap: isMobile ? '0.65rem' : '1rem', alignItems: 'flex-start' }}>
+              {/* Hide avatar on very small screens to save horizontal space */}
+              {!isMobile && (
+                <div style={{
+                  width: '48px', height: '48px', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #a78bfa, #818cf8)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '1.4rem', flexShrink: 0,
+                  boxShadow: '0 2px 8px rgba(124,58,237,0.3)',
+                }}>
+                  👩‍💼
+                </div>
+              )}
               <div style={{
                 flex: 1,
                 backgroundColor: '#f8fafc',
-                borderRadius: '0 16px 16px 16px',
-                padding: '1rem 1.25rem',
+                borderRadius: isMobile ? '10px' : '0 16px 16px 16px',
+                padding: isMobile ? '0.75rem 1rem' : '1rem 1.25rem',
                 border: '1px solid #e2e8f0',
               }}>
                 <div style={{
@@ -345,9 +353,10 @@ export default function SimulatorScreen() {
                 }}>
                   AI INTERVIEWER
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
                   <div style={{
-                    fontSize: '1.05rem', fontWeight: '600', color: '#1e293b', lineHeight: '1.55',
+                    fontSize: isMobile ? '0.95rem' : '1.05rem',
+                    fontWeight: '600', color: '#1e293b', lineHeight: '1.55',
                     flex: 1
                   }}>
                     {currentQuestion}
@@ -365,12 +374,12 @@ export default function SimulatorScreen() {
                     style={{
                       backgroundColor: '#f1f5f9', color: '#475569',
                       border: '1px solid #e2e8f0', borderRadius: '50%',
-                      width: '36px', height: '36px', cursor: 'pointer',
+                      width: '34px', height: '34px', cursor: 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '1rem', transition: 'all 0.15s', flexShrink: 0
+                      fontSize: '0.9rem', transition: 'all 0.15s', flexShrink: 0
                     }}
-                    onMouseEnter={e => e.target.style.backgroundColor = '#e2e8f0'}
-                    onMouseLeave={e => e.target.style.backgroundColor = '#f1f5f9'}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#e2e8f0'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#f1f5f9'}
                     title="Read question aloud"
                   >
                     🔊
@@ -384,20 +393,19 @@ export default function SimulatorScreen() {
               border: '1px solid #e2e8f0', borderRadius: '14px',
               overflow: 'hidden', backgroundColor: '#fafafa',
             }}>
-              <form onSubmit={handleAnswerSubmit} style={{ padding: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <label style={{
+              <form onSubmit={handleAnswerSubmit} style={{ padding: isMobile ? '1rem' : '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                  <label htmlFor="answer-textarea" style={{
                     fontSize: '0.75rem', fontWeight: '700',
                     color: '#94a3b8', letterSpacing: '0.05em',
                   }}>
                     YOUR ANSWER
                   </label>
-                  
+
                   {/* Mic Controls & Animated Waves */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {isRecording && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {/* Wave container */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: '14px' }}>
                           <style>{`
                             @keyframes bounce {
@@ -415,7 +423,7 @@ export default function SimulatorScreen() {
                             }} />
                           ))}
                         </div>
-                        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#ef4444', fontFamily: 'monospace' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: '700', color: '#ef4444', fontFamily: 'monospace' }}>
                           {formatTime(recordingDuration)}
                         </span>
                       </div>
@@ -424,12 +432,14 @@ export default function SimulatorScreen() {
                       type="button"
                       onClick={toggleRecording}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: '0.35rem',
-                        padding: '0.3rem 0.65rem', borderRadius: '20px',
+                        display: 'flex', alignItems: 'center', gap: '0.3rem',
+                        padding: isMobile ? '0.4rem 0.7rem' : '0.3rem 0.65rem',
+                        borderRadius: '20px',
                         border: '1.5px solid #e2e8f0', backgroundColor: isRecording ? '#fee2e2' : '#fff',
                         cursor: 'pointer', transition: 'all 0.2s',
                         fontSize: '0.75rem', fontWeight: '700',
                         color: isRecording ? '#dc2626' : '#64748b',
+                        minHeight: '36px',
                       }}
                     >
                       {isRecording ? '🔴 Stop' : '🎤 Mic'}
@@ -438,14 +448,17 @@ export default function SimulatorScreen() {
                 </div>
 
                 <textarea
+                  id="answer-textarea"
                   value={answerText}
                   onChange={(e) => setAnswerText(e.target.value)}
                   placeholder="Structure your response (e.g. Situation: ... Task: ... Action: ... Result: ...)"
                   style={{
-                    width: '100%', height: '140px',
+                    width: '100%',
+                    height: isMobile ? '130px' : '140px',
                     padding: '0.875rem', borderRadius: '10px',
                     border: '1.5px solid #e2e8f0', fontFamily: 'inherit',
-                    fontSize: '0.95rem', color: '#334155', resize: 'vertical',
+                    fontSize: isMobile ? '1rem' : '0.95rem',
+                    color: '#334155', resize: 'vertical',
                     outline: 'none', lineHeight: '1.5',
                     transition: 'border-color 0.15s',
                     boxSizing: 'border-box',
@@ -457,17 +470,20 @@ export default function SimulatorScreen() {
                   type="submit"
                   disabled={!answerText.trim()}
                   style={{
-                    marginTop: '0.75rem', width: '100%', padding: '0.875rem',
+                    marginTop: '0.75rem', width: '100%',
+                    padding: isMobile ? '1rem' : '0.875rem',
                     background: answerText.trim()
                       ? 'linear-gradient(135deg, #4f46e5, #7c3aed)'
                       : '#e2e8f0',
                     color: answerText.trim() ? '#fff' : '#94a3b8',
                     border: 'none', borderRadius: '10px',
-                    fontWeight: '700', fontSize: '0.95rem', cursor: answerText.trim() ? 'pointer' : 'default',
+                    fontWeight: '700', fontSize: isMobile ? '1rem' : '0.95rem',
+                    cursor: answerText.trim() ? 'pointer' : 'default',
                     boxShadow: answerText.trim()
                       ? '0 4px 14px rgba(79,70,229,0.35)'
                       : 'none',
                     transition: 'all 0.2s ease',
+                    minHeight: '48px',
                   }}
                 >
                   ✓ Submit Answer

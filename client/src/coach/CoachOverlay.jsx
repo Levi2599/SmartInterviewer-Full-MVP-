@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const INDIGO = '#4f46e5';
 
@@ -19,7 +20,6 @@ function ComponentChecklist({ labels, star, missing_components }) {
         const score = star?.[key] ?? 0;
         const barColor = getBarColor(score);
 
-        // Primary: use missing_components from AI; fallback: score threshold
         const flaggedByAI = missingSet.size > 0
           ? missingSet.has(label.toLowerCase()) || missingSet.has(key.toLowerCase())
           : null;
@@ -42,7 +42,7 @@ function ComponentChecklist({ labels, star, missing_components }) {
               }}>
                 {isPresent ? '✓' : '!'}
               </div>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#1e293b' }}>{label}</span>
                 {!isPresent && (
                   <span style={{
@@ -51,7 +51,7 @@ function ComponentChecklist({ labels, star, missing_components }) {
                   }}>— Missing</span>
                 )}
               </div>
-              <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b' }}>{score}/100</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b', flexShrink: 0 }}>{score}/100</span>
             </div>
             <div style={{ height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
               <div style={{
@@ -76,6 +76,7 @@ function ComponentChecklist({ labels, star, missing_components }) {
 const HIGH_SCORE_THRESHOLD = 85;
 
 export default function CoachOverlay({ feedback, originalAnswer, questionText, sessionId, expectedMethod, onNext }) {
+  const isMobile = useIsMobile();
   const {
     overall_score,
     framework_detected,
@@ -139,6 +140,9 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
   const statusBg = isGood ? '#dcfce7' : '#fee2e2';
   const statusText = isExcellent ? 'Excellent' : isGood ? 'Good' : 'Needs Improvement';
 
+  const cardPadding = isMobile ? '1rem' : '1.5rem';
+  const headerPadding = isMobile ? '1rem' : '1.25rem 1.5rem';
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       {/* Main Coach Card */}
@@ -151,7 +155,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
       }}>
         {/* Header */}
         <div style={{
-          padding: '1.25rem 1.5rem',
+          padding: headerPadding,
           background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           flexWrap: 'wrap', gap: '0.75rem',
@@ -160,29 +164,30 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
             <div style={{ fontSize: '0.65rem', color: '#a5b4fc', letterSpacing: '0.1em', fontWeight: '700', marginBottom: '0.2rem' }}>
               AI COACH FEEDBACK
             </div>
-            <div style={{ color: '#fff', fontWeight: '700', fontSize: '1.1rem' }}>
+            <div style={{ color: '#fff', fontWeight: '700', fontSize: isMobile ? '1rem' : '1.1rem' }}>
               Session Review
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <span style={{
               backgroundColor: statusBg, color: statusColor,
-              padding: '0.3rem 0.8rem', borderRadius: '20px',
-              fontWeight: '700', fontSize: '0.8rem',
+              padding: '0.3rem 0.7rem', borderRadius: '20px',
+              fontWeight: '700', fontSize: '0.78rem',
             }}>
               {isGood ? '✓' : '!'} {statusText}
             </span>
             <div style={{
               backgroundColor: 'rgba(255,255,255,0.15)',
-              color: '#fff', padding: '0.4rem 0.9rem',
-              borderRadius: '10px', fontWeight: '800', fontSize: '1.3rem',
+              color: '#fff', padding: '0.35rem 0.8rem',
+              borderRadius: '10px', fontWeight: '800',
+              fontSize: isMobile ? '1.2rem' : '1.3rem',
             }}>
               {activeScore}/100
             </div>
           </div>
         </div>
 
-        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div style={{ padding: cardPadding, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
           {/* Excellent score banner */}
           {isExcellent && (
@@ -191,7 +196,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
               borderRadius: '10px', padding: '0.875rem 1rem',
               display: 'flex', alignItems: 'center', gap: '0.75rem',
             }}>
-              <span style={{ fontSize: '1.5rem' }}>🏆</span>
+              <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>🏆</span>
               <div>
                 <div style={{ fontWeight: '700', color: '#166534', fontSize: '0.9rem' }}>Outstanding Answer!</div>
                 <div style={{ color: '#15803d', fontSize: '0.8rem', marginTop: '0.1rem' }}>
@@ -202,7 +207,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           )}
 
           {/* Method tag */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>
               Detected Framework:
             </span>
@@ -267,7 +272,8 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
               <button
                 onClick={() => onNext()}
                 style={{
-                  flex: 1, padding: '0.875rem',
+                  flex: 1, minWidth: isMobile ? '100%' : '120px',
+                  padding: isMobile ? '1rem' : '0.875rem',
                   backgroundColor: isExcellent ? INDIGO : '#f1f5f9',
                   color: isExcellent ? '#fff' : '#475569',
                   border: isExcellent ? 'none' : '1px solid #e2e8f0',
@@ -279,12 +285,12 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
               >
                 {isExcellent ? '🚀 Continue to Next Question →' : 'Keep & Continue →'}
               </button>
-              {/* Retry only available when score < 85 */}
               {!isExcellent && (
                 <button
                   onClick={() => { setIsRetrying(true); setRetryAnswer(''); }}
                   style={{
-                    flex: 1, padding: '0.875rem',
+                    flex: 1, minWidth: isMobile ? '100%' : '120px',
+                    padding: isMobile ? '1rem' : '0.875rem',
                     background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
                     color: '#fff', border: 'none', borderRadius: '10px',
                     fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem',
@@ -302,7 +308,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           {isRetrying && !retryResult && (
             <form onSubmit={handleRetrySubmit} style={{
               backgroundColor: '#f8fafc', borderRadius: '12px',
-              border: '1px solid #e2e8f0', padding: '1.25rem',
+              border: '1px solid #e2e8f0', padding: isMobile ? '1rem' : '1.25rem',
               display: 'flex', flexDirection: 'column', gap: '0.75rem',
             }}>
               <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>
@@ -317,9 +323,13 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                 disabled={retryLoading}
                 placeholder={`Use the ${method} structure to rewrite your answer...`}
                 style={{
-                  width: '100%', height: '110px', padding: '0.75rem',
+                  width: '100%',
+                  height: isMobile ? '130px' : '110px',
+                  padding: '0.75rem',
                   borderRadius: '10px', border: '1.5px solid #e2e8f0',
-                  fontFamily: 'inherit', fontSize: '0.9rem', resize: 'vertical',
+                  fontFamily: 'inherit',
+                  fontSize: isMobile ? '1rem' : '0.9rem',
+                  resize: 'vertical',
                   outline: 'none', lineHeight: '1.5',
                   transition: 'border-color 0.15s',
                   boxSizing: 'border-box',
@@ -332,13 +342,14 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                   ⚠️ {retryError}
                 </div>
               )}
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   onClick={() => { setIsRetrying(false); setRetryResult(null); }}
                   disabled={retryLoading}
                   style={{
-                    flex: 1, padding: '0.75rem',
+                    flex: 1, minWidth: isMobile ? '100%' : '80px',
+                    padding: isMobile ? '0.875rem' : '0.75rem',
                     backgroundColor: '#f1f5f9', color: '#475569',
                     border: '1px solid #e2e8f0', borderRadius: '8px',
                     fontWeight: '600', cursor: 'pointer',
@@ -350,7 +361,8 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                   type="submit"
                   disabled={retryLoading || !retryAnswer.trim()}
                   style={{
-                    flex: 2, padding: '0.75rem',
+                    flex: 2, minWidth: isMobile ? '100%' : '120px',
+                    padding: isMobile ? '0.875rem' : '0.75rem',
                     background: (!retryLoading && retryAnswer.trim())
                       ? 'linear-gradient(135deg, #4f46e5, #7c3aed)'
                       : '#e2e8f0',
@@ -374,39 +386,39 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
               backgroundColor: retryResult.improvement ? '#f0fdf4' : '#fef2f2',
               borderRadius: '12px',
               border: `1px solid ${retryResult.improvement ? '#bbf7d0' : '#fecaca'}`,
-              padding: '1.25rem',
+              padding: isMobile ? '1rem' : '1.25rem',
             }}>
               <div style={{ fontWeight: '700', color: retryResult.improvement ? '#166534' : '#991b1b', marginBottom: '0.75rem' }}>
                 {retryResult.improvement ? '✅ Revision Comparison' : '📊 Revision Comparison'}
               </div>
-              <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
                 <div style={{
-                  flex: 1, minWidth: '100px',
+                  flex: '1 1 80px',
                   backgroundColor: '#fee2e2', borderRadius: '8px', padding: '0.75rem', textAlign: 'center',
                 }}>
                   <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#991b1b', marginBottom: '0.2rem' }}>ORIGINAL</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#dc2626' }}>
+                  <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#dc2626' }}>
                     {retryResult.original_score ?? 0}
                   </div>
                 </div>
                 <div style={{
-                  flex: 1, minWidth: '100px',
+                  flex: '1 1 80px',
                   backgroundColor: '#dcfce7', borderRadius: '8px', padding: '0.75rem', textAlign: 'center',
                 }}>
                   <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#166534', marginBottom: '0.2rem' }}>REVISION</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#16a34a' }}>
+                  <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#16a34a' }}>
                     {retryResult.retry_feedback?.overall_score ?? 0}
                   </div>
                 </div>
                 {retryResult.score_delta !== undefined && (
                   <div style={{
-                    flex: 1, minWidth: '100px',
+                    flex: '1 1 80px',
                     backgroundColor: retryResult.score_delta >= 0 ? '#f0fdf4' : '#fef2f2',
                     borderRadius: '8px', padding: '0.75rem', textAlign: 'center',
                   }}>
                     <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#64748b', marginBottom: '0.2rem' }}>DELTA</div>
                     <div style={{
-                      fontSize: '1.5rem', fontWeight: '800',
+                      fontSize: '1.4rem', fontWeight: '800',
                       color: retryResult.score_delta >= 0 ? '#16a34a' : '#dc2626',
                     }}>
                       {retryResult.score_delta >= 0 ? '+' : ''}{retryResult.score_delta}
@@ -441,12 +453,13 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                   💡 {retryResult.retry_feedback.improvement_tip}
                 </p>
               )}
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                 {!retryResult.improvement && (
                   <button
                     onClick={() => { setRetryResult(null); setRetryAnswer(''); }}
                     style={{
-                      flex: 1, padding: '0.875rem',
+                      flex: 1, minWidth: isMobile ? '100%' : '100px',
+                      padding: isMobile ? '1rem' : '0.875rem',
                       backgroundColor: '#f1f5f9', color: '#475569',
                       border: '1px solid #e2e8f0', borderRadius: '10px',
                       fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem',
@@ -458,7 +471,8 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                 <button
                   onClick={() => onNext(retryAnswer)}
                   style={{
-                    flex: 2, padding: '0.875rem',
+                    flex: 2, minWidth: isMobile ? '100%' : '120px',
+                    padding: isMobile ? '1rem' : '0.875rem',
                     background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
                     color: '#fff', border: 'none', borderRadius: '10px',
                     fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem',
