@@ -125,8 +125,13 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
   if (method === 'PREP') labels = { S: 'Point', T: 'Reason', A: 'Example', R: 'Point (Revisited)' };
   if (method === 'Step-by-Step') labels = { S: 'Goal', T: 'Strategy', A: 'Analysis', R: 'Reporting' };
 
-  const isGood = overall_score >= 60;
-  const isExcellent = overall_score >= HIGH_SCORE_THRESHOLD;
+  // When retry result exists, show updated scores and components
+  const activeScore = retryResult?.retry_feedback?.overall_score ?? overall_score;
+  const activeStar = retryResult?.retry_feedback?.star_breakdown ?? star_breakdown;
+  const activeMissing = retryResult?.retry_feedback?.missing_components ?? missing_components;
+
+  const isGood = activeScore >= 60;
+  const isExcellent = activeScore >= HIGH_SCORE_THRESHOLD;
   const statusColor = isGood ? '#166534' : '#b91c1c';
   const statusBg = isGood ? '#dcfce7' : '#fee2e2';
   const statusText = isExcellent ? 'Excellent' : isGood ? 'Good' : 'Needs Improvement';
@@ -169,7 +174,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
               color: '#fff', padding: '0.4rem 0.9rem',
               borderRadius: '10px', fontWeight: '800', fontSize: '1.3rem',
             }}>
-              {overall_score}/100
+              {activeScore}/100
             </div>
           </div>
         </div>
@@ -187,7 +192,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
               <div>
                 <div style={{ fontWeight: '700', color: '#166534', fontSize: '0.9rem' }}>Outstanding Answer!</div>
                 <div style={{ color: '#15803d', fontSize: '0.8rem', marginTop: '0.1rem' }}>
-                  Your score of {overall_score}/100 is excellent — no revisions needed. Keep up the great work!
+                  Your score of {activeScore}/100 is excellent — no revisions needed. Keep up the great work!
                 </div>
               </div>
             </div>
@@ -213,7 +218,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
             <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
               RESPONSE COMPONENTS
             </div>
-            <ComponentChecklist labels={labels} star={star_breakdown} missing_components={missing_components} />
+            <ComponentChecklist labels={labels} star={activeStar} missing_components={activeMissing} />
           </div>
 
           {/* Filler words */}
