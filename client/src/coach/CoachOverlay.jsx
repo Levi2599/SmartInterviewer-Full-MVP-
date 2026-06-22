@@ -90,6 +90,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
   const [retryLoading, setRetryLoading] = useState(false);
   const [retryError, setRetryError] = useState('');
   const [retryResult, setRetryResult] = useState(null);
+  const [lastRetryFeedback, setLastRetryFeedback] = useState(null);
 
   const handleRetrySubmit = async (e) => {
     e.preventDefault();
@@ -112,6 +113,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
       if (!res.ok) throw new Error('Failed to process retry analysis.');
       const data = await res.json();
       setRetryResult(data);
+      if (data.retry_feedback) setLastRetryFeedback(data.retry_feedback);
     } catch (err) {
       setRetryError(err.message);
     } finally {
@@ -125,10 +127,11 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
   if (method === 'PREP') labels = { S: 'Point', T: 'Reason', A: 'Example', R: 'Point (Revisited)' };
   if (method === 'Step-by-Step') labels = { S: 'Goal', T: 'Strategy', A: 'Analysis', R: 'Reporting' };
 
-  // When retry result exists, show updated scores and components
-  const activeScore = retryResult?.retry_feedback?.overall_score ?? overall_score;
-  const activeStar = retryResult?.retry_feedback?.star_breakdown ?? star_breakdown;
-  const activeMissing = retryResult?.retry_feedback?.missing_components ?? missing_components;
+  // When retry result exists, show updated scores and components.
+  // Fall back to lastRetryFeedback so "Try Again" doesn't revert colors to original.
+  const activeScore = retryResult?.retry_feedback?.overall_score ?? lastRetryFeedback?.overall_score ?? overall_score;
+  const activeStar = retryResult?.retry_feedback?.star_breakdown ?? lastRetryFeedback?.star_breakdown ?? star_breakdown;
+  const activeMissing = retryResult?.retry_feedback?.missing_components ?? lastRetryFeedback?.missing_components ?? missing_components;
 
   const isGood = activeScore >= 60;
   const isExcellent = activeScore >= HIGH_SCORE_THRESHOLD;
@@ -418,6 +421,19 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                   fontSize: '0.83rem', color: '#9a3412', marginBottom: '0.75rem',
                 }}>
                   💡 Your revision didn't improve the score this time. Try incorporating all {method} components clearly and submit again.
+                </div>
+              )}
+              {/* Updated STAR breakdown so user sees new colors immediately */}
+              {retryResult.retry_feedback?.star_breakdown && (
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#64748b', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>
+                    UPDATED COMPONENTS
+                  </div>
+                  <ComponentChecklist
+                    labels={labels}
+                    star={retryResult.retry_feedback.star_breakdown}
+                    missing_components={retryResult.retry_feedback.missing_components || []}
+                  />
                 </div>
               )}
               {retryResult.retry_feedback?.improvement_tip && retryResult.improvement && (
