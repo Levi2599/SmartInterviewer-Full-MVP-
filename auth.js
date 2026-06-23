@@ -10,8 +10,10 @@ function authenticate(req, res, next) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  // Expecting JWT_SECRET to be defined in your environment
-  const secret = process.env.JWT_SECRET || "fallback_secret_change_me";
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('FATAL: JWT_SECRET environment variable is not set. Server cannot start.');
+  }
 
   jwt.verify(token, secret, (err, user) => {
     if (err) {

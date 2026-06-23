@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { getAuthHeaders } from '../utils/auth';
 
 const INDIGO = '#4f46e5';
 
 export default function SettingsScreen() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [saved, setSaved] = useState(false);
   const [role] = useState(() => localStorage.getItem('role') || 'candidate');
   const [username] = useState(() => localStorage.getItem('username') || 'User');
   const [userId] = useState(() => localStorage.getItem('userId'));
@@ -54,31 +56,28 @@ export default function SettingsScreen() {
       localStorage.setItem('pref-recruiter-company', companyName);
       localStorage.setItem('pref-recruiter-qcount', defaultQuestions);
     }
-    alert('Settings saved successfully!');
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
   };
 
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
   const handleDeleteAllData = async () => {
-    if (!window.confirm('WARNING: Are you sure you want to permanently delete all your data? This cannot be undone.')) return;
-    if (!window.confirm('FINAL CONFIRMATION: This will purge your profile, simulation history, and B2B guides from our databases. Continue?')) return;
-    
     try {
       const activeUserId = userId || 'user-001';
       const res = await fetch(`/api/progress/${activeUserId}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Data deletion failed.');
-      
-      alert('Your profile and all associated data have been permanently deleted.');
-      
-      // Reset accessibility styles
       document.documentElement.style.fontSize = '16px';
       document.body.style.filter = 'none';
-      
-      // Clear localStorage and log out
       localStorage.clear();
-      window.location.href = '/';
+      navigate('/');
     } catch (err) {
-      alert(`Error during deletion: ${err.message}`);
+      setDeleteError(err.message);
+      setDeleteConfirm(false);
     }
   };
 
@@ -301,6 +300,22 @@ export default function SettingsScreen() {
           </div>
         </div>
 
+        {/* Success banner */}
+        {saved && (
+          <div style={{
+            backgroundColor: '#f0fdf4',
+            border: '1px solid #86efac',
+            color: '#166534',
+            padding: '0.75rem 1rem',
+            borderRadius: '10px',
+            fontWeight: '600',
+            fontSize: '0.875rem',
+            marginBottom: '1rem',
+          }}>
+            ✓ Settings saved successfully!
+          </div>
+        )}
+
         {/* Action Button */}
         <button
           type="submit"
@@ -330,19 +345,47 @@ export default function SettingsScreen() {
         <p style={{ fontSize: '0.8rem', color: '#dc2626', margin: '0 0 1.25rem 0' }}>
           Irreversible security options. Delete your profile database records and reset cache.
         </p>
-        <button
-          onClick={handleDeleteAllData}
-          style={{
-            padding: '0.65rem 1.25rem', borderRadius: '8px',
-            backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca',
-            fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer',
-            transition: 'background-color 0.15s'
-          }}
-          onMouseEnter={e => e.target.style.backgroundColor = '#fecaca'}
-          onMouseLeave={e => e.target.style.backgroundColor = '#fee2e2'}
-        >
-          Delete My Account & Data Permanently
-        </button>
+        {deleteError && (
+          <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: '8px', padding: '0.65rem 1rem', marginBottom: '0.75rem', fontSize: '0.85rem', fontWeight: '500' }}>
+            ⚠️ {deleteError}
+          </div>
+        )}
+
+        {!deleteConfirm ? (
+          <button
+            onClick={() => { setDeleteError(''); setDeleteConfirm(true); }}
+            style={{
+              padding: '0.65rem 1.25rem', borderRadius: '8px',
+              backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca',
+              fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer',
+              transition: 'background-color 0.15s',
+            }}
+            onMouseEnter={e => e.target.style.backgroundColor = '#fecaca'}
+            onMouseLeave={e => e.target.style.backgroundColor = '#fee2e2'}
+          >
+            Delete My Account & Data Permanently
+          </button>
+        ) : (
+          <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '1rem' }}>
+            <p style={{ fontSize: '0.875rem', fontWeight: '700', color: '#991b1b', margin: '0 0 0.75rem 0' }}>
+              This will permanently delete your profile, all simulation history, and B2B guides. This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                onClick={() => setDeleteConfirm(false)}
+                style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f1f5f9', color: '#475569', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAllData}
+                style={{ flex: 2, padding: '0.65rem', borderRadius: '8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', fontWeight: '700', cursor: 'pointer' }}
+              >
+                Yes, Delete Everything
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

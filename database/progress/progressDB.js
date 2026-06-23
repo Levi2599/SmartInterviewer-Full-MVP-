@@ -23,9 +23,16 @@ const ProgressSchema = new mongoose.Schema({
     type: [String], 
     default: [] 
   },
-  date: { 
-    type: Date, 
-    default: Date.now 
+  date: {
+    type: Date,
+    default: Date.now
+  },
+  recommendation_cache: {
+    detected_weakness_pattern: { type: String, default: null },
+    focus_area: { type: String, default: null },
+    actionable_steps: { type: [String], default: [] },
+    generated_at: { type: Date, default: null },
+    session_count_at_generation: { type: Number, default: 0 }
   }
 });
 
@@ -57,9 +64,17 @@ async function getHistory(userId) {
     .exec();
 }
 
+async function updateRecommendationCache(userId, cacheData) {
+  return await ProgressModel.updateMany(
+    { user_id: userId },
+    { $set: { recommendation_cache: cacheData } }
+  );
+}
+
 module.exports = {
   ProgressModel,
   saveProgress,
   findByUserId,
-  getHistory
+  getHistory,
+  updateRecommendationCache
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { getAuthHeaders } from '../utils/auth';
 
 const INDIGO = '#4f46e5';
 
@@ -101,7 +102,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
     try {
       const res = await fetch('/api/coach/retry', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           original_answer: originalAnswer,
           retry_answer: retryAnswer,

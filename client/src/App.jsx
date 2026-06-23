@@ -110,8 +110,9 @@ export default function App() {
   const handleSwitchRole = () => {
     const newRole = role === 'candidate' ? 'interviewer' : 'candidate';
     localStorage.setItem('role', newRole);
+    setRole(newRole);
     setMobileMenuOpen(false);
-    window.location.href = '/';
+    setMenuOpen(false);
   };
 
   const navLinkStyle = (isActive) => ({

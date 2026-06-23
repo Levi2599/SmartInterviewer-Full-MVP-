@@ -3,6 +3,7 @@ import { useLocation, Link } from 'react-router-dom';
 import CoachOverlay from '../coach/CoachOverlay';
 import Stepper from '../components/Stepper';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { getAuthHeaders } from '../utils/auth';
 
 const INDIGO = '#4f46e5';
 
@@ -19,8 +20,20 @@ export default function SimulatorScreen() {
 
   // All hooks declared before any conditional return (React Rules of Hooks)
   const [sessionId] = useState(() => `${localStorage.getItem('userId') || 'user-001'}-${Date.now()}`);
-  const [turnNumber, setTurnNumber] = useState(1);
-  const [conversationHistory, setConversationHistory] = useState([]);
+  const [turnNumber, setTurnNumber] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(`sim-turn-${localStorage.getItem('userId') || 'user-001'}`);
+      return saved ? Number(saved) : 1;
+    } catch (_) { return 1; }
+  });
+  const [conversationHistory, setConversationHistory] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(`sim-history-${localStorage.getItem('userId') || 'user-001'}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (_) { return []; }
+  });
+  const [sttWarning, setSttWarning] = useState(false);
+  const [exitConfirm, setExitConfirm] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [answerText, setAnswerText] = useState('');
   const [expectedMethod, setExpectedMethod] = useState('STAR');
@@ -93,9 +106,16 @@ export default function SimulatorScreen() {
     };
   }, [currentQuestion]);
 
+  const updateConversationHistory = (newHistory) => {
+    setConversationHistory(newHistory);
+    try {
+      sessionStorage.setItem(`sim-history-${localStorage.getItem('userId') || 'user-001'}`, JSON.stringify(newHistory));
+    } catch (_) {}
+  };
+
   const toggleRecording = () => {
     if (!recognition) {
-      alert("Speech recognition is not supported in this browser. Please type your response.");
+      setSttWarning(true);
       return;
     }
 
@@ -127,7 +147,7 @@ export default function SimulatorScreen() {
     try {
       const res = await fetch('/api/simulator/generate-question', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           cv_text, jd_text,
           session_id: sessionId,
@@ -183,7 +203,7 @@ export default function SimulatorScreen() {
     try {
       const res = await fetch('/api/coach/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           answer_text: answerText,
           question_text: currentQuestion,
@@ -211,8 +231,9 @@ export default function SimulatorScreen() {
       { role: 'candidate', text: actualAnswer },
     ];
     const nextTurn = turnNumber + 1;
-    setConversationHistory(updatedHistory);
+    updateConversationHistory(updatedHistory);
     setTurnNumber(nextTurn);
+    try { sessionStorage.setItem(`sim-turn-${localStorage.getItem('userId') || 'user-001'}`, String(nextTurn)); } catch (_) {}
     setAnswerText('');
     setFeedback(null);
     fetchQuestion(nextTurn, updatedHistory);
@@ -276,26 +297,63 @@ export default function SimulatorScreen() {
             </span>
           </div>
         </div>
-        <Link
-          to="/"
-          onClick={(e) => {
-            if (!window.confirm('Are you sure you want to exit the current interview simulation? Your progress will be saved.')) {
-              e.preventDefault();
-            }
-          }}
+        <button
+          type="button"
+          onClick={() => setExitConfirm(true)}
           style={{
             backgroundColor: '#fee2e2', color: '#dc2626',
             padding: '0.4rem 0.75rem', borderRadius: '8px',
-            fontSize: '0.78rem', fontWeight: '700', textDecoration: 'none',
+            fontSize: '0.78rem', fontWeight: '700',
             border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '0.25rem',
-            transition: 'opacity 0.15s', whiteSpace: 'nowrap',
+            cursor: 'pointer', transition: 'opacity 0.15s', whiteSpace: 'nowrap',
           }}
           onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
           onMouseLeave={e => e.currentTarget.style.opacity = '1'}
         >
           🚪 Exit Session
-        </Link>
+        </button>
       </div>
+
+      {sttWarning && (
+        <div style={{
+          backgroundColor: '#fffbeb', border: '1px solid #fde68a',
+          color: '#92400e', padding: '0.75rem 1rem',
+          borderRadius: '10px', marginBottom: '1rem', fontWeight: '500',
+          fontSize: '0.875rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <span>⚠️ Speech recognition is not supported in this browser. Please type your response.</span>
+          <button onClick={() => setSttWarning(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#92400e', fontWeight: '700', marginLeft: '0.75rem' }}>✕</button>
+        </div>
+      )}
+
+      {exitConfirm && (
+        <div style={{
+          backgroundColor: '#fff', border: '1px solid #fecaca',
+          borderRadius: '12px', padding: '1.25rem 1.5rem',
+          marginBottom: '1rem', boxShadow: '0 4px 16px rgba(220,38,38,0.1)',
+        }}>
+          <div style={{ fontWeight: '700', color: '#991b1b', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
+            Exit Interview Session?
+          </div>
+          <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '0 0 1rem 0' }}>
+            Are you sure you want to exit? Your progress will be saved.
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button
+              onClick={() => setExitConfirm(false)}
+              style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f1f5f9', color: '#475569', fontWeight: '600', cursor: 'pointer' }}
+            >
+              Stay in Interview
+            </button>
+            <Link
+              to="/"
+              style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', backgroundColor: '#fee2e2', color: '#dc2626', fontWeight: '700', textDecoration: 'none', textAlign: 'center', border: '1px solid #fecaca' }}
+            >
+              Exit Session
+            </Link>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div style={{

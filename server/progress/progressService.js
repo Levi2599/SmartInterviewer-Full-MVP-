@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { detectWeaknesses } = require("./weaknessDetector");
 const recommendationPrompt = require("../../ai/progress/recommendationPrompt");
-const { saveProgress, findByUserId, getHistory } = require("../../database/progress/progressDB");
+const { saveProgress, findByUserId, getHistory, updateRecommendationCache } = require("../../database/progress/progressDB");
 
 // POST /save
 router.post('/save', async (req, res) => {
@@ -104,22 +104,43 @@ router.get('/:userId', async (req, res) => {
       weakness_tags: h.weakness_tags
     }));
 
-    // Call AI Engine layer for programmatic synthesis reports
-    const aiRecommendation = await recommendationPrompt({
-      star_breakdown,
-      weakness_profile,
-      lowest_component,
-      session_count: recordCount,
-      session_history: clean_history
-    });
-
     const calculated_readiness = recordCount > 0
       ? Math.max(0, Math.min(100, Math.round(history.reduce((sum, h) => sum + (h.readiness_score || 0), 0) / recordCount)))
       : 0;
 
-    const weaknessPattern = aiRecommendation.detected_weakness_pattern || `Growth needed in ${lowest_component}.`;
-    const focusArea = (aiRecommendation.strategic_recommendation && aiRecommendation.strategic_recommendation.focus_area) || lowest_component;
-    const actionableSteps = (aiRecommendation.strategic_recommendation && aiRecommendation.strategic_recommendation.actionable_steps) || ["Practice structuring mockups."];
+    const latestRecord = history[history.length - 1];
+    const existingCache = latestRecord?.recommendation_cache;
+    const cacheIsValid = existingCache &&
+      existingCache.generated_at &&
+      existingCache.session_count_at_generation === recordCount;
+
+    let weaknessPattern, focusArea, actionableSteps;
+
+    if (cacheIsValid) {
+      weaknessPattern = existingCache.detected_weakness_pattern || `Growth needed in ${lowest_component}.`;
+      focusArea = existingCache.focus_area || lowest_component;
+      actionableSteps = existingCache.actionable_steps || ["Practice structuring responses."];
+    } else {
+      const aiRecommendation = await recommendationPrompt({
+        star_breakdown,
+        weakness_profile,
+        lowest_component,
+        session_count: recordCount,
+        session_history: clean_history
+      });
+
+      weaknessPattern = aiRecommendation.detected_weakness_pattern || `Growth needed in ${lowest_component}.`;
+      focusArea = (aiRecommendation.strategic_recommendation && aiRecommendation.strategic_recommendation.focus_area) || lowest_component;
+      actionableSteps = (aiRecommendation.strategic_recommendation && aiRecommendation.strategic_recommendation.actionable_steps) || ["Practice structuring mockups."];
+
+      updateRecommendationCache(userId, {
+        detected_weakness_pattern: weaknessPattern,
+        focus_area: focusArea,
+        actionable_steps: actionableSteps,
+        generated_at: new Date(),
+        session_count_at_generation: recordCount
+      }).catch(err => console.error('Cache update failed (non-critical):', err));
+    }
 
     return res.json({
       user_id: userId,

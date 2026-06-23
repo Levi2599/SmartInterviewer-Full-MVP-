@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { getAuthHeaders } from '../utils/auth';
 
 const INDIGO = '#4f46e5';
 const INDIGO_LIGHT = '#f5f3ff';
@@ -65,18 +66,37 @@ export default function ProgressDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleteStatus, setDeleteStatus] = useState('');
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchProgress = async () => {
       const activeUserId = localStorage.getItem('userId') || 'user-001';
+
       try {
-        const res = await fetch(`/api/progress/${activeUserId}`);
-        if (res.status === 404) { setData(null); return; }
+        const cached = sessionStorage.getItem('progressData');
+        const cachedTime = sessionStorage.getItem('progressDataTime');
+        if (cached && cachedTime && (Date.now() - Number(cachedTime)) < 5 * 60 * 1000) {
+          setData(JSON.parse(cached));
+          setLoading(false);
+          return;
+        }
+      } catch (_) {}
+
+      try {
+        const res = await fetch(`/api/progress/${activeUserId}`, {
+          headers: getAuthHeaders(),
+        });
+        if (res.status === 404) { setData(null); setLoading(false); return; }
         if (!res.ok) throw new Error('Failed to retrieve progress data.');
         const json = await res.json();
         setData(json);
+        try {
+          sessionStorage.setItem('progressData', JSON.stringify(json));
+          sessionStorage.setItem('progressDataTime', String(Date.now()));
+        } catch (_) {}
       } catch (err) {
         setError(err.message);
       } finally {
@@ -409,33 +429,63 @@ export default function ProgressDashboard() {
         <p style={{ fontSize: '0.85rem', color: '#64748b', lineHeight: '1.5', margin: '0 0 1rem 0' }}>
           In accordance with GDPR compliance, your transcripts and performance scores are stored securely. You can permanently delete all your data from our database at any time. This action is irreversible.
         </p>
-        <button
-          onClick={async () => {
-            const confirmed = window.confirm("Are you sure you want to permanently delete all your data? This cannot be undone.");
-            if (!confirmed) return;
-            try {
-              const activeUserId = localStorage.getItem('userId') || 'user-001';
-              const res = await fetch(`/api/progress/${activeUserId}`, {
-                method: 'DELETE'
-              });
-              if (!res.ok) throw new Error("Deletion failed.");
-              alert("Your data has been successfully deleted.");
-              localStorage.clear();
-              window.location.href = "/";
-            } catch (err) {
-              alert(`Error: ${err.message}`);
-            }
-          }}
-          style={{
-            padding: '0.65rem 1.25rem',
-            backgroundColor: '#fee2e2', color: '#dc2626',
-            border: '1px solid #fecaca', borderRadius: '10px',
-            fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer',
-            transition: 'all 0.15s',
-          }}
-        >
-          🗑️ Delete All My Data Permanently
-        </button>
+
+        {deleteStatus === 'error' && (
+          <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1rem', fontSize: '0.85rem', fontWeight: '500' }}>
+            ⚠️ Deletion failed. Please try again.
+          </div>
+        )}
+
+        {!deleteConfirm ? (
+          <button
+            onClick={() => setDeleteConfirm(true)}
+            style={{
+              padding: '0.65rem 1.25rem',
+              backgroundColor: '#fee2e2', color: '#dc2626',
+              border: '1px solid #fecaca', borderRadius: '10px',
+              fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+          >
+            🗑️ Delete All My Data Permanently
+          </button>
+        ) : (
+          <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '1rem' }}>
+            <p style={{ fontSize: '0.875rem', fontWeight: '700', color: '#991b1b', margin: '0 0 0.75rem 0' }}>
+              This will permanently delete all your sessions, scores, and profile data. This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                onClick={() => setDeleteConfirm(false)}
+                style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f1f5f9', color: '#475569', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const activeUserId = localStorage.getItem('userId') || 'user-001';
+                    const res = await fetch(`/api/progress/${activeUserId}`, {
+                      method: 'DELETE',
+                      headers: getAuthHeaders(),
+                    });
+                    if (!res.ok) throw new Error('Deletion failed.');
+                    sessionStorage.removeItem('progressData');
+                    sessionStorage.removeItem('progressDataTime');
+                    localStorage.clear();
+                    navigate('/');
+                  } catch (_) {
+                    setDeleteConfirm(false);
+                    setDeleteStatus('error');
+                  }
+                }}
+                style={{ flex: 2, padding: '0.65rem', borderRadius: '8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', fontWeight: '700', cursor: 'pointer' }}
+              >
+                Yes, Delete Everything
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

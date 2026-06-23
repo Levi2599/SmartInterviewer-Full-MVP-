@@ -15,15 +15,17 @@ const styles = {
 
 export default function InterviewGuideExport({ question_bank_id }) {
   const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
 
   if (!question_bank_id) return null;
 
   const handleExport = async () => {
     setExporting(true);
+    setExportError('');
     try {
       const res = await fetch(`/api/questionBank/export/${question_bank_id}`);
       if (!res.ok) throw new Error('Export download execution failed.');
-      
+
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -34,15 +36,22 @@ export default function InterviewGuideExport({ question_bank_id }) {
       if (link.parentNode) link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert(`Export configuration error: ${err.message}`);
+      setExportError(err.message);
     } finally {
       setExporting(false);
     }
   };
 
   return (
-    <button onClick={handleExport} style={styles.button} disabled={exporting}>
-      {exporting ? 'Exporting File...' : 'Export Guide Document (JSON)'}
-    </button>
+    <div>
+      {exportError && (
+        <div style={{ color: '#dc2626', fontSize: '0.8rem', fontWeight: '500', marginBottom: '0.4rem' }}>
+          ⚠️ Export error: {exportError}
+        </div>
+      )}
+      <button onClick={handleExport} style={styles.button} disabled={exporting}>
+        {exporting ? 'Exporting File...' : 'Export Guide Document (JSON)'}
+      </button>
+    </div>
   );
 }

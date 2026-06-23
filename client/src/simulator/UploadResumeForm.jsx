@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Stepper from '../components/Stepper';
+import { getAuthHeadersFormData } from '../utils/auth';
 
 const INDIGO = '#4f46e5';
 const INDIGO_LIGHT = '#f5f3ff';
@@ -187,6 +188,7 @@ export default function UploadResumeForm() {
       formData.append('file', file);
       const res = await fetch('/api/simulator/parse-file', {
         method: 'POST',
+        headers: getAuthHeadersFormData(),
         body: formData,
       });
       if (!res.ok) {

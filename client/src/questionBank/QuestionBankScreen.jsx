@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import { getAuthHeaders } from '../utils/auth';
 
 const INDIGO = '#4f46e5';
 const INDIGO_LIGHT = '#f5f3ff';
@@ -20,6 +21,7 @@ export default function QuestionBankScreen() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [exportError, setExportError] = useState('');
   const [questionBankId, setQuestionBankId] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [basket, setBasket] = useState([]);
@@ -48,7 +50,7 @@ export default function QuestionBankScreen() {
     try {
       const res = await fetch('/api/questionBank/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           job_role: jobRole,
           industry,
@@ -79,12 +81,15 @@ export default function QuestionBankScreen() {
   const handleExport = async (format = 'json') => {
     if (!questionBankId) return;
     setExporting(format);
+    setExportError('');
     try {
       const brand = localStorage.getItem('pref-recruiter-company') || 'SmartInterviewer AI';
       const brandQuery = `&brand=${encodeURIComponent(brand)}`;
       const urlQuery = format === 'pdf' ? `?format=pdf${brandQuery}` : '';
       const filename = format === 'pdf' ? 'interview-guide.pdf' : 'interview-guide.json';
-      const res = await fetch(`/api/questionBank/export/${questionBankId}${urlQuery}`);
+      const res = await fetch(`/api/questionBank/export/${questionBankId}${urlQuery}`, {
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error('Export failed.');
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
@@ -96,7 +101,7 @@ export default function QuestionBankScreen() {
       if (link.parentNode) link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert(`Export error: ${err.message}`);
+      setExportError(err.message);
     } finally {
       setExporting(false);
     }
@@ -498,6 +503,11 @@ export default function QuestionBankScreen() {
               {/* Export */}
               {questionBankId && (
                 <div style={{ padding: '0.75rem 0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {exportError && (
+                    <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.8rem', fontWeight: '500' }}>
+                      ⚠️ Export error: {exportError}
+                    </div>
+                  )}
                   <button
                     onClick={() => handleExport('json')}
                     disabled={!!exporting}

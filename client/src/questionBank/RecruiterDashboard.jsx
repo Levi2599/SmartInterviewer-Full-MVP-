@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getAuthHeaders } from '../utils/auth';
 
 const INDIGO = '#4f46e5';
 const INDIGO_LIGHT = '#f5f3ff';
@@ -29,14 +30,29 @@ export default function RecruiterDashboard() {
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const navigate = useNavigate();
 
   const fetchGuides = async () => {
     try {
-      const res = await fetch('/api/questionBank');
+      const cached = sessionStorage.getItem('recruiterGuides');
+      const cachedTime = sessionStorage.getItem('recruiterGuidesTime');
+      if (cached && cachedTime && (Date.now() - Number(cachedTime)) < 2 * 60 * 1000) {
+        setGuides(JSON.parse(cached));
+        setLoading(false);
+        return;
+      }
+    } catch (_) {}
+
+    try {
+      const res = await fetch('/api/questionBank', { headers: getAuthHeaders() });
       if (!res.ok) throw new Error('Failed to retrieve question guides.');
       const data = await res.json();
       setGuides(data);
+      try {
+        sessionStorage.setItem('recruiterGuides', JSON.stringify(data));
+        sessionStorage.setItem('recruiterGuidesTime', String(Date.now()));
+      } catch (_) {}
     } catch (err) {
       setError(err.message);
     } finally {
@@ -48,15 +64,25 @@ export default function RecruiterDashboard() {
     fetchGuides();
   }, []);
 
-  const handleDelete = async (id, e) => {
+  const handleDeleteRequest = (id, e) => {
     e.stopPropagation();
-    if (!window.confirm('Are you sure you want to delete this guide permanently?')) return;
+    setPendingDeleteId(id);
+  };
+
+  const handleDeleteConfirm = async () => {
+    const id = pendingDeleteId;
+    setPendingDeleteId(null);
     try {
-      const res = await fetch(`/api/questionBank/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/questionBank/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error('Failed to delete guide.');
       setGuides(prev => prev.filter(g => g.question_id !== id));
+      sessionStorage.removeItem('recruiterGuides');
+      sessionStorage.removeItem('recruiterGuidesTime');
     } catch (err) {
-      alert(err.message);
+      setError(err.message);
     }
   };
 
@@ -156,6 +182,28 @@ export default function RecruiterDashboard() {
           Active Job Interview Guides
         </h2>
 
+        {pendingDeleteId && (
+          <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '1rem', marginBottom: '1.25rem' }}>
+            <p style={{ fontSize: '0.875rem', fontWeight: '700', color: '#991b1b', margin: '0 0 0.75rem 0' }}>
+              Delete this guide permanently? This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                onClick={() => setPendingDeleteId(null)}
+                style={{ flex: 1, padding: '0.55rem', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f1f5f9', color: '#475569', fontWeight: '600', cursor: 'pointer', fontSize: '0.85rem' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                style={{ flex: 2, padding: '0.55rem', borderRadius: '8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', fontWeight: '700', cursor: 'pointer', fontSize: '0.85rem' }}
+              >
+                Yes, Delete Guide
+              </button>
+            </div>
+          </div>
+        )}
+
         {guides.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
             <span style={{ fontSize: '2.5rem' }}>📂</span>
@@ -236,7 +284,7 @@ export default function RecruiterDashboard() {
                           ⚙️ JSON
                         </button>
                         <button
-                          onClick={(e) => handleDelete(g.question_id, e)}
+                          onClick={(e) => handleDeleteRequest(g.question_id, e)}
                           title="Delete Guide"
                           style={{
                             padding: '0.35rem 0.6rem', borderRadius: '6px',
