@@ -78,16 +78,13 @@ export default function QuestionBankScreen() {
     setBasket(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const handleExport = async (format = 'json') => {
+  const handleExport = async () => {
     if (!questionBankId) return;
-    setExporting(format);
+    setExporting('pdf');
     setExportError('');
     try {
       const brand = localStorage.getItem('pref-recruiter-company') || 'SmartInterviewer AI';
-      const brandQuery = `&brand=${encodeURIComponent(brand)}`;
-      const urlQuery = format === 'pdf' ? `?format=pdf${brandQuery}` : '';
-      const filename = format === 'pdf' ? 'interview-guide.pdf' : 'interview-guide.json';
-      const res = await fetch(`/api/questionBank/export/${questionBankId}${urlQuery}`, {
+      const res = await fetch(`/api/questionBank/export/${questionBankId}?format=pdf&brand=${encodeURIComponent(brand)}`, {
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Export failed.');
@@ -95,7 +92,7 @@ export default function QuestionBankScreen() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', filename);
+      link.setAttribute('download', 'interview-guide.pdf');
       document.body.appendChild(link);
       link.click();
       if (link.parentNode) link.parentNode.removeChild(link);
@@ -509,22 +506,7 @@ export default function QuestionBankScreen() {
                     </div>
                   )}
                   <button
-                    onClick={() => handleExport('json')}
-                    disabled={!!exporting}
-                    style={{
-                      width: '100%', padding: '0.75rem',
-                      background: exporting === 'json' ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-                      color: '#fff', border: 'none', borderRadius: '10px',
-                      fontWeight: '700', fontSize: '0.85rem', cursor: exporting ? 'not-allowed' : 'pointer',
-                      boxShadow: exporting ? 'none' : '0 2px 8px rgba(79,70,229,0.2)',
-                      transition: 'all 0.2s',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
-                    }}
-                  >
-                    {exporting === 'json' ? '⏳ Exporting...' : '📤 Export JSON Guide'}
-                  </button>
-                  <button
-                    onClick={() => handleExport('pdf')}
+                    onClick={() => handleExport()}
                     disabled={!!exporting}
                     style={{
                       width: '100%', padding: '0.75rem',

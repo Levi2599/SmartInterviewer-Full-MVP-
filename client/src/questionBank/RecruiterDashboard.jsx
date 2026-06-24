@@ -92,11 +92,6 @@ export default function RecruiterDashboard() {
     window.open(`/api/questionBank/export/${id}?format=pdf&brand=${encodeURIComponent(brand)}`, '_blank');
   };
 
-  const handleExportJSON = (id, e) => {
-    e.stopPropagation();
-    window.open(`/api/questionBank/export/${id}`, '_blank');
-  };
-
   if (loading) return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -271,17 +266,6 @@ export default function RecruiterDashboard() {
                           }}
                         >
                           📄 PDF
-                        </button>
-                        <button
-                          onClick={(e) => handleExportJSON(g.question_id, e)}
-                          title="Download JSON"
-                          style={{
-                            padding: '0.35rem 0.6rem', borderRadius: '6px',
-                            backgroundColor: '#fff', border: '1px solid #e2e8f0',
-                            cursor: 'pointer', fontSize: '0.8rem',
-                          }}
-                        >
-                          ⚙️ JSON
                         </button>
                         <button
                           onClick={(e) => handleDeleteRequest(g.question_id, e)}
