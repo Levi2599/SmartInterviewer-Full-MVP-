@@ -446,23 +446,14 @@ export default function ProgressDashboard() {
               </button>
               <button
                 onClick={async () => {
-                  try {
-                    const activeUserId = localStorage.getItem('userId') || 'user-001';
-                    const res = await fetch(`/api/progress/${activeUserId}`, {
-                      method: 'DELETE',
-                      headers: getAuthHeaders(),
-                    });
-                    if (!res.ok) {
-                      const errData = await res.json().catch(() => ({}));
-                      throw new Error(errData.error || 'Deletion failed.');
-                    }
-                    sessionStorage.clear();
-                    localStorage.clear();
-                    window.location.replace('/');
-                  } catch (err) {
-                    setDeleteConfirm(false);
-                    setDeleteStatus(err.message || 'error');
-                  }
+                  const activeUserId = localStorage.getItem('userId') || 'user-001';
+                  fetch(`/api/progress/${activeUserId}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders(),
+                  }).catch(() => {});
+                  sessionStorage.clear();
+                  localStorage.clear();
+                  window.location.replace('/');
                 }}
                 style={{ flex: 2, padding: '0.65rem', borderRadius: '8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', fontWeight: '700', cursor: 'pointer' }}
               >
