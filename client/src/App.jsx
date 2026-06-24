@@ -113,6 +113,7 @@ export default function App() {
     setRole(newRole);
     setMobileMenuOpen(false);
     setMenuOpen(false);
+    window.location.replace('/');
   };
 
   const navLinkStyle = (isActive) => ({
