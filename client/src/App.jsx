@@ -64,7 +64,8 @@ export default function App() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!inputIdentifier.trim() || !inputPassword) return;
+    if (!inputIdentifier.trim()) { setError(t('usernameOrEmailRequired')); return; }
+    if (!inputPassword) { setError(t('passwordRequired')); return; }
     setLoading(true);
     setError('');
     try {
@@ -85,7 +86,9 @@ export default function App() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    if (!inputUsername.trim() || !inputEmail.trim() || !inputPassword) return;
+    if (!inputUsername.trim()) { setError(t('usernameRequired')); return; }
+    if (!inputEmail.trim()) { setError(t('emailRequired')); return; }
+    if (!inputPassword) { setError(t('passwordRequired')); return; }
     if (inputPassword !== inputConfirmPassword) {
       setError(t('passwordsDoNotMatch'));
       return;
@@ -316,7 +319,7 @@ export default function App() {
 
       {/* ── SIGN IN ── */}
       {authTab === 'signin' && (
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <form onSubmit={handleLogin} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <div style={{ textAlign: 'start' }}>
             <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>
               {t('usernameOrEmail')}
@@ -364,7 +367,7 @@ export default function App() {
 
       {/* ── SIGN UP ── */}
       {authTab === 'signup' && (
-        <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <form onSubmit={handleRegister} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <div style={{ textAlign: 'start' }}>
             <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>
               {t('selectRole')}

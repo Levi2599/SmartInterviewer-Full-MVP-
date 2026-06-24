@@ -35,6 +35,10 @@ const translations = {
     registrationFailed: 'Registration failed.',
     passwordsDoNotMatch: 'Passwords do not match.',
     serverStarting: 'Server is starting up, retrying…',
+    usernameOrEmailRequired: 'Please enter your username or email.',
+    usernameRequired: 'Username is required.',
+    emailRequired: 'Email is required.',
+    passwordRequired: 'Password is required.',
 
     // ── Branding panel ────────────────────────────────────
     heroTitle: 'Ace Your Next\nInterview',
@@ -294,6 +298,10 @@ const translations = {
     registrationFailed: 'ההרשמה נכשלה.',
     passwordsDoNotMatch: 'הסיסמאות אינן תואמות.',
     serverStarting: 'השרת מתחיל, מנסה שוב…',
+    usernameOrEmailRequired: 'נא להזין שם משתמש או אימייל.',
+    usernameRequired: 'שם משתמש הוא שדה חובה.',
+    emailRequired: 'אימייל הוא שדה חובה.',
+    passwordRequired: 'סיסמה היא שדה חובה.',
 
     // ── Branding panel ────────────────────────────────────
     heroTitle: 'עלה רמה\nבראיון הבא שלך',
