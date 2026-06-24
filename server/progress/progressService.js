@@ -39,18 +39,26 @@ router.post('/save', async (req, res) => {
   }
 });
 
-// DELETE /:userId - GDPR deletion of all progress and session records
+// DELETE /:userId - GDPR deletion of all progress, session, and user account records
 router.delete('/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const { SessionModel } = require("../../database/simulator/sessionDB");
     const { ProgressModel } = require("../../database/progress/progressDB");
+    const { UserModel } = require("../../database/users/userDB");
 
     await ProgressModel.deleteMany({ user_id: userId });
     await SessionModel.deleteMany({ user_id: userId });
 
-    return res.json({ success: true, message: `All data for user ${userId} has been successfully deleted.` });
+    // Extract MongoDB _id from userId format "user-<mongoId>"
+    const mongoId = userId.startsWith('user-') ? userId.slice(5) : null;
+    if (mongoId) {
+      await UserModel.deleteOne({ _id: mongoId }).catch(() => {});
+    }
+
+    return res.json({ success: true });
   } catch (e) {
+    console.error('GDPR delete error:', e.message);
     return res.status(500).json({ error: e.message });
   }
 });

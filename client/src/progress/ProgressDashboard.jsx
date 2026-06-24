@@ -413,9 +413,9 @@ export default function ProgressDashboard() {
           {t('progressGdprDesc')}
         </p>
 
-        {deleteStatus === 'error' && (
+        {deleteStatus && deleteStatus !== '' && (
           <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1rem', fontSize: '0.85rem', fontWeight: '500' }}>
-            ⚠️ Deletion failed. Please try again.
+            ⚠️ {deleteStatus}
           </div>
         )}
 
@@ -452,14 +452,16 @@ export default function ProgressDashboard() {
                       method: 'DELETE',
                       headers: getAuthHeaders(),
                     });
-                    if (!res.ok) throw new Error('Deletion failed.');
-                    sessionStorage.removeItem('progressData');
-                    sessionStorage.removeItem('progressDataTime');
+                    if (!res.ok) {
+                      const errData = await res.json().catch(() => ({}));
+                      throw new Error(errData.error || 'Deletion failed.');
+                    }
+                    sessionStorage.clear();
                     localStorage.clear();
-                    navigate('/');
-                  } catch (_) {
+                    window.location.replace('/');
+                  } catch (err) {
                     setDeleteConfirm(false);
-                    setDeleteStatus('error');
+                    setDeleteStatus(err.message || 'error');
                   }
                 }}
                 style={{ flex: 2, padding: '0.65rem', borderRadius: '8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', fontWeight: '700', cursor: 'pointer' }}
