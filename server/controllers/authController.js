@@ -1,16 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error('FATAL: JWT_SECRET environment variable is not set. Server cannot start.');
 }
 
-const DEMO_PASSWORD = process.env.DEMO_PASSWORD || null;
-
+const { UserModel } = require('../../database/users/userDB');
 const { SessionModel } = require('../../database/simulator/sessionDB');
 const { ProgressModel } = require('../../database/progress/progressDB');
 
@@ -33,22 +32,70 @@ async function cleanOldGuestData() {
   }
 }
 
+// POST /api/auth/register
+router.post('/register', async (req, res) => {
+  const { username, email, password, role } = req.body;
+
+  if (!username || !username.trim()) return res.status(400).json({ error: 'Username is required.' });
+  if (!email || !email.trim()) return res.status(400).json({ error: 'Email is required.' });
+  if (!password || password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim())) return res.status(400).json({ error: 'Invalid email address.' });
+
+  try {
+    const existingUsername = await UserModel.findOne({ username: username.trim() });
+    if (existingUsername) return res.status(409).json({ error: 'Username already taken.' });
+
+    const existingEmail = await UserModel.findOne({ email: email.trim().toLowerCase() });
+    if (existingEmail) return res.status(409).json({ error: 'Email already registered.' });
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const selectedRole = role || 'candidate';
+
+    const user = await UserModel.create({
+      username: username.trim(),
+      email: email.trim().toLowerCase(),
+      passwordHash,
+      role: selectedRole,
+    });
+
+    const userId = `user-${user._id.toString()}`;
+    const token = jwt.sign({ userId, username: user.username, role: selectedRole }, JWT_SECRET, { expiresIn: '30d' });
+
+    return res.status(201).json({ token, userId, username: user.username, role: selectedRole });
+  } catch (err) {
+    console.error('Register error:', err.message);
+    return res.status(500).json({ error: 'Registration failed. Please try again.' });
+  }
+});
+
 // POST /api/auth/login
-router.post('/login', (req, res) => {
-  const { username, password, role } = req.body;
-  if (!username || !username.trim()) {
-    return res.status(400).json({ error: "Username is required." });
+router.post('/login', async (req, res) => {
+  const { identifier, password } = req.body;
+
+  if (!identifier || !identifier.trim()) return res.status(400).json({ error: 'Username or email is required.' });
+  if (!password) return res.status(400).json({ error: 'Password is required.' });
+
+  try {
+    const isEmail = identifier.includes('@');
+    const user = isEmail
+      ? await UserModel.findOne({ email: identifier.trim().toLowerCase() })
+      : await UserModel.findOne({ username: identifier.trim() });
+
+    if (!user) return res.status(401).json({ error: 'Invalid credentials.' });
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) return res.status(401).json({ error: 'Invalid credentials.' });
+
+    const userId = `user-${user._id.toString()}`;
+    const token = jwt.sign({ userId, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
+
+    return res.json({ token, userId, username: user.username, role: user.role });
+  } catch (err) {
+    console.error('Login error:', err.message);
+    return res.status(500).json({ error: 'Login failed. Please try again.' });
   }
-
-  if (DEMO_PASSWORD && password && password !== DEMO_PASSWORD) {
-    return res.status(401).json({ error: "Invalid credentials." });
-  }
-
-  const selectedRole = role || 'candidate';
-  const userId = `user-${crypto.createHash('sha256').update(username.trim().toLowerCase()).digest('hex').slice(0, 12)}`;
-  const token = jwt.sign({ userId, username: username.trim(), role: selectedRole }, JWT_SECRET, { expiresIn: '30d' });
-
-  return res.json({ token, userId, username: username.trim(), role: selectedRole });
 });
 
 // POST /api/auth/guest

@@ -14,11 +14,16 @@ export default function App() {
   const [userId, setUserId] = useState(() => localStorage.getItem('userId'));
   const [role, setRole] = useState(() => localStorage.getItem('role') || 'candidate');
 
+  const [authTab, setAuthTab] = useState('signin');
+  const [inputIdentifier, setInputIdentifier] = useState('');
   const [inputUsername, setInputUsername] = useState('');
+  const [inputEmail, setInputEmail] = useState('');
   const [inputPassword, setInputPassword] = useState('');
+  const [inputConfirmPassword, setInputConfirmPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState('candidate');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -39,30 +44,62 @@ export default function App() {
     }
   };
 
+  const saveSession = (data, displayName) => {
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('userId', data.userId);
+    localStorage.setItem('username', displayName || data.username);
+    localStorage.setItem('role', data.role);
+    setToken(data.token);
+    setUserId(data.userId);
+    setUsername(displayName || data.username);
+    setRole(data.role);
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!inputUsername.trim()) return;
+    if (!inputIdentifier.trim() || !inputPassword) return;
     setLoading(true);
     setError('');
     try {
       const res = await fetchWithRetry('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: inputIdentifier.trim(), password: inputPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Login failed.');
+      saveSession(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    if (!inputUsername.trim() || !inputEmail.trim() || !inputPassword) return;
+    if (inputPassword !== inputConfirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setSuccessMsg('');
+    try {
+      const res = await fetchWithRetry('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: inputUsername,
+          username: inputUsername.trim(),
+          email: inputEmail.trim(),
           password: inputPassword,
-          role: selectedRole
+          role: selectedRole,
         }),
       });
       const data = await res.json();
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userId', data.userId);
-      localStorage.setItem('username', data.username);
-      localStorage.setItem('role', data.role);
-      setToken(data.token);
-      setUserId(data.userId);
-      setUsername(data.username);
-      setRole(data.role);
+      if (!res.ok) throw new Error(data.error || 'Registration failed.');
+      saveSession(data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -174,8 +211,49 @@ export default function App() {
     );
   }
 
+  const inputStyle = {
+    width: '100%', padding: '0.65rem 0.875rem',
+    borderRadius: '10px', border: '1.5px solid #e2e8f0',
+    fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box',
+    fontFamily: 'inherit',
+  };
+
+  const roleCard = (roleVal, icon, label) => (
+    <div
+      onClick={() => setSelectedRole(roleVal)}
+      style={{
+        flex: 1, padding: '0.75rem', borderRadius: '10px',
+        border: `2px solid ${selectedRole === roleVal ? '#4f46e5' : '#e2e8f0'}`,
+        backgroundColor: selectedRole === roleVal ? '#f5f3ff' : '#ffffff',
+        cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease',
+      }}
+    >
+      <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '0.25rem' }}>{icon}</span>
+      <span style={{ fontSize: '0.8rem', fontWeight: '700', color: selectedRole === roleVal ? '#4f46e5' : '#475569' }}>{label}</span>
+    </div>
+  );
+
   const loginForm = (
     <>
+      {/* Tabs */}
+      <div style={{ display: 'flex', borderRadius: '10px', backgroundColor: '#f1f5f9', padding: '4px', marginBottom: '1.25rem' }}>
+        {['signin', 'signup'].map(tab => (
+          <button
+            key={tab}
+            onClick={() => { setAuthTab(tab); setError(''); setSuccessMsg(''); }}
+            style={{
+              flex: 1, padding: '0.55rem', border: 'none', borderRadius: '8px', cursor: 'pointer',
+              fontWeight: '700', fontSize: '0.85rem', transition: 'all 0.15s',
+              backgroundColor: authTab === tab ? '#ffffff' : 'transparent',
+              color: authTab === tab ? '#4f46e5' : '#64748b',
+              boxShadow: authTab === tab ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+            }}
+          >
+            {tab === 'signin' ? 'Sign In' : 'Create Account'}
+          </button>
+        ))}
+      </div>
+
       {error && (
         <div style={{
           backgroundColor: '#fef2f2', border: '1px solid #fecaca',
@@ -185,92 +263,143 @@ export default function App() {
           ⚠️ {error}
         </div>
       )}
+      {successMsg && (
+        <div style={{
+          backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0',
+          color: '#15803d', padding: '0.75rem', borderRadius: '10px',
+          fontSize: '0.85rem', marginBottom: '1rem', fontWeight: '500',
+        }}>
+          ✅ {successMsg}
+        </div>
+      )}
 
-      <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        <div style={{ textAlign: 'left', marginBottom: '0.5rem' }}>
-          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.5rem' }}>SELECT YOUR ROLE</label>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <div
-              onClick={() => setSelectedRole('candidate')}
-              style={{
-                flex: 1, padding: '0.75rem', borderRadius: '10px',
-                border: `2px solid ${selectedRole === 'candidate' ? '#4f46e5' : '#e2e8f0'}`,
-                backgroundColor: selectedRole === 'candidate' ? '#f5f3ff' : '#ffffff',
-                cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease',
-              }}
-            >
-              <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '0.25rem' }}>👨‍💻</span>
-              <span style={{ fontSize: '0.8rem', fontWeight: '700', color: selectedRole === 'candidate' ? '#4f46e5' : '#475569' }}>Candidate</span>
-            </div>
-            <div
-              onClick={() => setSelectedRole('interviewer')}
-              style={{
-                flex: 1, padding: '0.75rem', borderRadius: '10px',
-                border: `2px solid ${selectedRole === 'interviewer' ? '#4f46e5' : '#e2e8f0'}`,
-                backgroundColor: selectedRole === 'interviewer' ? '#f5f3ff' : '#ffffff',
-                cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease',
-              }}
-            >
-              <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '0.25rem' }}>💼</span>
-              <span style={{ fontSize: '0.8rem', fontWeight: '700', color: selectedRole === 'interviewer' ? '#4f46e5' : '#475569' }}>Interviewer</span>
+      {/* ── SIGN IN ── */}
+      {authTab === 'signin' && (
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ textAlign: 'left' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>USERNAME OR EMAIL</label>
+            <input
+              type="text"
+              placeholder="Enter your username or email"
+              value={inputIdentifier}
+              onChange={e => setInputIdentifier(e.target.value)}
+              disabled={loading}
+              required
+              style={inputStyle}
+            />
+          </div>
+          <div style={{ textAlign: 'left' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>PASSWORD</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={inputPassword}
+              onChange={e => setInputPassword(e.target.value)}
+              disabled={loading}
+              required
+              style={inputStyle}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading || !inputIdentifier.trim() || !inputPassword}
+            style={{
+              width: '100%', padding: '0.75rem', marginTop: '0.25rem',
+              background: (!loading && inputIdentifier.trim() && inputPassword) ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : '#e2e8f0',
+              color: (!loading && inputIdentifier.trim() && inputPassword) ? '#fff' : '#94a3b8',
+              border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '0.95rem',
+              cursor: (!loading && inputIdentifier.trim() && inputPassword) ? 'pointer' : 'default',
+              boxShadow: (!loading && inputIdentifier.trim() && inputPassword) ? '0 4px 12px rgba(79,70,229,0.2)' : 'none',
+            }}
+          >
+            {loading ? 'Signing In...' : 'Sign In'}
+          </button>
+        </form>
+      )}
+
+      {/* ── SIGN UP ── */}
+      {authTab === 'signup' && (
+        <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ textAlign: 'left' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>SELECT YOUR ROLE</label>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              {roleCard('candidate', '👨‍💻', 'Candidate')}
+              {roleCard('interviewer', '💼', 'Interviewer')}
             </div>
           </div>
-        </div>
-
-        <div style={{ textAlign: 'left' }}>
-          <label htmlFor="login-username" style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>USERNAME / EMAIL</label>
-          <input
-            id="login-username"
-            name="username"
-            type="text"
-            placeholder="Enter your username or email"
-            value={inputUsername}
-            onChange={e => setInputUsername(e.target.value)}
-            disabled={loading}
-            required
+          <div style={{ textAlign: 'left' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>USERNAME</label>
+            <input
+              type="text"
+              placeholder="Choose a unique username"
+              value={inputUsername}
+              onChange={e => setInputUsername(e.target.value)}
+              disabled={loading}
+              required
+              style={inputStyle}
+            />
+          </div>
+          <div style={{ textAlign: 'left' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>EMAIL</label>
+            <input
+              type="email"
+              placeholder="your@email.com"
+              value={inputEmail}
+              onChange={e => setInputEmail(e.target.value)}
+              disabled={loading}
+              required
+              style={inputStyle}
+            />
+          </div>
+          <div style={{ textAlign: 'left' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>PASSWORD</label>
+            <input
+              type="password"
+              placeholder="At least 6 characters"
+              value={inputPassword}
+              onChange={e => setInputPassword(e.target.value)}
+              disabled={loading}
+              required
+              minLength={6}
+              style={inputStyle}
+            />
+          </div>
+          <div style={{ textAlign: 'left' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>CONFIRM PASSWORD</label>
+            <input
+              type="password"
+              placeholder="Repeat your password"
+              value={inputConfirmPassword}
+              onChange={e => setInputConfirmPassword(e.target.value)}
+              disabled={loading}
+              required
+              style={{
+                ...inputStyle,
+                borderColor: inputConfirmPassword && inputPassword !== inputConfirmPassword ? '#fca5a5' : '#e2e8f0',
+              }}
+            />
+            {inputConfirmPassword && inputPassword !== inputConfirmPassword && (
+              <span style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem', display: 'block' }}>Passwords do not match</span>
+            )}
+          </div>
+          <button
+            type="submit"
+            disabled={loading || !inputUsername.trim() || !inputEmail.trim() || !inputPassword || inputPassword !== inputConfirmPassword}
             style={{
-              width: '100%', padding: '0.65rem 0.875rem',
-              borderRadius: '10px', border: '1.5px solid #e2e8f0',
-              fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box',
+              width: '100%', padding: '0.75rem', marginTop: '0.25rem',
+              background: (!loading && inputUsername.trim() && inputEmail.trim() && inputPassword && inputPassword === inputConfirmPassword)
+                ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : '#e2e8f0',
+              color: (!loading && inputUsername.trim() && inputEmail.trim() && inputPassword && inputPassword === inputConfirmPassword)
+                ? '#fff' : '#94a3b8',
+              border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '0.95rem',
+              cursor: (!loading && inputUsername.trim() && inputEmail.trim() && inputPassword && inputPassword === inputConfirmPassword)
+                ? 'pointer' : 'default',
             }}
-          />
-        </div>
-
-        <div style={{ textAlign: 'left' }}>
-          <label htmlFor="login-password" style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>PASSWORD</label>
-          <input
-            id="login-password"
-            name="password"
-            type="password"
-            placeholder="••••••••"
-            value={inputPassword}
-            onChange={e => setInputPassword(e.target.value)}
-            disabled={loading}
-            style={{
-              width: '100%', padding: '0.65rem 0.875rem',
-              borderRadius: '10px', border: '1.5px solid #e2e8f0',
-              fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box',
-            }}
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading || !inputUsername.trim()}
-          style={{
-            width: '100%', padding: '0.75rem',
-            background: (!loading && inputUsername.trim()) ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : '#e2e8f0',
-            color: (!loading && inputUsername.trim()) ? '#fff' : '#94a3b8',
-            border: 'none', borderRadius: '10px', fontWeight: '700',
-            fontSize: '0.95rem',
-            cursor: (!loading && inputUsername.trim()) ? 'pointer' : 'default',
-            boxShadow: (!loading && inputUsername.trim()) ? '0 4px 12px rgba(79,70,229,0.2)' : 'none',
-            marginTop: '0.5rem',
-          }}
-        >
-          {loading ? 'Signing In...' : 'Sign In'}
-        </button>
-      </form>
+          >
+            {loading ? 'Creating Account...' : 'Create Account'}
+          </button>
+        </form>
+      )}
 
       <div style={{ display: 'flex', alignItems: 'center', margin: '1rem 0' }}>
         <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
@@ -278,6 +407,13 @@ export default function App() {
         <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
       </div>
 
+      <div style={{ textAlign: 'left', marginBottom: '0.5rem' }}>
+        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.5rem' }}>CONTINUE AS GUEST</label>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          {roleCard('candidate', '👨‍💻', 'Candidate')}
+          {roleCard('interviewer', '💼', 'Interviewer')}
+        </div>
+      </div>
       <button
         type="button"
         onClick={handleGuest}
@@ -286,10 +422,11 @@ export default function App() {
           width: '100%', padding: '0.75rem',
           backgroundColor: '#f8fafc', color: '#475569',
           border: '1px solid #e2e8f0', borderRadius: '10px', fontWeight: '600',
-          cursor: 'pointer', transition: 'background-color 0.15s',
+          cursor: loading ? 'default' : 'pointer', transition: 'background-color 0.15s',
+          fontSize: '0.9rem',
         }}
       >
-        Continue as Guest
+        {loading ? 'Loading...' : 'Continue as Guest'}
       </button>
     </>
   );
@@ -329,8 +466,12 @@ export default function App() {
                 Smart<span style={{ color: '#4f46e5' }}>Interviewer</span>
               </span>
             </div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>Welcome back</h2>
-            <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.25rem' }}>Sign in to access your interview simulator and recruiter portal.</p>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>
+              {authTab === 'signin' ? 'Welcome back' : 'Create your account'}
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.25rem' }}>
+              {authTab === 'signin' ? 'Sign in to access your interview simulator and recruiter portal.' : 'Join SmartInterviewer and start practicing today.'}
+            </p>
             {loginForm}
           </div>
         </div>
@@ -426,9 +567,11 @@ export default function App() {
           boxShadow: '-4px 0 24px rgba(0,0,0,0.06)',
         }}>
           <div style={{ width: '100%', maxWidth: '380px' }}>
-            <h2 style={{ fontSize: '1.6rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.4rem' }}>Welcome back</h2>
+            <h2 style={{ fontSize: '1.6rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.4rem' }}>
+              {authTab === 'signin' ? 'Welcome back' : 'Create your account'}
+            </h2>
             <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1.75rem' }}>
-              Sign in to your account or continue as a guest.
+              {authTab === 'signin' ? 'Sign in to your account or continue as a guest.' : 'Fill in the details below to get started.'}
             </p>
             {loginForm}
           </div>
