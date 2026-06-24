@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import Stepper from '../components/Stepper';
 import { getAuthHeadersFormData } from '../utils/auth';
 import { createWorker } from 'tesseract.js';
+import { useLanguage } from '../utils/LanguageContext';
 
 const INDIGO = '#4f46e5';
 const INDIGO_LIGHT = '#f5f3ff';
 const BORDER = '#e2e8f0';
 
 function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, setIsLoading, onFileUpload }) {
+  const { t } = useLanguage();
   const [isDragOver, setIsDragOver] = useState(false);
   const [ocrProgress, setOcrProgress] = useState('');
 
@@ -24,12 +26,12 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, setI
     const file = e.target.files[0];
     if (!file) return;
     setIsLoading(true);
-    setOcrProgress('Initializing OCR engine...');
+    setOcrProgress(t('uploadExtractingOcr'));
     try {
       const worker = await createWorker('eng+heb', 1, {
         logger: m => {
           if (m.status === 'recognizing text') {
-            setOcrProgress(`Reading image... ${Math.round(m.progress * 100)}%`);
+            setOcrProgress(`${t('uploadExtractingOcr')} ${Math.round(m.progress * 100)}%`);
           }
         },
       });
@@ -71,9 +73,9 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, setI
     }}>
       {/* Toggle Header */}
       <div style={{ display: 'flex', borderBottom: `1px solid ${BORDER}`, backgroundColor: '#f8fafc' }}>
-        <button type="button" onClick={() => setMode('paste')} style={tabStyle(mode === 'paste')}>✏️ Paste Text</button>
-        <button type="button" onClick={() => setMode('upload')} style={tabStyle(mode === 'upload')}>📎 Upload File</button>
-        <button type="button" onClick={() => setMode('image')} style={tabStyle(mode === 'image')}>🖼️ Upload Image</button>
+        <button type="button" onClick={() => setMode('paste')} style={tabStyle(mode === 'paste')}>✏️ {t('uploadPasteTab')}</button>
+        <button type="button" onClick={() => setMode('upload')} style={tabStyle(mode === 'upload')}>📎 {t('uploadFileTab')}</button>
+        <button type="button" onClick={() => setMode('image')} style={tabStyle(mode === 'image')}>🖼️ {t('uploadImageTab')}</button>
       </div>
 
       {/* Content Area */}
@@ -87,7 +89,7 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, setI
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={`Paste your ${label} content here...`}
+            placeholder={`${label}...`}
             style={{
               width: '100%', height: '150px', padding: '0.75rem',
               borderRadius: '10px', border: `1.5px solid ${BORDER}`,
@@ -119,20 +121,20 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, setI
                 <>
                   <div style={{ width: '28px', height: '28px', border: `3px solid #c7d2fe`, borderTopColor: INDIGO, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                   <style>{`@keyframes spin { to { transform: rotate(360deg); }}`}</style>
-                  <span style={{ color: INDIGO, fontWeight: '600', fontSize: '0.85rem' }}>Extracting text...</span>
+                  <span style={{ color: INDIGO, fontWeight: '600', fontSize: '0.85rem' }}>{t('uploadExtractingFile')}</span>
                 </>
               ) : text ? (
                 <>
                   <span style={{ fontSize: '1.5rem' }}>✅</span>
-                  <span style={{ color: '#166534', fontWeight: '700', fontSize: '0.85rem' }}>File parsed successfully</span>
+                  <span style={{ color: '#166634', fontWeight: '700', fontSize: '0.85rem' }}>File parsed successfully</span>
                   <span style={{ color: '#64748b', fontSize: '0.75rem' }}>{text.slice(0, 60)}...</span>
                   <span style={{ color: INDIGO, fontSize: '0.75rem', textDecoration: 'underline' }}>Click to replace</span>
                 </>
               ) : (
                 <>
                   <span style={{ fontSize: '2rem' }}>{icon}</span>
-                  <span style={{ color: INDIGO, fontWeight: '700', fontSize: '0.9rem' }}>Click to upload</span>
-                  <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>PDF, DOCX, TXT · max 10MB · drag or click</span>
+                  <span style={{ color: INDIGO, fontWeight: '700', fontSize: '0.9rem' }}>{t('uploadFileDropzone')}</span>
+                  <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{t('uploadFileTypes')}</span>
                 </>
               )}
               <input type="file" accept=".pdf,.docx,.doc,.txt" style={{ display: 'none' }} onChange={onFileUpload} disabled={isLoading} />
@@ -152,20 +154,20 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, setI
               <>
                 <div style={{ width: '28px', height: '28px', border: `3px solid #c7d2fe`, borderTopColor: INDIGO, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                 <style>{`@keyframes spin { to { transform: rotate(360deg); }}`}</style>
-                <span style={{ color: INDIGO, fontWeight: '600', fontSize: '0.85rem' }}>{ocrProgress || 'Processing image...'}</span>
+                <span style={{ color: INDIGO, fontWeight: '600', fontSize: '0.85rem' }}>{ocrProgress || t('uploadProcessing')}</span>
               </>
             ) : text ? (
               <>
                 <span style={{ fontSize: '1.5rem' }}>✅</span>
-                <span style={{ color: '#166534', fontWeight: '700', fontSize: '0.85rem' }}>Image text extracted</span>
+                <span style={{ color: '#166634', fontWeight: '700', fontSize: '0.85rem' }}>Image text extracted</span>
                 <span style={{ color: '#64748b', fontSize: '0.75rem' }}>{text.slice(0, 60)}...</span>
                 <span style={{ color: INDIGO, fontSize: '0.75rem', textDecoration: 'underline' }}>Click to replace</span>
               </>
             ) : (
               <>
                 <span style={{ fontSize: '2rem' }}>🖼️</span>
-                <span style={{ color: INDIGO, fontWeight: '700', fontSize: '0.9rem' }}>Upload a screenshot</span>
-                <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>PNG, JPG, WEBP · Text will be extracted automatically</span>
+                <span style={{ color: INDIGO, fontWeight: '700', fontSize: '0.9rem' }}>{t('uploadImageDropzone')}</span>
+                <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{t('uploadImageTypes')}</span>
               </>
             )}
             <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" style={{ display: 'none' }} onChange={handleImageUpload} disabled={isLoading} />
@@ -177,6 +179,7 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, setI
 }
 
 export default function UploadResumeForm() {
+  const { t } = useLanguage();
   const [autoSaveCv, setAutoSaveCv] = useState(() => localStorage.getItem('pref-auto-save-cv') === 'true');
   const [cvText, setCvText] = useState(() => {
     const autoSave = localStorage.getItem('pref-auto-save-cv') === 'true';
@@ -230,7 +233,6 @@ export default function UploadResumeForm() {
     }
     setError('');
 
-    // Auto-save logic
     const autoSave = localStorage.getItem('pref-auto-save-cv') === 'true';
     if (autoSave) {
       localStorage.setItem('cached-cv', cvText);
@@ -256,10 +258,10 @@ export default function UploadResumeForm() {
           letterSpacing: '-0.03em',
           marginBottom: '0.5rem',
         }}>
-          Prepare Your Interview Materials
+          {t('uploadTitle')}
         </h1>
         <p style={{ color: '#64748b', fontSize: '1rem', maxWidth: '500px', margin: '0 auto' }}>
-          Upload your CV and the target job description to begin your AI-powered mock interview session.
+          {t('uploadCvLabel')}
         </p>
       </div>
 
@@ -287,7 +289,7 @@ export default function UploadResumeForm() {
         }}>
           <UploadZone
             icon="📄"
-            label="Your CV / Resume"
+            label={t('uploadCvLabel')}
             mode={cvMode}
             setMode={setCvMode}
             text={cvText}
@@ -301,7 +303,7 @@ export default function UploadResumeForm() {
           />
           <UploadZone
             icon="💼"
-            label="Job Description"
+            label={t('uploadJdLabel')}
             mode={jdMode}
             setMode={setJdMode}
             text={jdText}
@@ -359,7 +361,7 @@ export default function UploadResumeForm() {
           onMouseEnter={e => { if (!cvLoading && !jdLoading) e.target.style.opacity = '0.92'; }}
           onMouseLeave={e => { e.target.style.opacity = '1'; }}
         >
-          🚀 Start Simulation
+          {t('uploadStartBtn')}
         </button>
       </form>
     </div>

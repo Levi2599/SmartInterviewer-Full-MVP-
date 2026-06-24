@@ -7,8 +7,11 @@ import ProgressDashboard from './progress/ProgressDashboard';
 import RecruiterDashboard from './questionBank/RecruiterDashboard';
 import SettingsScreen from './settings/SettingsScreen';
 import { useIsMobile } from './hooks/useIsMobile';
+import { useLanguage } from './utils/LanguageContext';
 
 export default function App() {
+  const { language, setLanguage, t } = useLanguage();
+
   const [token, setToken] = useState(() => localStorage.getItem('token'));
   const [username, setUsername] = useState(() => localStorage.getItem('username') || 'User');
   const [userId, setUserId] = useState(() => localStorage.getItem('userId'));
@@ -24,7 +27,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -35,10 +38,10 @@ export default function App() {
       try {
         const res = await window.fetch(url, options);
         if (res.ok) return res;
-        if (attempt === retries) throw new Error('Authentication failed.');
+        if (attempt === retries) throw new Error(t('authFailed'));
       } catch (err) {
         if (attempt === retries) throw err;
-        setError(`Server is starting up, retrying… (${attempt}/${retries})`);
+        setError(`${t('serverStarting')} (${attempt}/${retries})`);
         await new Promise(r => setTimeout(r, delayMs));
       }
     }
@@ -67,7 +70,7 @@ export default function App() {
         body: JSON.stringify({ identifier: inputIdentifier.trim(), password: inputPassword }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Login failed.');
+      if (!res.ok) throw new Error(data.error || t('loginFailed'));
       saveSession(data);
     } catch (err) {
       setError(err.message);
@@ -80,7 +83,7 @@ export default function App() {
     e.preventDefault();
     if (!inputUsername.trim() || !inputEmail.trim() || !inputPassword) return;
     if (inputPassword !== inputConfirmPassword) {
-      setError('Passwords do not match.');
+      setError(t('passwordsDoNotMatch'));
       return;
     }
     setLoading(true);
@@ -98,7 +101,7 @@ export default function App() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Registration failed.');
+      if (!res.ok) throw new Error(data.error || t('registrationFailed'));
       saveSession(data);
     } catch (err) {
       setError(err.message);
@@ -194,7 +197,7 @@ export default function App() {
             alignItems: 'center', gap: '0.5rem',
           }}
         >
-          ⚙️ Settings
+          ⚙️ {t('navSettings')}
         </NavLink>
         <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '0.3rem 0' }} />
         <button
@@ -205,7 +208,7 @@ export default function App() {
             textAlign: 'left', cursor: 'pointer', width: '100%',
           }}
         >
-          🚪 Logout
+          🚪 {t('navLogout')}
         </button>
       </div>
     );
@@ -233,8 +236,42 @@ export default function App() {
     </div>
   );
 
+  // Language toggle — two pill buttons used in auth screens
+  const langToggle = (
+    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+      <button
+        type="button"
+        onClick={() => setLanguage('en')}
+        style={{
+          padding: '0.25rem 0.7rem', borderRadius: '20px 0 0 20px',
+          border: '1.5px solid #e0d9ff', borderRight: 'none',
+          backgroundColor: language === 'en' ? '#4f46e5' : '#f5f3ff',
+          color: language === 'en' ? '#fff' : '#4f46e5',
+          fontWeight: '700', fontSize: '0.75rem', cursor: 'pointer',
+        }}
+      >
+        EN
+      </button>
+      <button
+        type="button"
+        onClick={() => setLanguage('he')}
+        style={{
+          padding: '0.25rem 0.7rem', borderRadius: '0 20px 20px 0',
+          border: '1.5px solid #e0d9ff',
+          backgroundColor: language === 'he' ? '#4f46e5' : '#f5f3ff',
+          color: language === 'he' ? '#fff' : '#4f46e5',
+          fontWeight: '700', fontSize: '0.75rem', cursor: 'pointer',
+        }}
+      >
+        עב
+      </button>
+    </div>
+  );
+
   const loginForm = (
     <>
+      {langToggle}
+
       {/* Tabs */}
       <div style={{ display: 'flex', borderRadius: '10px', backgroundColor: '#f1f5f9', padding: '4px', marginBottom: '1.25rem' }}>
         {['signin', 'signup'].map(tab => (
@@ -249,7 +286,7 @@ export default function App() {
               boxShadow: authTab === tab ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
             }}
           >
-            {tab === 'signin' ? 'Sign In' : 'Create Account'}
+            {tab === 'signin' ? t('signIn') : t('createAccount')}
           </button>
         ))}
       </div>
@@ -276,11 +313,13 @@ export default function App() {
       {/* ── SIGN IN ── */}
       {authTab === 'signin' && (
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <div style={{ textAlign: 'left' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>USERNAME OR EMAIL</label>
+          <div style={{ textAlign: 'start' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>
+              {t('usernameOrEmail')}
+            </label>
             <input
               type="text"
-              placeholder="Enter your username or email"
+              placeholder={t('usernameOrEmailPlaceholder')}
               value={inputIdentifier}
               onChange={e => setInputIdentifier(e.target.value)}
               disabled={loading}
@@ -288,11 +327,13 @@ export default function App() {
               style={inputStyle}
             />
           </div>
-          <div style={{ textAlign: 'left' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>PASSWORD</label>
+          <div style={{ textAlign: 'start' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>
+              {t('password')}
+            </label>
             <input
               type="password"
-              placeholder="••••••••"
+              placeholder={t('passwordPlaceholder')}
               value={inputPassword}
               onChange={e => setInputPassword(e.target.value)}
               disabled={loading}
@@ -312,7 +353,7 @@ export default function App() {
               boxShadow: (!loading && inputIdentifier.trim() && inputPassword) ? '0 4px 12px rgba(79,70,229,0.2)' : 'none',
             }}
           >
-            {loading ? 'Signing In...' : 'Sign In'}
+            {loading ? t('signingIn') : t('signIn')}
           </button>
         </form>
       )}
@@ -320,18 +361,22 @@ export default function App() {
       {/* ── SIGN UP ── */}
       {authTab === 'signup' && (
         <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <div style={{ textAlign: 'left' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>SELECT YOUR ROLE</label>
+          <div style={{ textAlign: 'start' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>
+              {t('selectRole')}
+            </label>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
-              {roleCard('candidate', '👨‍💻', 'Candidate')}
-              {roleCard('interviewer', '💼', 'Interviewer')}
+              {roleCard('candidate', '👨‍💻', t('roleCandidate'))}
+              {roleCard('interviewer', '💼', t('roleInterviewer'))}
             </div>
           </div>
-          <div style={{ textAlign: 'left' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>USERNAME</label>
+          <div style={{ textAlign: 'start' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>
+              {t('username')}
+            </label>
             <input
               type="text"
-              placeholder="Choose a unique username"
+              placeholder={t('usernamePlaceholder')}
               value={inputUsername}
               onChange={e => setInputUsername(e.target.value)}
               disabled={loading}
@@ -339,11 +384,13 @@ export default function App() {
               style={inputStyle}
             />
           </div>
-          <div style={{ textAlign: 'left' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>EMAIL</label>
+          <div style={{ textAlign: 'start' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>
+              {t('email')}
+            </label>
             <input
               type="email"
-              placeholder="your@email.com"
+              placeholder={t('emailPlaceholder')}
               value={inputEmail}
               onChange={e => setInputEmail(e.target.value)}
               disabled={loading}
@@ -351,11 +398,13 @@ export default function App() {
               style={inputStyle}
             />
           </div>
-          <div style={{ textAlign: 'left' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>PASSWORD</label>
+          <div style={{ textAlign: 'start' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>
+              {t('password')}
+            </label>
             <input
               type="password"
-              placeholder="At least 6 characters"
+              placeholder={t('passwordPlaceholderMin')}
               value={inputPassword}
               onChange={e => setInputPassword(e.target.value)}
               disabled={loading}
@@ -364,11 +413,13 @@ export default function App() {
               style={inputStyle}
             />
           </div>
-          <div style={{ textAlign: 'left' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>CONFIRM PASSWORD</label>
+          <div style={{ textAlign: 'start' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.35rem' }}>
+              {t('confirmPassword')}
+            </label>
             <input
               type="password"
-              placeholder="Repeat your password"
+              placeholder={t('confirmPasswordPlaceholder')}
               value={inputConfirmPassword}
               onChange={e => setInputConfirmPassword(e.target.value)}
               disabled={loading}
@@ -379,7 +430,9 @@ export default function App() {
               }}
             />
             {inputConfirmPassword && inputPassword !== inputConfirmPassword && (
-              <span style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem', display: 'block' }}>Passwords do not match</span>
+              <span style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem', display: 'block' }}>
+                {t('passwordsNoMatch')}
+              </span>
             )}
           </div>
           <button
@@ -396,22 +449,24 @@ export default function App() {
                 ? 'pointer' : 'default',
             }}
           >
-            {loading ? 'Creating Account...' : 'Create Account'}
+            {loading ? t('creatingAccount') : t('createAccount')}
           </button>
         </form>
       )}
 
       <div style={{ display: 'flex', alignItems: 'center', margin: '1rem 0' }}>
         <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
-        <span style={{ padding: '0 0.5rem', fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' }}>OR</span>
+        <span style={{ padding: '0 0.5rem', fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' }}>{t('or')}</span>
         <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
       </div>
 
-      <div style={{ textAlign: 'left', marginBottom: '0.5rem' }}>
-        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.5rem' }}>CONTINUE AS GUEST</label>
+      <div style={{ textAlign: 'start', marginBottom: '0.5rem' }}>
+        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.5rem' }}>
+          {t('continueAsGuest')}
+        </label>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          {roleCard('candidate', '👨‍💻', 'Candidate')}
-          {roleCard('interviewer', '💼', 'Interviewer')}
+          {roleCard('candidate', '👨‍💻', t('roleCandidate'))}
+          {roleCard('interviewer', '💼', t('roleInterviewer'))}
         </div>
       </div>
       <button
@@ -426,7 +481,7 @@ export default function App() {
           fontSize: '0.9rem',
         }}
       >
-        {loading ? 'Loading...' : 'Continue as Guest'}
+        {loading ? t('loading') : t('continueAsGuestBtn')}
       </button>
     </>
   );
@@ -467,10 +522,10 @@ export default function App() {
               </span>
             </div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>
-              {authTab === 'signin' ? 'Welcome back' : 'Create your account'}
+              {authTab === 'signin' ? t('welcomeBack') : t('createYourAccount')}
             </h2>
             <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.25rem' }}>
-              {authTab === 'signin' ? 'Sign in to access your interview simulator and recruiter portal.' : 'Join SmartInterviewer and start practicing today.'}
+              {authTab === 'signin' ? t('signInSubtitle') : t('signUpSubtitle')}
             </p>
             {loginForm}
           </div>
@@ -528,28 +583,30 @@ export default function App() {
           </div>
 
           <h1 style={{ fontSize: '2rem', fontWeight: '800', textAlign: 'center', marginBottom: '1rem', lineHeight: 1.2, zIndex: 1 }}>
-            Ace Your Next<br />Interview
+            {t('heroTitle').split('\n').map((line, i) => (
+              <React.Fragment key={i}>{line}{i === 0 && <br />}</React.Fragment>
+            ))}
           </h1>
           <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.8)', textAlign: 'center', maxWidth: '340px', lineHeight: 1.6, zIndex: 1, marginBottom: '2.5rem' }}>
-            AI-powered interview practice with real-time STAR feedback, personalized coaching, and recruiter tools.
+            {t('heroSubtitle')}
           </p>
 
           {/* Feature bullets */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', zIndex: 1, width: '100%', maxWidth: '340px' }}>
             {[
-              { icon: '🚀', text: 'Realistic interview simulations' },
-              { icon: '📊', text: 'STAR-method scoring & feedback' },
-              { icon: '🧠', text: 'AI coaching after every answer' },
-              { icon: '💼', text: 'Recruiter dashboard & question bank' },
+              { icon: '🚀', key: 'feature1' },
+              { icon: '📊', key: 'feature2' },
+              { icon: '🧠', key: 'feature3' },
+              { icon: '💼', key: 'feature4' },
             ].map(f => (
-              <div key={f.text} style={{
+              <div key={f.key} style={{
                 display: 'flex', alignItems: 'center', gap: '0.75rem',
                 background: 'rgba(255,255,255,0.1)',
                 borderRadius: '10px', padding: '0.65rem 1rem',
                 border: '1px solid rgba(255,255,255,0.15)',
               }}>
                 <span style={{ fontSize: '1.1rem' }}>{f.icon}</span>
-                <span style={{ fontSize: '0.9rem', fontWeight: '600', color: 'rgba(255,255,255,0.9)' }}>{f.text}</span>
+                <span style={{ fontSize: '0.9rem', fontWeight: '600', color: 'rgba(255,255,255,0.9)' }}>{t(f.key)}</span>
               </div>
             ))}
           </div>
@@ -568,10 +625,10 @@ export default function App() {
         }}>
           <div style={{ width: '100%', maxWidth: '380px' }}>
             <h2 style={{ fontSize: '1.6rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.4rem' }}>
-              {authTab === 'signin' ? 'Welcome back' : 'Create your account'}
+              {authTab === 'signin' ? t('welcomeBack') : t('createYourAccount')}
             </h2>
             <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1.75rem' }}>
-              {authTab === 'signin' ? 'Sign in to your account or continue as a guest.' : 'Fill in the details below to get started.'}
+              {authTab === 'signin' ? t('signInSubtitleRight') : t('signUpSubtitleRight')}
             </p>
             {loginForm}
           </div>
@@ -638,19 +695,19 @@ export default function App() {
                 <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
                   {role === 'candidate' ? (
                     <>
-                      <NavLink to="/" end style={({ isActive }) => navLinkStyle(isActive)}>🏠 Dashboard</NavLink>
-                      <NavLink to="/prepare" style={({ isActive }) => navLinkStyle(isActive)}>🚀 Practice Simulation</NavLink>
+                      <NavLink to="/" end style={({ isActive }) => navLinkStyle(isActive)}>🏠 {t('navDashboard')}</NavLink>
+                      <NavLink to="/prepare" style={({ isActive }) => navLinkStyle(isActive)}>🚀 {t('navPractice')}</NavLink>
                     </>
                   ) : (
                     <>
-                      <NavLink to="/" end style={({ isActive }) => navLinkStyle(isActive)}>🏠 Recruiter Dashboard</NavLink>
-                      <NavLink to="/questions" style={({ isActive }) => navLinkStyle(isActive)}>📋 Question Generator</NavLink>
+                      <NavLink to="/" end style={({ isActive }) => navLinkStyle(isActive)}>🏠 {t('navRecruiterDashboard')}</NavLink>
+                      <NavLink to="/questions" style={({ isActive }) => navLinkStyle(isActive)}>📋 {t('navQuestionGenerator')}</NavLink>
                     </>
                   )}
                 </div>
 
                 <button onClick={handleSwitchRole} style={switchBtnStyle}>
-                  🔄 Switch to {role === 'candidate' ? 'Recruiter' : 'Candidate'}
+                  🔄 {role === 'candidate' ? t('switchToRecruiter') : t('switchToCandidate')}
                 </button>
 
                 {/* User Dropdown Pill */}
@@ -683,24 +740,24 @@ export default function App() {
             }}>
               {role === 'candidate' ? (
                 <>
-                  <NavLink to="/" end onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>🏠 Dashboard</NavLink>
-                  <NavLink to="/prepare" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>🚀 Practice Simulation</NavLink>
+                  <NavLink to="/" end onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>🏠 {t('navDashboard')}</NavLink>
+                  <NavLink to="/prepare" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>🚀 {t('navPractice')}</NavLink>
                 </>
               ) : (
                 <>
-                  <NavLink to="/" end onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>🏠 Recruiter Dashboard</NavLink>
-                  <NavLink to="/questions" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>📋 Question Generator</NavLink>
+                  <NavLink to="/" end onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>🏠 {t('navRecruiterDashboard')}</NavLink>
+                  <NavLink to="/questions" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>📋 {t('navQuestionGenerator')}</NavLink>
                 </>
               )}
-              <NavLink to="/settings" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>⚙️ Settings</NavLink>
+              <NavLink to="/settings" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>⚙️ {t('navSettings')}</NavLink>
               <button onClick={handleSwitchRole} style={{ ...mobileNavLinkStyle(false), textAlign: 'left', border: 'none', cursor: 'pointer', width: '100%' }}>
-                🔄 Switch to {role === 'candidate' ? 'Recruiter' : 'Candidate'}
+                🔄 {role === 'candidate' ? t('switchToRecruiter') : t('switchToCandidate')}
               </button>
               <button
                 onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
                 style={{ ...mobileNavLinkStyle(false), textAlign: 'left', border: 'none', cursor: 'pointer', color: '#dc2626', width: '100%' }}
               >
-                🚪 Logout
+                🚪 {t('navLogout')}
               </button>
             </div>
           )}

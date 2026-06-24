@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { getAuthHeaders } from '../utils/auth';
+import { useLanguage } from '../utils/LanguageContext';
 
 const INDIGO = '#4f46e5';
 
 export default function SettingsScreen() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { language, setLanguage, t } = useLanguage();
   const [saved, setSaved] = useState(false);
   const [role] = useState(() => localStorage.getItem('role') || 'candidate');
   const [username] = useState(() => localStorage.getItem('username') || 'User');
@@ -143,7 +145,44 @@ export default function SettingsScreen() {
 
         {/* Layout Grid: Settings Sections */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
+
+          {/* Section 0: Interface Language */}
+          <div style={{
+            backgroundColor: '#fff', borderRadius: '16px',
+            border: '1px solid #e2e8f0', padding: '1.5rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b', margin: '0 0 1.25rem 0', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
+              🌐 {t('settingsInterfaceLang')}
+            </h2>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              {[
+                { code: 'en', label: t('settingsLangEn') },
+                { code: 'he', label: t('settingsLangHe') },
+              ].map(({ code, label }) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => setLanguage(code)}
+                  style={{
+                    flex: 1,
+                    padding: '0.65rem 1rem',
+                    borderRadius: '10px',
+                    border: `2px solid ${language === code ? '#4f46e5' : '#e2e8f0'}`,
+                    backgroundColor: language === code ? '#f5f3ff' : '#fff',
+                    color: language === code ? '#4f46e5' : '#475569',
+                    fontWeight: '700',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {language === code ? '✓ ' : ''}{label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Section 1: Accessibility & Speech */}
           <div style={{
             backgroundColor: '#fff', borderRadius: '16px',

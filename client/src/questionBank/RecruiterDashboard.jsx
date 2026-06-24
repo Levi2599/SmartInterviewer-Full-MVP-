@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuthHeaders } from '../utils/auth';
+import { useLanguage } from '../utils/LanguageContext';
 
 const INDIGO = '#4f46e5';
 const INDIGO_LIGHT = '#f5f3ff';
@@ -32,6 +33,7 @@ export default function RecruiterDashboard() {
   const [error, setError] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const fetchGuides = async () => {
     try {
@@ -102,7 +104,7 @@ export default function RecruiterDashboard() {
         width: '44px', height: '44px', border: '4px solid #e0d9ff',
         borderTopColor: INDIGO, borderRadius: '50%', animation: 'spin 0.9s linear infinite',
       }} />
-      <div style={{ fontWeight: '600', color: '#64748b' }}>Loading recruiter guides...</div>
+      <div style={{ fontWeight: '600', color: '#64748b' }}>{t('recruiterLoadingGuides')}</div>
     </div>
   );
 
@@ -123,10 +125,10 @@ export default function RecruiterDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
-            📋 Recruiter Dashboard
+            📋 {t('recruiterDashTitle')}
           </h1>
           <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0 }}>
-            Manage your generated interview guides and question templates.
+            {t('recruiterDashSubtitle')}
           </p>
         </div>
         <button
@@ -140,31 +142,16 @@ export default function RecruiterDashboard() {
             fontSize: '0.9rem',
           }}
         >
-          <span>Create New Guide</span>
+          <span>{t('recruiterCreateNewGuide')}</span>
           <span>📋</span>
         </button>
       </div>
 
       {/* Recruiter Stats */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-        <RecruiterStatCard
-          label="ACTIVE POSITION GUIDES"
-          value={guides.length}
-          icon="💼"
-          sub="guides saved in DB"
-        />
-        <RecruiterStatCard
-          label="TOTAL GENERATED QUESTIONS"
-          value={totalQuestions}
-          icon="❓"
-          sub="across all templates"
-        />
-        <RecruiterStatCard
-          label="PDF EXPORTS ACTIVE"
-          value="100%"
-          icon="📄"
-          sub="styled print ready templates"
-        />
+        <RecruiterStatCard label={t('recruiterActivePositions')} value={guides.length} icon="💼" sub={t('recruiterGuidesSaved')} />
+        <RecruiterStatCard label={t('recruiterTotalQs')} value={totalQuestions} icon="❓" sub={t('recruiterAcrossTemplates')} />
+        <RecruiterStatCard label={t('recruiterPdfActive')} value="100%" icon="📄" sub={t('recruiterPrintReady')} />
       </div>
 
       {/* Guides Grid/Table */}
@@ -174,26 +161,26 @@ export default function RecruiterDashboard() {
         padding: '1.5rem',
       }}>
         <h2 style={{ margin: '0 0 1.25rem 0', fontSize: '1.1rem', fontWeight: '800', color: '#1e293b' }}>
-          Active Job Interview Guides
+          {t('recruiterActiveGuides')}
         </h2>
 
         {pendingDeleteId && (
           <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '1rem', marginBottom: '1.25rem' }}>
             <p style={{ fontSize: '0.875rem', fontWeight: '700', color: '#991b1b', margin: '0 0 0.75rem 0' }}>
-              Delete this guide permanently? This cannot be undone.
+              {t('recruiterDeleteConfirmText')}
             </p>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button
                 onClick={() => setPendingDeleteId(null)}
                 style={{ flex: 1, padding: '0.55rem', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f1f5f9', color: '#475569', fontWeight: '600', cursor: 'pointer', fontSize: '0.85rem' }}
               >
-                Cancel
+                {t('recruiterCancelBtn')}
               </button>
               <button
                 onClick={handleDeleteConfirm}
                 style={{ flex: 2, padding: '0.55rem', borderRadius: '8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', fontWeight: '700', cursor: 'pointer', fontSize: '0.85rem' }}
               >
-                Yes, Delete Guide
+                {t('recruiterDeleteGuideBtn')}
               </button>
             </div>
           </div>
@@ -203,10 +190,10 @@ export default function RecruiterDashboard() {
           <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
             <span style={{ fontSize: '2.5rem' }}>📂</span>
             <h3 style={{ color: '#64748b', fontSize: '1rem', fontWeight: '600', marginTop: '0.75rem' }}>
-              No guides generated yet
+              {t('recruiterNoGuidesTitle')}
             </h3>
             <p style={{ color: '#94a3b8', fontSize: '0.85rem', maxWidth: '320px', margin: '0.25rem auto 1.25rem' }}>
-              Create your first B2B question bank guide using the AI generator.
+              {t('recruiterNoGuidesDesc')}
             </p>
             <button
               onClick={() => navigate('/questions')}
@@ -217,7 +204,7 @@ export default function RecruiterDashboard() {
                 cursor: 'pointer',
               }}
             >
-              Generate First Guide
+              {t('recruiterGenerateFirstBtn')}
             </button>
           </div>
         ) : (
@@ -225,12 +212,12 @@ export default function RecruiterDashboard() {
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid #f1f5f9' }}>
-                  <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Position / Job Role</th>
-                  <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Industry</th>
-                  <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Level</th>
-                  <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Questions</th>
-                  <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Date Created</th>
-                  <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
+                  <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>{t('recruiterColPosition')}</th>
+                  <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>{t('recruiterColIndustry')}</th>
+                  <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>{t('recruiterColLevel')}</th>
+                  <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>{t('recruiterColQuestions')}</th>
+                  <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>{t('recruiterColDate')}</th>
+                  <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', textAlign: 'right' }}>{t('recruiterColActions')}</th>
                 </tr>
               </thead>
               <tbody>

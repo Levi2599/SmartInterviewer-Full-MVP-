@@ -28,10 +28,17 @@ async function questionGenPrompt(input) {
     jdText = 'General role requirements';
   }
 
+  const lang = input.language || 'en';
+  const langInstruction = lang === 'he'
+    ? "LANGUAGE: Write all text fields (text, competency, follow_ups, hr_keywords, red_flags) in Hebrew (עברית) only.\n\n"
+    : "LANGUAGE: Write all text fields in English.\n\n";
+
   // 2. Define System Instructions
-  const systemInstruction = 
+  const systemInstruction =
     "You are an expert HR consultant AI for SmartInterviewer. Generate high-quality structured " +
-    "interview questions for recruiters using behavioral and technical best practices. Return ONLY a valid JSON " +
+    "interview questions for recruiters using behavioral and technical best practices.\n\n" +
+    langInstruction +
+    "Return ONLY a valid JSON " +
     "array where every element matches the following item schema exactly:\n" +
     "[\n" +
     "  {\n" +

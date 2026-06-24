@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { getAuthHeaders } from '../utils/auth';
+import { useLanguage } from '../utils/LanguageContext';
 
 const INDIGO = '#4f46e5';
 const INDIGO_LIGHT = '#f5f3ff';
@@ -27,6 +28,7 @@ export default function QuestionBankScreen() {
   const [basket, setBasket] = useState([]);
   const [exporting, setExporting] = useState(false);
 
+  const { t, language } = useLanguage();
   const location = useLocation();
 
   useEffect(() => {
@@ -57,6 +59,7 @@ export default function QuestionBankScreen() {
           seniority_level: seniorityLevel,
           jd_text: jdText,
           question_count: Number(questionCount),
+          language,
         }),
       });
       if (!res.ok) throw new Error('Could not generate questions.');
@@ -112,10 +115,10 @@ export default function QuestionBankScreen() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.25rem', letterSpacing: '-0.02em' }}>
-            📋 Question Bank Generator
+            📋 {t('qbPageTitle')}
           </h1>
           <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0 }}>
-            Generate AI-tailored interview question blueprints for any role and seniority level.
+            {t('qbPageSubtitle')}
           </p>
         </div>
         <Link
@@ -127,7 +130,7 @@ export default function QuestionBankScreen() {
             border: '1px solid #e2e8f0', textDecoration: 'none', fontSize: '0.9rem',
           }}
         >
-          ← Back to Dashboard
+          {t('qbBackDashboard')}
         </Link>
       </div>
 
@@ -147,7 +150,7 @@ export default function QuestionBankScreen() {
             {/* Job Role */}
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
-                JOB ROLE
+                {t('qbJobRoleLabel')}
               </label>
               <input
                 type="text"
@@ -168,7 +171,7 @@ export default function QuestionBankScreen() {
             {/* Industry */}
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
-                INDUSTRY
+                {t('qbIndustryLabel')}
               </label>
               <input
                 type="text"
@@ -189,7 +192,7 @@ export default function QuestionBankScreen() {
             {/* Seniority */}
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
-                SENIORITY LEVEL
+                {t('qbSeniorityLabel')}
               </label>
               <select
                 value={seniorityLevel}
@@ -212,7 +215,7 @@ export default function QuestionBankScreen() {
             {/* Count */}
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
-                QUESTION COUNT
+                {t('qbQuestionCountLabel')}
               </label>
               <input
                 type="number" min="1" max="10"
@@ -233,7 +236,7 @@ export default function QuestionBankScreen() {
           {/* Optional JD text */}
           <div style={{ marginBottom: '1.25rem' }}>
             <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
-              OPTIONAL — JOB DESCRIPTION CONTEXT
+              {t('qbOptionalJdLabel')}
             </label>
             <textarea
               value={jdText}
@@ -272,9 +275,9 @@ export default function QuestionBankScreen() {
                   borderTopColor: '#fff', borderRadius: '50%',
                   animation: 'spin 0.8s linear infinite',
                 }} />
-                Generating...
+                {t('qbGeneratingBtn')}
               </>
-            ) : '✨ Generate Questions'}
+            ) : `✨ ${t('qbGenerateQsBtn')}`}
           </button>
         </form>
       </div>
@@ -306,14 +309,14 @@ export default function QuestionBankScreen() {
                 backgroundColor: '#fafafa',
               }}>
                 <span style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>
-                  🤖 AI Generated Questions ({questions.length})
+                  🤖 {t('qbAiQuestionsHeader')} ({questions.length})
                 </span>
                 <span style={{
                   fontSize: '0.75rem', color: INDIGO,
                   backgroundColor: INDIGO_LIGHT, padding: '0.2rem 0.6rem',
                   borderRadius: '6px', fontWeight: '600',
                 }}>
-                  Click + to add to basket
+                  {t('qbAddToBasket')}
                 </span>
               </div>
 
@@ -340,7 +343,7 @@ export default function QuestionBankScreen() {
                             backgroundColor: isTechnical ? '#dbeafe' : '#dcfce7',
                             color: isTechnical ? '#1d4ed8' : '#166534',
                           }}>
-                            {isTechnical ? '⚙️ Technical' : '💬 Behavioral'}
+                            {isTechnical ? `⚙️ ${t('qbTechnical')}` : `💬 ${t('qbBehavioral')}`}
                           </span>
                           {q.methodology_expectation && (
                             <span style={{
@@ -398,7 +401,7 @@ export default function QuestionBankScreen() {
                           borderLeft: '3px solid #ef4444',
                         }}>
                           <div style={{ fontSize: '0.72rem', fontWeight: '700', color: '#dc2626', marginBottom: '0.25rem' }}>
-                            🚩 RED FLAGS TO WATCH FOR
+                            🚩 {t('qbRedFlags')}
                           </div>
                           <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.8rem', color: '#b91c1c', lineHeight: '1.4' }}>
                             {q.red_flags.map((f, fi) => <li key={fi}>{f}</li>)}
@@ -414,7 +417,7 @@ export default function QuestionBankScreen() {
                           borderLeft: '3px solid #94a3b8',
                         }}>
                           <div style={{ fontSize: '0.72rem', fontWeight: '700', color: '#64748b', marginBottom: '0.25rem' }}>
-                            🔍 FOLLOW-UP PROBES
+                            🔍 {t('qbFollowUps')}
                           </div>
                           <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.8rem', color: '#475569', lineHeight: '1.4' }}>
                             {q.follow_ups.map((f, fi) => <li key={fi}>{f}</li>)}
@@ -442,14 +445,14 @@ export default function QuestionBankScreen() {
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
                 <span style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>
-                  🗂 Interview Basket
+                  🗂 {t('qbBasketTitle')}
                 </span>
                 <span style={{
                   backgroundColor: INDIGO_LIGHT, color: INDIGO,
                   borderRadius: '20px', padding: '0.15rem 0.6rem',
                   fontSize: '0.78rem', fontWeight: '700',
                 }}>
-                  {basket.length} selected
+                  {basket.length} {t('qbSelected')}
                 </span>
               </div>
 
@@ -461,7 +464,7 @@ export default function QuestionBankScreen() {
                     color: '#94a3b8', fontSize: '0.85rem', lineHeight: '1.5',
                   }}>
                     <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🗃️</div>
-                    Your basket is empty.<br />Click <strong>+</strong> on a question to add it here.
+                    {t('qbBasketEmpty')}<br />{t('qbBasketEmptyHint')}
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -518,7 +521,7 @@ export default function QuestionBankScreen() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
                     }}
                   >
-                    {exporting === 'pdf' ? '⏳ Exporting...' : '📄 Export PDF Guide'}
+                    {exporting === 'pdf' ? `⏳ ${t('qbExporting')}` : `📄 ${t('qbExportPdfBtn')}`}
                   </button>
                 </div>
               )}

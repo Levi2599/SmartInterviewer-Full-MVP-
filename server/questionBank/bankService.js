@@ -6,7 +6,7 @@ const { saveQuestionSet } = require("../../database/questionBank/questionBankDB"
 
 router.post('/generate', async (req, res) => {
   try {
-    const { job_role, industry, seniority_level, jd_text, question_count } = req.body;
+    const { job_role, industry, seniority_level, jd_text, question_count, language } = req.body;
 
     if (!job_role || !industry || !seniority_level) {
       return res.status(400).json({ error: "job_role, industry, and seniority_level are required fields." });
@@ -17,7 +17,8 @@ router.post('/generate', async (req, res) => {
       industry,
       seniority_level,
       jd_text: jd_text || "",
-      question_count: question_count || 5
+      question_count: question_count || 5,
+      language: language || 'en'
     });
 
     const question_bank_id = uuidv4();

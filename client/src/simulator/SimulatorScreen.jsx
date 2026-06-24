@@ -4,6 +4,7 @@ import CoachOverlay from '../coach/CoachOverlay';
 import Stepper from '../components/Stepper';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { getAuthHeaders } from '../utils/auth';
+import { useLanguage } from '../utils/LanguageContext';
 
 const INDIGO = '#4f46e5';
 
@@ -11,6 +12,7 @@ export default function SimulatorScreen() {
   const location = useLocation();
   const state = location.state || {};
   const isMobile = useIsMobile();
+  const { t } = useLanguage();
 
   // Persist cv_text/jd_text in sessionStorage so a page refresh doesn't lose them
   const cv_text = state.cv_text || sessionStorage.getItem('sim-cv') || '';
@@ -154,8 +156,8 @@ export default function SimulatorScreen() {
 
   const fetchQuestion = async (currentTurn, currentHistory) => {
     const msg = currentTurn === 1
-      ? 'Loading simulation and generating your first question...'
-      : 'Saving response and generating next interview question...';
+      ? t('simLoadingFirst')
+      : t('simLoadingNext');
     setLoading(msg);
     setError('');
     try {
@@ -195,16 +197,16 @@ export default function SimulatorScreen() {
         border: '1px solid #e2e8f0', textAlign: 'center',
       }}>
         <span style={{ fontSize: '3rem' }}>📋</span>
-        <h3 style={{ marginTop: '1rem', color: '#1e293b' }}>Missing Setup Data</h3>
+        <h3 style={{ marginTop: '1rem', color: '#1e293b' }}>{t('simMissingData')}</h3>
         <p style={{ color: '#64748b', marginTop: '0.5rem' }}>
-          Please upload your CV and target Job Description to access the simulation.
+          {t('simMissingDataBody')}
         </p>
         <Link to="/" style={{
           display: 'inline-block', marginTop: '1.5rem',
           backgroundColor: INDIGO, color: '#fff',
           padding: '0.75rem 1.5rem', borderRadius: '10px', fontWeight: '600',
         }}>
-          ← Back to Setup
+          {t('simBackSetup')}
         </Link>
       </div>
     );
@@ -213,7 +215,7 @@ export default function SimulatorScreen() {
   const handleAnswerSubmit = async (e) => {
     e.preventDefault();
     if (!answerText.trim()) return;
-    setLoading('AI Coach is analyzing your response...');
+    setLoading(t('simAnalyzing'));
     setError('');
     try {
       const res = await fetch('/api/coach/analyze', {
@@ -306,10 +308,10 @@ export default function SimulatorScreen() {
           <span style={{ fontSize: isMobile ? '1rem' : '1.2rem' }}>🎤</span>
           <div>
             <span style={{ fontWeight: '800', color: '#0f172a', fontSize: isMobile ? '0.85rem' : '0.95rem', display: 'block' }}>
-              Live Job Interview Simulation
+              {t('simTitle')}
             </span>
             <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: '600' }}>
-              Turn {turnNumber} — {expectedMethod} Framework Target
+              {t('simTurn')} {turnNumber} — {expectedMethod} {t('simFrameworkTarget')}
             </span>
           </div>
         </div>
@@ -326,7 +328,7 @@ export default function SimulatorScreen() {
           onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
           onMouseLeave={e => e.currentTarget.style.opacity = '1'}
         >
-          🚪 Exit Session
+          🚪 {t('simExitSession')}
         </button>
       </div>
 
@@ -337,7 +339,7 @@ export default function SimulatorScreen() {
           borderRadius: '10px', marginBottom: '1rem', fontWeight: '500',
           fontSize: '0.875rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
-          <span>⚠️ Speech recognition is not supported in this browser. Please type your response.</span>
+          <span>⚠️ {t('simSttWarning')}</span>
           <button onClick={() => setSttWarning(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#92400e', fontWeight: '700', marginLeft: '0.75rem' }}>✕</button>
         </div>
       )}
@@ -349,23 +351,23 @@ export default function SimulatorScreen() {
           marginBottom: '1rem', boxShadow: '0 4px 16px rgba(220,38,38,0.1)',
         }}>
           <div style={{ fontWeight: '700', color: '#991b1b', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
-            Exit Interview Session?
+            {t('simExitTitle')}
           </div>
           <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '0 0 1rem 0' }}>
-            Are you sure you want to exit? Your progress will be saved.
+            {t('simExitBody')}
           </p>
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             <button
               onClick={() => setExitConfirm(false)}
               style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f1f5f9', color: '#475569', fontWeight: '600', cursor: 'pointer' }}
             >
-              Stay in Interview
+              {t('simStayBtn')}
             </button>
             <Link
               to="/"
               style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', backgroundColor: '#fee2e2', color: '#dc2626', fontWeight: '700', textDecoration: 'none', textAlign: 'center', border: '1px solid #fecaca' }}
             >
-              Exit Session
+              {t('simExitBtn')}
             </Link>
           </div>
         </div>
@@ -395,7 +397,7 @@ export default function SimulatorScreen() {
             padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
           }}>
             <span style={{ color: '#fff', fontWeight: '800', fontSize: isMobile ? '0.82rem' : '0.9rem' }}>
-              Current Interviewer Question
+              {t('simCurrentQuestion')}
             </span>
           </div>
 
@@ -425,7 +427,7 @@ export default function SimulatorScreen() {
                   fontSize: '0.7rem', color: '#a78bfa', fontWeight: '700',
                   marginBottom: '0.4rem', letterSpacing: '0.05em',
                 }}>
-                  AI INTERVIEWER
+                  {t('simAiInterviewer')}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
                   <div style={{
@@ -461,7 +463,7 @@ export default function SimulatorScreen() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: '0.9rem', transition: 'all 0.15s', flexShrink: 0
                     }}
-                    title={isSpeaking ? 'Stop reading' : 'Read question aloud'}
+                    title={isSpeaking ? t('simStopReading') : t('simReadAloud')}
                   >
                     {isSpeaking ? '⏹' : '🔊'}
                   </button>
@@ -480,7 +482,7 @@ export default function SimulatorScreen() {
                     fontSize: '0.75rem', fontWeight: '700',
                     color: '#94a3b8', letterSpacing: '0.05em',
                   }}>
-                    YOUR ANSWER
+                    {t('simYourAnswer')}
                   </label>
 
                   {/* Mic Controls & Animated Waves */}
@@ -523,7 +525,7 @@ export default function SimulatorScreen() {
                         minHeight: '36px',
                       }}
                     >
-                      {isRecording ? '🔴 Stop' : '🎤 Mic'}
+                      {isRecording ? `🔴 ${t('simStopBtn')}` : `🎤 ${t('simMicBtn')}`}
                     </button>
                   </div>
                 </div>
@@ -532,7 +534,7 @@ export default function SimulatorScreen() {
                   id="answer-textarea"
                   value={answerText}
                   onChange={(e) => setAnswerText(e.target.value)}
-                  placeholder="Structure your response (e.g. Situation: ... Task: ... Action: ... Result: ...)"
+                  placeholder={t('simAnswerPlaceholder')}
                   style={{
                     width: '100%',
                     height: isMobile ? '130px' : '140px',
@@ -567,7 +569,7 @@ export default function SimulatorScreen() {
                     minHeight: '48px',
                   }}
                 >
-                  ✓ Submit Answer
+                  ✓ {t('simSubmitAnswer')}
                 </button>
               </form>
             </div>

@@ -6,11 +6,13 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { getAuthHeaders } from '../utils/auth';
+import { useLanguage } from '../utils/LanguageContext';
 
 const INDIGO = '#4f46e5';
 const INDIGO_LIGHT = '#f5f3ff';
 
 function StatCard({ label, value, sub, icon, delta }) {
+  const { t } = useLanguage();
   const trendUp = delta !== null && delta !== undefined && delta > 0;
   const trendDown = delta !== null && delta !== undefined && delta < 0;
 
@@ -31,12 +33,12 @@ function StatCard({ label, value, sub, icon, delta }) {
       </div>
       {trendUp && (
         <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: '600', marginTop: '0.3rem' }}>
-          ▲ Trending up (+{delta})
+          ▲ {t('progressTrendingUp')} (+{delta})
         </div>
       )}
       {trendDown && (
         <div style={{ fontSize: '0.75rem', color: '#dc2626', fontWeight: '600', marginTop: '0.3rem' }}>
-          ▼ Trending down ({delta})
+          ▼ {t('progressTrendingDown')} ({delta})
         </div>
       )}
       {sub && <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.3rem' }}>{sub}</div>}
@@ -70,6 +72,7 @@ export default function ProgressDashboard() {
   const [deleteStatus, setDeleteStatus] = useState('');
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -116,7 +119,7 @@ export default function ProgressDashboard() {
         width: '44px', height: '44px', border: '4px solid #e0d9ff',
         borderTopColor: INDIGO, borderRadius: '50%', animation: 'spin 0.9s linear infinite',
       }} />
-      <div style={{ fontWeight: '600', color: '#64748b' }}>Loading analytics...</div>
+      <div style={{ fontWeight: '600', color: '#64748b' }}>{t('progressLoadingAnalytics')}</div>
     </div>
   );
 
@@ -137,9 +140,9 @@ export default function ProgressDashboard() {
         border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
       }}>
         <span style={{ fontSize: '3rem' }}>📊</span>
-        <h2 style={{ marginTop: '1rem', color: '#1e293b', fontWeight: '800' }}>No Progress Yet</h2>
+        <h2 style={{ marginTop: '1rem', color: '#1e293b', fontWeight: '800' }}>{t('progressNoProgressTitle')}</h2>
         <p style={{ color: '#64748b', marginTop: '0.5rem', maxWidth: '380px', margin: '0.5rem auto 1.5rem' }}>
-          Complete your first interview simulation to see your performance analytics here.
+          {t('progressNoProgressDesc')}
         </p>
         <button
           onClick={() => navigate('/prepare')}
@@ -150,7 +153,7 @@ export default function ProgressDashboard() {
             boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
           }}
         >
-          Start Your First Simulation →
+          {t('progressFirstSimBtn')}
         </button>
       </div>
     );
@@ -193,10 +196,10 @@ export default function ProgressDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: 'clamp(1.3rem, 5vw, 1.75rem)', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
-            📊 My Progress Dashboard
+            📊 {t('progressDashTitle')}
           </h1>
           <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>
-            Track your interview readiness and AI coach recommendations.
+            {t('progressDashSubtitle')}
           </p>
         </div>
         <button
@@ -212,37 +215,17 @@ export default function ProgressDashboard() {
             justifyContent: 'center',
           }}
         >
-          <span>Start New Simulation</span>
+          <span>{t('progressStartNewSim')}</span>
           <span>🚀</span>
         </button>
       </div>
 
       {/* ─── Stats Grid ─── */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-        <StatCard
-          label="OVERALL SCORE"
-          value={`${data.readiness_score}%`}
-          icon="🎯"
-          delta={scoreTrend}
-        />
-        <StatCard
-          label="SIMULATIONS"
-          value={sessions.length}
-          icon="🎤"
-          sub="completed sessions"
-        />
-        <StatCard
-          label="AVG. STAR SCORE"
-          value={avgStar}
-          icon="⭐"
-          sub="across all components"
-        />
-        <StatCard
-          label="BEST SCORE"
-          value={`${bestScore}%`}
-          icon="🏆"
-          sub="personal best"
-        />
+        <StatCard label={t('progressOverallScore')} value={`${data.readiness_score}%`} icon="🎯" delta={scoreTrend} />
+        <StatCard label={t('progressSimulations')} value={sessions.length} icon="🎤" sub={t('progressCompletedSessions')} />
+        <StatCard label={t('progressAvgStarScore')} value={avgStar} icon="⭐" sub={t('progressAcrossComponents')} />
+        <StatCard label={t('progressBestScoreLabel')} value={`${bestScore}%`} icon="🏆" sub={t('progressPersonalBest')} />
       </div>
 
       {/* ─── Score Trend Chart ─── */}
@@ -254,10 +237,10 @@ export default function ProgressDashboard() {
         }}>
           <div style={{ marginBottom: '1rem' }}>
             <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>
-              📈 Score Trend
+              {t('progressScoreTrendTitle')}
             </h2>
             <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>
-              Readiness score over your simulation sessions
+              {t('progressScoreTrendDesc')}
             </p>
           </div>
           <div style={{ width: '100%', height: 200 }}>
@@ -307,7 +290,7 @@ export default function ProgressDashboard() {
           padding: '1.5rem',
         }}>
           <h2 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>
-            🕸 Framework Balance
+            {t('progressFrameworkBalance')}
           </h2>
           <div style={{ width: '100%', height: 220 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -335,7 +318,7 @@ export default function ProgressDashboard() {
           padding: '1.5rem',
         }}>
           <h2 style={{ margin: '0 0 1.25rem 0', fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>
-            📊 Component Scores
+            {t('progressComponentScores')}
           </h2>
           <ProgressBar label="Situation" score={S} color={getBarColor(S)} />
           <ProgressBar label="Task" score={T} color={getBarColor(T)} />
@@ -361,7 +344,7 @@ export default function ProgressDashboard() {
                 justifyContent: 'center', fontSize: '1rem',
               }}>⚠️</div>
               <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#991b1b' }}>
-                Weakness Profile
+                {t('progressWeaknessProfile')}
               </h2>
             </div>
             <ul style={{ margin: 0, paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -387,7 +370,7 @@ export default function ProgressDashboard() {
                 justifyContent: 'center', fontSize: '1rem',
               }}>🎯</div>
               <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#1d4ed8' }}>
-                Recommended Training
+                {t('progressRecommendedTraining')}
               </h2>
             </div>
             <ul style={{ margin: '0 0 1rem 0', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -405,7 +388,7 @@ export default function ProgressDashboard() {
                 boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
               }}
             >
-              🚀 Practice This
+              {t('progressPracticeThis')}
             </button>
           </div>
         )}
@@ -423,11 +406,11 @@ export default function ProgressDashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
           <span style={{ fontSize: '1.2rem' }}>🔒</span>
           <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#991b1b' }}>
-            Data Privacy & Deletion (GDPR)
+            {t('progressGdprTitle')}
           </h2>
         </div>
         <p style={{ fontSize: '0.85rem', color: '#64748b', lineHeight: '1.5', margin: '0 0 1rem 0' }}>
-          In accordance with GDPR compliance, your transcripts and performance scores are stored securely. You can permanently delete all your data from our database at any time. This action is irreversible.
+          {t('progressGdprDesc')}
         </p>
 
         {deleteStatus === 'error' && (
@@ -447,19 +430,19 @@ export default function ProgressDashboard() {
               transition: 'all 0.15s',
             }}
           >
-            🗑️ Delete All My Data Permanently
+            {t('progressDeleteAllBtn')}
           </button>
         ) : (
           <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '1rem' }}>
             <p style={{ fontSize: '0.875rem', fontWeight: '700', color: '#991b1b', margin: '0 0 0.75rem 0' }}>
-              This will permanently delete all your sessions, scores, and profile data. This cannot be undone.
+              {t('progressDeleteConfirmText')}
             </p>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button
                 onClick={() => setDeleteConfirm(false)}
                 style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f1f5f9', color: '#475569', fontWeight: '600', cursor: 'pointer' }}
               >
-                Cancel
+                {t('progressCancel')}
               </button>
               <button
                 onClick={async () => {
@@ -481,7 +464,7 @@ export default function ProgressDashboard() {
                 }}
                 style={{ flex: 2, padding: '0.65rem', borderRadius: '8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', fontWeight: '700', cursor: 'pointer' }}
               >
-                Yes, Delete Everything
+                {t('progressDeleteYes')}
               </button>
             </div>
           </div>

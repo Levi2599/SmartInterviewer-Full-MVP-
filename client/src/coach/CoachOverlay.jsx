@@ -436,19 +436,6 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                   💡 Your revision didn't improve the score this time. Try incorporating all {method} components clearly and submit again.
                 </div>
               )}
-              {/* Updated STAR breakdown so user sees new colors immediately */}
-              {retryResult.retry_feedback?.star_breakdown && (
-                <div style={{ marginBottom: '0.75rem' }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#64748b', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>
-                    UPDATED COMPONENTS
-                  </div>
-                  <ComponentChecklist
-                    labels={labels}
-                    star={retryResult.retry_feedback.star_breakdown}
-                    missing_components={retryResult.retry_feedback.missing_components || []}
-                  />
-                </div>
-              )}
               {retryResult.retry_feedback?.improvement_tip && retryResult.improvement && (
                 <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 0.75rem 0' }}>
                   💡 {retryResult.retry_feedback.improvement_tip}
