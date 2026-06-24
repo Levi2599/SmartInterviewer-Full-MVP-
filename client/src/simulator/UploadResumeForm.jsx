@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Stepper from '../components/Stepper';
 import { getAuthHeadersFormData } from '../utils/auth';
+import { createWorker } from 'tesseract.js';
 
 const INDIGO = '#4f46e5';
 const INDIGO_LIGHT = '#f5f3ff';
 const BORDER = '#e2e8f0';
 
-function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, onFileUpload }) {
+function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, setIsLoading, onFileUpload }) {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [ocrProgress, setOcrProgress] = useState('');
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -17,6 +19,47 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, onFi
     const file = e.dataTransfer.files[0];
     if (file) onFileUpload({ target: { files: [file] } });
   };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setIsLoading(true);
+    setOcrProgress('Initializing OCR engine...');
+    try {
+      const worker = await createWorker('eng+heb', 1, {
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            setOcrProgress(`Reading image... ${Math.round(m.progress * 100)}%`);
+          }
+        },
+      });
+      const { data: { text: extracted } } = await worker.recognize(file);
+      await worker.terminate();
+      const cleaned = extracted.trim();
+      if (!cleaned) throw new Error('No text found in image.');
+      setText(cleaned);
+      setOcrProgress('');
+    } catch (err) {
+      setOcrProgress('');
+      setText('');
+      alert(`Image OCR failed: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const tabStyle = (active) => ({
+    flex: 1,
+    padding: '0.75rem',
+    fontWeight: '600',
+    fontSize: '0.75rem',
+    border: 'none',
+    cursor: 'pointer',
+    backgroundColor: active ? '#fff' : 'transparent',
+    color: active ? INDIGO : '#94a3b8',
+    borderBottom: active ? `2px solid ${INDIGO}` : '2px solid transparent',
+    transition: 'all 0.15s',
+  });
 
   return (
     <div style={{
@@ -27,108 +70,54 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, onFi
       overflow: 'hidden',
     }}>
       {/* Toggle Header */}
-      <div style={{
-        display: 'flex',
-        borderBottom: `1px solid ${BORDER}`,
-        backgroundColor: '#f8fafc',
-      }}>
-        <button
-          type="button"
-          onClick={() => setMode('paste')}
-          style={{
-            flex: 1,
-            padding: '0.75rem',
-            fontWeight: '600',
-            fontSize: '0.8rem',
-            border: 'none',
-            cursor: 'pointer',
-            backgroundColor: mode === 'paste' ? '#fff' : 'transparent',
-            color: mode === 'paste' ? INDIGO : '#94a3b8',
-            borderBottom: mode === 'paste' ? `2px solid ${INDIGO}` : '2px solid transparent',
-            transition: 'all 0.15s',
-          }}
-        >
-          ✏️ Paste Text
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode('upload')}
-          style={{
-            flex: 1,
-            padding: '0.75rem',
-            fontWeight: '600',
-            fontSize: '0.8rem',
-            border: 'none',
-            cursor: 'pointer',
-            backgroundColor: mode === 'upload' ? '#fff' : 'transparent',
-            color: mode === 'upload' ? INDIGO : '#94a3b8',
-            borderBottom: mode === 'upload' ? `2px solid ${INDIGO}` : '2px solid transparent',
-            transition: 'all 0.15s',
-          }}
-        >
-          📎 Upload File
-        </button>
+      <div style={{ display: 'flex', borderBottom: `1px solid ${BORDER}`, backgroundColor: '#f8fafc' }}>
+        <button type="button" onClick={() => setMode('paste')} style={tabStyle(mode === 'paste')}>✏️ Paste Text</button>
+        <button type="button" onClick={() => setMode('upload')} style={tabStyle(mode === 'upload')}>📎 Upload File</button>
+        <button type="button" onClick={() => setMode('image')} style={tabStyle(mode === 'image')}>🖼️ Upload Image</button>
       </div>
 
       {/* Content Area */}
       <div style={{ padding: '1.25rem' }}>
-        {/* Label */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
           <span style={{ fontSize: '1.2rem' }}>{icon}</span>
           <span style={{ fontWeight: '700', fontSize: '0.9rem', color: '#1e293b' }}>{label}</span>
         </div>
 
-        {mode === 'paste' ? (
+        {mode === 'paste' && (
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder={`Paste your ${label} content here...`}
             style={{
-              width: '100%',
-              height: '150px',
-              padding: '0.75rem',
-              borderRadius: '10px',
-              border: `1.5px solid ${BORDER}`,
-              fontSize: '0.9rem',
-              resize: 'vertical',
-              outline: 'none',
-              fontFamily: 'inherit',
-              lineHeight: '1.5',
-              color: '#334155',
-              transition: 'border-color 0.15s',
+              width: '100%', height: '150px', padding: '0.75rem',
+              borderRadius: '10px', border: `1.5px solid ${BORDER}`,
+              fontSize: '0.9rem', resize: 'vertical', outline: 'none',
+              fontFamily: 'inherit', lineHeight: '1.5', color: '#334155',
+              transition: 'border-color 0.15s', boxSizing: 'border-box',
             }}
             onFocus={e => e.target.style.borderColor = INDIGO}
             onBlur={e => e.target.style.borderColor = BORDER}
           />
-        ) : (
+        )}
+
+        {mode === 'upload' && (
           <div
             onDragOver={(e) => { e.preventDefault(); if (!isLoading) setIsDragOver(true); }}
             onDragLeave={() => setIsDragOver(false)}
             onDrop={handleDrop}
           >
             <label style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              justifyContent: 'center', gap: '0.5rem',
               border: isDragOver ? '2px dashed #4f46e5' : '2px dashed #c7d2fe',
-              borderRadius: '12px',
-              padding: '2rem 1rem',
+              borderRadius: '12px', padding: '2rem 1rem',
               cursor: isLoading ? 'default' : 'pointer',
               backgroundColor: isDragOver ? '#ede9fe' : INDIGO_LIGHT,
               transition: 'all 0.15s',
-              transform: isDragOver ? 'scale(1.01)' : 'scale(1)',
             }}>
               {isLoading ? (
                 <>
-                  <div style={{
-                    width: '28px', height: '28px',
-                    border: `3px solid #c7d2fe`,
-                    borderTopColor: INDIGO,
-                    borderRadius: '50%',
-                    animation: 'spin 0.8s linear infinite',
-                  }} />
+                  <div style={{ width: '28px', height: '28px', border: `3px solid #c7d2fe`, borderTopColor: INDIGO, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                   <style>{`@keyframes spin { to { transform: rotate(360deg); }}`}</style>
                   <span style={{ color: INDIGO, fontWeight: '600', fontSize: '0.85rem' }}>Extracting text...</span>
                 </>
@@ -146,17 +135,41 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, onFi
                   <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>PDF, DOCX, TXT · max 10MB · drag or click</span>
                 </>
               )}
-              <input
-                id={`file-upload-${label.toLowerCase().replace(/\s+/g, '-')}`}
-                name={`file-upload-${label.toLowerCase().replace(/\s+/g, '-')}`}
-                type="file"
-                accept=".pdf,.docx,.doc,.txt"
-                style={{ display: 'none' }}
-                onChange={onFileUpload}
-                disabled={isLoading}
-              />
+              <input type="file" accept=".pdf,.docx,.doc,.txt" style={{ display: 'none' }} onChange={onFileUpload} disabled={isLoading} />
             </label>
           </div>
+        )}
+
+        {mode === 'image' && (
+          <label style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', gap: '0.5rem',
+            border: '2px dashed #c7d2fe', borderRadius: '12px', padding: '2rem 1rem',
+            cursor: isLoading ? 'default' : 'pointer',
+            backgroundColor: INDIGO_LIGHT, transition: 'all 0.15s',
+          }}>
+            {isLoading ? (
+              <>
+                <div style={{ width: '28px', height: '28px', border: `3px solid #c7d2fe`, borderTopColor: INDIGO, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                <style>{`@keyframes spin { to { transform: rotate(360deg); }}`}</style>
+                <span style={{ color: INDIGO, fontWeight: '600', fontSize: '0.85rem' }}>{ocrProgress || 'Processing image...'}</span>
+              </>
+            ) : text ? (
+              <>
+                <span style={{ fontSize: '1.5rem' }}>✅</span>
+                <span style={{ color: '#166534', fontWeight: '700', fontSize: '0.85rem' }}>Image text extracted</span>
+                <span style={{ color: '#64748b', fontSize: '0.75rem' }}>{text.slice(0, 60)}...</span>
+                <span style={{ color: INDIGO, fontSize: '0.75rem', textDecoration: 'underline' }}>Click to replace</span>
+              </>
+            ) : (
+              <>
+                <span style={{ fontSize: '2rem' }}>🖼️</span>
+                <span style={{ color: INDIGO, fontWeight: '700', fontSize: '0.9rem' }}>Upload a screenshot</span>
+                <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>PNG, JPG, WEBP · Text will be extracted automatically</span>
+              </>
+            )}
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" style={{ display: 'none' }} onChange={handleImageUpload} disabled={isLoading} />
+          </label>
         )}
       </div>
     </div>
@@ -280,6 +293,7 @@ export default function UploadResumeForm() {
             text={cvText}
             setText={setCvText}
             isLoading={cvLoading}
+            setIsLoading={setCvLoading}
             onFileUpload={(e) => {
               const file = e.target.files[0];
               if (file) parseFile(file, setCvText, setCvLoading, true);
@@ -293,6 +307,7 @@ export default function UploadResumeForm() {
             text={jdText}
             setText={setJdText}
             isLoading={jdLoading}
+            setIsLoading={setJdLoading}
             onFileUpload={(e) => {
               const file = e.target.files[0];
               if (file) parseFile(file, setJdText, setJdLoading, false);
