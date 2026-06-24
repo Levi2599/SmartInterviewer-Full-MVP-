@@ -121,25 +121,36 @@ router.get('/:userId', async (req, res) => {
       focusArea = existingCache.focus_area || lowest_component;
       actionableSteps = existingCache.actionable_steps || ["Practice structuring responses."];
     } else {
-      const aiRecommendation = await recommendationPrompt({
-        star_breakdown,
-        weakness_profile,
-        lowest_component,
-        session_count: recordCount,
-        session_history: clean_history
-      });
+      try {
+        const aiRecommendation = await recommendationPrompt({
+          star_breakdown,
+          weakness_profile,
+          lowest_component,
+          session_count: recordCount,
+          session_history: clean_history
+        });
 
-      weaknessPattern = aiRecommendation.detected_weakness_pattern || `Growth needed in ${lowest_component}.`;
-      focusArea = (aiRecommendation.strategic_recommendation && aiRecommendation.strategic_recommendation.focus_area) || lowest_component;
-      actionableSteps = (aiRecommendation.strategic_recommendation && aiRecommendation.strategic_recommendation.actionable_steps) || ["Practice structuring mockups."];
+        weaknessPattern = aiRecommendation.detected_weakness_pattern || `Growth needed in ${lowest_component}.`;
+        focusArea = (aiRecommendation.strategic_recommendation && aiRecommendation.strategic_recommendation.focus_area) || lowest_component;
+        actionableSteps = (aiRecommendation.strategic_recommendation && aiRecommendation.strategic_recommendation.actionable_steps) || ["Practice structuring responses."];
 
-      updateRecommendationCache(userId, {
-        detected_weakness_pattern: weaknessPattern,
-        focus_area: focusArea,
-        actionable_steps: actionableSteps,
-        generated_at: new Date(),
-        session_count_at_generation: recordCount
-      }).catch(err => console.error('Cache update failed (non-critical):', err));
+        updateRecommendationCache(userId, {
+          detected_weakness_pattern: weaknessPattern,
+          focus_area: focusArea,
+          actionable_steps: actionableSteps,
+          generated_at: new Date(),
+          session_count_at_generation: recordCount
+        }).catch(err => console.error('Cache update failed (non-critical):', err));
+      } catch (aiErr) {
+        console.error('AI recommendation failed (non-critical):', aiErr.message);
+        weaknessPattern = `Focus on strengthening your ${lowest_component} component.`;
+        focusArea = lowest_component;
+        actionableSteps = [
+          "Practice structuring responses with the STAR method.",
+          "Add specific, measurable results to your answers.",
+          "Keep answers concise — aim for 90–120 seconds per response."
+        ];
+      }
     }
 
     return res.json({
