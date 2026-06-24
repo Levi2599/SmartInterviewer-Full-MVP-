@@ -37,8 +37,12 @@ export default function App() {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         const res = await window.fetch(url, options);
-        if (res.ok) return res;
-        if (attempt === retries) throw new Error(t('authFailed'));
+        // Return immediately for any 4xx — caller reads data.error
+        if (res.ok || res.status < 500) return res;
+        // 5xx (server cold start) — retry unless last attempt
+        if (attempt === retries) return res;
+        setError(`${t('serverStarting')} (${attempt}/${retries})`);
+        await new Promise(r => setTimeout(r, delayMs));
       } catch (err) {
         if (attempt === retries) throw err;
         setError(`${t('serverStarting')} (${attempt}/${retries})`);
