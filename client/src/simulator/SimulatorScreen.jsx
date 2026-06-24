@@ -44,6 +44,7 @@ export default function SimulatorScreen() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [recognition, setRecognition] = useState(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -97,11 +98,15 @@ export default function SimulatorScreen() {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(currentQuestion);
       utterance.lang = 'en-US';
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
       window.speechSynthesis.speak(utterance);
     }
     return () => {
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel();
+        setIsSpeaking(false);
       }
     };
   }, [currentQuestion]);
@@ -422,25 +427,32 @@ export default function SimulatorScreen() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (window.speechSynthesis) {
+                      if (!window.speechSynthesis) return;
+                      if (isSpeaking) {
+                        window.speechSynthesis.cancel();
+                        setIsSpeaking(false);
+                      } else {
                         window.speechSynthesis.cancel();
                         const utterance = new SpeechSynthesisUtterance(currentQuestion);
                         utterance.lang = 'en-US';
+                        utterance.onstart = () => setIsSpeaking(true);
+                        utterance.onend = () => setIsSpeaking(false);
+                        utterance.onerror = () => setIsSpeaking(false);
                         window.speechSynthesis.speak(utterance);
                       }
                     }}
                     style={{
-                      backgroundColor: '#f1f5f9', color: '#475569',
-                      border: '1px solid #e2e8f0', borderRadius: '50%',
+                      backgroundColor: isSpeaking ? '#fee2e2' : '#f1f5f9',
+                      color: isSpeaking ? '#dc2626' : '#475569',
+                      border: `1px solid ${isSpeaking ? '#fca5a5' : '#e2e8f0'}`,
+                      borderRadius: '50%',
                       width: '34px', height: '34px', cursor: 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: '0.9rem', transition: 'all 0.15s', flexShrink: 0
                     }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#e2e8f0'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#f1f5f9'}
-                    title="Read question aloud"
+                    title={isSpeaking ? 'Stop reading' : 'Read question aloud'}
                   >
-                    🔊
+                    {isSpeaking ? '⏹' : '🔊'}
                   </button>
                 </div>
               </div>
