@@ -178,11 +178,11 @@ export default function ProgressDashboard() {
 
   // Radar chart data
   const radarData = [
-    { subject: 'Situation', score: S },
-    { subject: 'Task', score: T },
-    { subject: 'Action', score: A },
-    { subject: 'Result', score: R },
-    { subject: 'Reflection', score: Math.round((S + R) / 2) },
+    { subject: t('starSituation'), score: S },
+    { subject: t('starTask'), score: T },
+    { subject: t('starAction'), score: A },
+    { subject: t('starResult'), score: R },
+    { subject: t('starReflection'), score: Math.round((S + R) / 2) },
   ];
 
   const getBarColor = (score) => {
@@ -261,7 +261,7 @@ export default function ProgressDashboard() {
                 />
                 <ReferenceLine 
                   y={Number(localStorage.getItem('pref-readiness-threshold') || '75')} 
-                  label={{ value: `Target (${localStorage.getItem('pref-readiness-threshold') || '75'}%)`, fill: '#ef4444', fontSize: 10, position: 'top' }} 
+                  label={{ value: `${t('chartTargetLabel')} (${localStorage.getItem('pref-readiness-threshold') || '75'}%)`, fill: '#ef4444', fontSize: 10, position: 'top' }}
                   stroke="#ef4444" 
                   strokeDasharray="3 3" 
                 />
@@ -320,10 +320,10 @@ export default function ProgressDashboard() {
           <h2 style={{ margin: '0 0 1.25rem 0', fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>
             {t('progressComponentScores')}
           </h2>
-          <ProgressBar label="Situation" score={S} color={getBarColor(S)} />
-          <ProgressBar label="Task" score={T} color={getBarColor(T)} />
-          <ProgressBar label="Action" score={A} color={getBarColor(A)} />
-          <ProgressBar label="Result" score={R} color={getBarColor(R)} />
+          <ProgressBar label={t('starSituation')} score={S} color={getBarColor(S)} />
+          <ProgressBar label={t('starTask')} score={T} color={getBarColor(T)} />
+          <ProgressBar label={t('starAction')} score={A} color={getBarColor(A)} />
+          <ProgressBar label={t('starResult')} score={R} color={getBarColor(R)} />
         </div>
       </div>
 

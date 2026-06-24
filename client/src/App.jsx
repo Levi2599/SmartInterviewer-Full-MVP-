@@ -245,7 +245,7 @@ export default function App() {
 
   // Language toggle — two pill buttons used in auth screens
   const langToggle = (
-    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+    <div dir="ltr" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
       <button
         type="button"
         onClick={() => setLanguage('en')}
@@ -471,10 +471,12 @@ export default function App() {
         <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#475569', marginBottom: '0.5rem' }}>
           {t('continueAsGuest')}
         </label>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          {roleCard('candidate', '👨‍💻', t('roleCandidate'))}
-          {roleCard('interviewer', '💼', t('roleInterviewer'))}
-        </div>
+        {authTab === 'signin' && (
+          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.5rem' }}>
+            {roleCard('candidate', '👨‍💻', t('roleCandidate'))}
+            {roleCard('interviewer', '💼', t('roleInterviewer'))}
+          </div>
+        )}
       </div>
       <button
         type="button"

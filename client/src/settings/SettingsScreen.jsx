@@ -89,10 +89,10 @@ export default function SettingsScreen() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: 'clamp(1.35rem, 5vw, 1.75rem)', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
-            ⚙️ App Settings
+            ⚙️ {t('settingsTitle')}
           </h1>
           <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0 }}>
-            Configure your accessibility, language inputs, and role preferences.
+            {t('settingsSubtitle')}
           </p>
         </div>
         <button
@@ -104,7 +104,7 @@ export default function SettingsScreen() {
             boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
           }}
         >
-          ← Dashboard
+          {t('settingsDashboardBtn')}
         </button>
       </div>
 
@@ -130,7 +130,7 @@ export default function SettingsScreen() {
             <div>
               <div style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b' }}>{username}</div>
               <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', marginTop: '0.15rem' }}>
-                Logged in as {role}
+                {t('settingsLoggedInAs')} {role}
               </div>
             </div>
           </div>
@@ -139,7 +139,7 @@ export default function SettingsScreen() {
             backgroundColor: '#f5f3ff', border: '1px solid #e0d9ff',
             padding: '0.3rem 0.8rem', borderRadius: '20px', whiteSpace: 'nowrap',
           }}>
-            Active Session
+            {t('settingsActiveSession')}
           </span>
         </div>
 
@@ -190,15 +190,15 @@ export default function SettingsScreen() {
             boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
           }}>
             <h2 style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b', margin: '0 0 1.25rem 0', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
-              ♿ Accessibility & Input Settings
+              ♿ {t('settingsAccessibilityTitle')}
             </h2>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {/* Font Size */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>Font Size Scaling</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Resize typography across the interface.</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>{t('settingsFontSizeLabel')}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{t('settingsFontSizeDesc')}</div>
                 </div>
                 <select
                   value={fontSize}
@@ -209,9 +209,9 @@ export default function SettingsScreen() {
                     width: isMobile ? '100%' : 'auto', minWidth: isMobile ? 'unset' : '150px',
                   }}
                 >
-                  <option value="small">Small (14px)</option>
-                  <option value="medium">Medium (16px)</option>
-                  <option value="large">Large (18px)</option>
+                  <option value="small">{t('settingsFontSmall')}</option>
+                  <option value="medium">{t('settingsFontMedium')}</option>
+                  <option value="large">{t('settingsFontLarge')}</option>
                 </select>
               </div>
 
@@ -220,8 +220,8 @@ export default function SettingsScreen() {
               {/* High Contrast */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>High Contrast Mode</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Increase saturation for easier reading.</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>{t('settingsHighContrast')}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{t('settingsHighContrastDesc')}</div>
                 </div>
                 <input
                   type="checkbox"
@@ -236,8 +236,8 @@ export default function SettingsScreen() {
               {/* STT Transcription Language */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>Speech-to-Text Language</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Configure candidate mic voice recognition.</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>{t('settingsSttLangLabel')}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{t('settingsSttLangDesc')}</div>
                 </div>
                 <select
                   value={sttLang}
@@ -264,12 +264,12 @@ export default function SettingsScreen() {
             {role === 'candidate' ? (
               <div>
                 <h2 style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b', margin: '0 0 1.25rem 0', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
-                  👨‍💻 Candidate Preferences
+                  👨‍💻 {t('settingsCandidatePrefs')}
                 </h2>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>Target Readiness Score</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Define your personal interview success score target.</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>{t('settingsReadinessTarget')}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{t('settingsReadinessTargetDesc')}</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: isMobile ? '100%' : 'auto' }}>
                     <input
@@ -289,14 +289,14 @@ export default function SettingsScreen() {
             ) : (
               <div>
                 <h2 style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b', margin: '0 0 1.25rem 0', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
-                  💼 Recruiter Template Configurations
+                  💼 {t('settingsRecruiterPrefs')}
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   {/* Brand Name */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>Company PDF branding</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Title used as document header for printed PDFs.</div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>{t('settingsPdfBranding')}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{t('settingsPdfBrandingDesc')}</div>
                     </div>
                     <input
                       type="text"
@@ -316,8 +316,8 @@ export default function SettingsScreen() {
                   {/* Question Counts */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>Default Question Count</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Number of AI questions generated per template request.</div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>{t('settingsDefaultQCount')}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{t('settingsDefaultQCountDesc')}</div>
                     </div>
                     <select
                       value={defaultQuestions}
@@ -328,9 +328,9 @@ export default function SettingsScreen() {
                         width: isMobile ? '100%' : 'auto', minWidth: isMobile ? 'unset' : '180px',
                       }}
                     >
-                      <option value="3">3 Questions</option>
-                      <option value="5">5 Questions (Default)</option>
-                      <option value="10">10 Questions</option>
+                      <option value="3">{t('settingsQCount3')}</option>
+                      <option value="5">{t('settingsQCount5')}</option>
+                      <option value="10">{t('settingsQCount10')}</option>
                     </select>
                   </div>
                 </div>
@@ -351,7 +351,7 @@ export default function SettingsScreen() {
             fontSize: '0.875rem',
             marginBottom: '1rem',
           }}>
-            ✓ Settings saved successfully!
+            ✓ {t('settingsSavedMsg')}
           </div>
         )}
 
@@ -368,7 +368,7 @@ export default function SettingsScreen() {
           onMouseEnter={e => e.target.style.opacity = '0.92'}
           onMouseLeave={e => e.target.style.opacity = '1'}
         >
-          ✓ Save Settings
+          ✓ {t('settingsSaveBtn')}
         </button>
       </form>
 
@@ -379,10 +379,10 @@ export default function SettingsScreen() {
         boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
       }}>
         <h2 style={{ fontSize: '1rem', fontWeight: '800', color: '#b91c1c', margin: '0 0 0.25rem 0' }}>
-          ⚠️ Danger Zone
+          ⚠️ {t('settingsDangerZone')}
         </h2>
         <p style={{ fontSize: '0.8rem', color: '#dc2626', margin: '0 0 1.25rem 0' }}>
-          Irreversible security options. Delete your profile database records and reset cache.
+          {t('settingsDangerDesc')}
         </p>
         {deleteError && (
           <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: '8px', padding: '0.65rem 1rem', marginBottom: '0.75rem', fontSize: '0.85rem', fontWeight: '500' }}>
@@ -402,25 +402,25 @@ export default function SettingsScreen() {
             onMouseEnter={e => e.target.style.backgroundColor = '#fecaca'}
             onMouseLeave={e => e.target.style.backgroundColor = '#fee2e2'}
           >
-            Delete My Account & Data Permanently
+            {t('settingsDeleteBtn')}
           </button>
         ) : (
           <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '1rem' }}>
             <p style={{ fontSize: '0.875rem', fontWeight: '700', color: '#991b1b', margin: '0 0 0.75rem 0' }}>
-              This will permanently delete your profile, all simulation history, and B2B guides. This cannot be undone.
+              {t('settingsDeleteConfirmText')}
             </p>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button
                 onClick={() => setDeleteConfirm(false)}
                 style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f1f5f9', color: '#475569', fontWeight: '600', cursor: 'pointer' }}
               >
-                Cancel
+                {t('settingsCancel')}
               </button>
               <button
                 onClick={handleDeleteAllData}
                 style={{ flex: 2, padding: '0.65rem', borderRadius: '8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', fontWeight: '700', cursor: 'pointer' }}
               >
-                Yes, Delete Everything
+                {t('settingsDeleteYes')}
               </button>
             </div>
           </div>
