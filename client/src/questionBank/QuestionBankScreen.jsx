@@ -62,8 +62,8 @@ export default function QuestionBankScreen() {
           language,
         }),
       });
-      if (!res.ok) throw new Error('Could not generate questions.');
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not generate questions.');
       setQuestionBankId(data.question_bank_id);
       setQuestions(data.questions || []);
     } catch (err) {
