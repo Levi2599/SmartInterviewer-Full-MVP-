@@ -14,6 +14,10 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: "answer_text and question_text are required." });
     }
 
+    const heChars = (answer_text.match(/[֐-׿]/g) || []).length;
+    const totalChars = answer_text.replace(/\s/g, '').length;
+    const language = totalChars > 0 && heChars / totalChars > 0.2 ? 'he' : 'en';
+
     let previous_feedback_history = [];
     let existingSession = null;
     if (session_id) {
@@ -29,7 +33,8 @@ router.post('/', async (req, res) => {
       expected_method: expected_method || "STAR",
       star_target,
       topic_tag,
-      previous_feedback_history
+      previous_feedback_history,
+      language
     });
 
     // Automatically update session and save progress record

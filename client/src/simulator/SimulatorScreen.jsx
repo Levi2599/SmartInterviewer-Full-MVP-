@@ -18,6 +18,15 @@ export default function SimulatorScreen() {
   if (state.cv_text) sessionStorage.setItem('sim-cv', state.cv_text);
   if (state.jd_text) sessionStorage.setItem('sim-jd', state.jd_text);
 
+  const detectLang = (text) => {
+    const heChars = (text.match(/[֐-׿]/g) || []).length;
+    const total = text.replace(/\s/g, '').length;
+    return total > 0 && heChars / total > 0.25 ? 'he' : 'en';
+  };
+  const sessionLang = detectLang(jd_text + ' ' + cv_text);
+  const ttsLang = sessionLang === 'he' ? 'he-IL' : 'en-US';
+  const sttLang = sessionLang === 'he' ? 'he-IL' : (localStorage.getItem('pref-stt-lang') || 'en-US');
+
   // All hooks declared before any conditional return (React Rules of Hooks)
   const [sessionId] = useState(() => `${localStorage.getItem('userId') || 'user-001'}-${Date.now()}`);
   const [turnNumber, setTurnNumber] = useState(() => {
@@ -52,7 +61,7 @@ export default function SimulatorScreen() {
       const rec = new SpeechRecognition();
       rec.continuous = true;
       rec.interimResults = true;
-      rec.lang = localStorage.getItem('pref-stt-lang') || 'en-US';
+      rec.lang = sttLang;
 
       rec.onresult = (event) => {
         let transcript = '';
@@ -97,7 +106,7 @@ export default function SimulatorScreen() {
     if (isTtsEnabled && currentQuestion && window.speechSynthesis) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(currentQuestion);
-      utterance.lang = 'en-US';
+      utterance.lang = ttsLang;
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
       utterance.onerror = () => setIsSpeaking(false);
@@ -158,6 +167,7 @@ export default function SimulatorScreen() {
           session_id: sessionId,
           turn_number: currentTurn,
           conversation_history: currentHistory.slice(-6),
+          language: sessionLang,
         }),
       });
       if (!res.ok) throw new Error('Failed to retrieve next question.');
@@ -216,6 +226,7 @@ export default function SimulatorScreen() {
           star_target: 'all',
           topic_tag: 'technical_behavioral',
           session_id: sessionId,
+          language: sessionLang,
         }),
       });
       if (!res.ok) throw new Error('Failed to process feedback analysis.');
@@ -434,7 +445,7 @@ export default function SimulatorScreen() {
                       } else {
                         window.speechSynthesis.cancel();
                         const utterance = new SpeechSynthesisUtterance(currentQuestion);
-                        utterance.lang = 'en-US';
+                        utterance.lang = ttsLang;
                         utterance.onstart = () => setIsSpeaking(true);
                         utterance.onend = () => setIsSpeaking(false);
                         utterance.onerror = () => setIsSpeaking(false);

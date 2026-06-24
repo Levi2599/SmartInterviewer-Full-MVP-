@@ -22,10 +22,15 @@ async function coachFeedbackPrompt(input) {
   }
 
   const expectedMethod = input.expected_method || "STAR";
+  const lang = input.language || 'en';
+  const langInstruction = lang === 'he'
+    ? "LANGUAGE: Write the improvement_tip and all text fields in Hebrew (עברית) only.\n\n"
+    : "LANGUAGE: Write all text fields in English.\n\n";
 
   // 2. Define System Instructions
   const systemInstruction =
     "You are an expert interview coach AI for SmartInterviewer. Evaluate the candidate's answer using the expected methodology.\n\n" +
+    langInstruction +
     `EXPECTED METHODOLOGY: ${expectedMethod}\n\n` +
     "METHODOLOGY COMPONENT DEFINITIONS:\n" +
     "1. STAR: Situation (S), Task (T), Action (A), Result (R)\n" +

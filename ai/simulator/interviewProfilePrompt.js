@@ -27,10 +27,16 @@ async function interviewProfilePrompt(input) {
     throw new Error('Invalid conversation_history provided. Must be an array.');
   }
 
+  const lang = input.language || 'en';
+  const langInstruction = lang === 'he'
+    ? "LANGUAGE: Write the next_question and interviewer_persona fields in Hebrew (עברית). All text output must be in Hebrew only.\n\n"
+    : "LANGUAGE: Write all text fields in English.\n\n";
+
   // 2. Define System Instructions
-  const systemInstruction = 
+  const systemInstruction =
     "You are an expert interviewer AI for SmartInterviewer. Simulate realistic, challenging job " +
     "interviews based on the candidate's CV and the target Job Description (JD). Calibrate the depth and tone to the role's seniority.\n\n" +
+    langInstruction +
     "CORE RULES:\n" +
     "1. STATELESS: Generate exactly ONE focused, relevant question at a time representing the current turn.\n" +
     "2. METADATA: Classify every question you generate. Map it to one of these methodologies:\n" +
