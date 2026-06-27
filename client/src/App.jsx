@@ -47,13 +47,15 @@ function UserDropdown({ onClose, onLogout, t, isRtl }) {
   );
 }
 
-// Forces a full remount of the dashboard on every navigation to '/',
-// ensuring fresh data is always fetched regardless of component identity.
+// Forces a full remount of the dashboard on every navigation to '/'.
+// Including location.state?.refresh guarantees a fresh fetch even when
+// location.key stays the same (e.g. same-path re-navigation).
 function HomeRoute({ role }) {
   const location = useLocation();
+  const mountKey = `${location.key}-${location.state?.refresh ?? ''}`;
   return role === 'candidate'
-    ? <ProgressDashboard key={location.key} />
-    : <RecruiterDashboard key={location.key} />;
+    ? <ProgressDashboard key={mountKey} />
+    : <RecruiterDashboard key={mountKey} />;
 }
 
 export default function App() {

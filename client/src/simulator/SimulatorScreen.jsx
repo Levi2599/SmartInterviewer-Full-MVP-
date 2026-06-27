@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import CoachOverlay from '../coach/CoachOverlay';
 import Stepper from '../components/Stepper';
 import { useIsMobile } from '../hooks/useIsMobile';
@@ -10,6 +10,7 @@ const INDIGO = '#4f46e5';
 
 export default function SimulatorScreen() {
   const location = useLocation();
+  const navigate = useNavigate();
   const state = location.state || {};
   const isMobile = useIsMobile();
   const { t, language } = useLanguage();
@@ -417,12 +418,12 @@ export default function SimulatorScreen() {
             >
               {t('simStayBtn')}
             </button>
-            <Link
-              to="/"
-              style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', backgroundColor: '#fee2e2', color: '#dc2626', fontWeight: '700', textDecoration: 'none', textAlign: 'center', border: '1px solid #fecaca' }}
+            <button
+              onClick={() => navigate('/', { state: { refresh: Date.now() } })}
+              style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', backgroundColor: '#fee2e2', color: '#dc2626', fontWeight: '700', textAlign: 'center', border: '1px solid #fecaca', cursor: 'pointer' }}
             >
               {t('simExitBtn')}
-            </Link>
+            </button>
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { getAuthHeaders } from '../utils/auth';
 import { useLanguage } from '../utils/LanguageContext';
 
@@ -30,6 +30,7 @@ export default function QuestionBankScreen() {
 
   const { t, language } = useLanguage();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (location.state && location.state.resumeGuide) {
@@ -121,21 +122,21 @@ export default function QuestionBankScreen() {
             {t('qbPageSubtitle')}
           </p>
         </div>
-        <Link
-          to="/"
+        <button
+          onClick={() => navigate('/', { state: { refresh: Date.now() } })}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.5rem',
             backgroundColor: '#fff', color: '#64748b',
             padding: '0.5rem 1.25rem', borderRadius: '10px', fontWeight: '700',
-            border: '1px solid #e2e8f0', textDecoration: 'none', fontSize: '0.9rem',
+            border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '0.9rem',
             direction: 'ltr',
           }}
         >
           <span>←</span>
           <span>{t('qbBackDashboard')}</span>
-        </Link>
+        </button>
       </div>
 
       {/* Filters Card */}
