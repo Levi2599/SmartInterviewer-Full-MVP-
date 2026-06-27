@@ -11,6 +11,7 @@ export default function SettingsScreen() {
   const isMobile = useIsMobile();
   const { language, setLanguage, t } = useLanguage();
   const [saved, setSaved] = useState(false);
+  const [saveTimeout, setSaveTimeout] = useState(null);
   const [role] = useState(() => localStorage.getItem('role') || 'candidate');
   const [username] = useState(() => localStorage.getItem('username') || 'User');
   const [userId] = useState(() => localStorage.getItem('userId'));
@@ -46,20 +47,19 @@ export default function SettingsScreen() {
     applyAccessibility(fontSize, highContrast);
   }, [fontSize, highContrast]);
 
-  const handleSave = (e) => {
-    e.preventDefault();
-    localStorage.setItem('pref-font-size', fontSize);
-    localStorage.setItem('pref-high-contrast', String(highContrast));
-    localStorage.setItem('pref-stt-lang', sttLang);
-    
-    if (role === 'candidate') {
-      localStorage.setItem('pref-readiness-threshold', readinessThreshold);
-    } else {
-      localStorage.setItem('pref-recruiter-company', companyName);
-      localStorage.setItem('pref-recruiter-qcount', defaultQuestions);
-    }
+  useEffect(() => {
+    return () => {
+      if (saveTimeout) clearTimeout(saveTimeout);
+    };
+  }, [saveTimeout]);
+
+  const persistSetting = (key, value) => {
+    localStorage.setItem(key, String(value));
     setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSaveTimeout(prev => {
+      if (prev) clearTimeout(prev);
+      return setTimeout(() => setSaved(false), 2000);
+    });
   };
 
   const [deleteConfirm, setDeleteConfirm] = useState(false);
@@ -72,11 +72,17 @@ export default function SettingsScreen() {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
-      if (!res.ok) throw new Error('Data deletion failed.');
+      if (!res.ok) throw new Error('Account deletion failed.');
       document.documentElement.style.fontSize = '16px';
       document.body.style.filter = 'none';
-      localStorage.clear();
-      navigate('/');
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('username');
+      localStorage.removeItem('role');
+      localStorage.removeItem('cached-cv');
+      localStorage.removeItem('cached-jd');
+      sessionStorage.clear();
+      window.location.replace('/');
     } catch (err) {
       setDeleteError(err.message);
       setDeleteConfirm(false);
@@ -98,17 +104,22 @@ export default function SettingsScreen() {
         <button
           onClick={() => navigate('/')}
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
             backgroundColor: '#fff', color: '#64748b',
             padding: '0.5rem 1.25rem', borderRadius: '10px', fontWeight: '700',
             border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '0.85rem',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+            direction: 'ltr',
           }}
         >
-          {t('settingsDashboardBtn')}
+          <span>←</span>
+          <span>{t('settingsDashboardBtn')}</span>
         </button>
       </div>
 
-      <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         
         {/* Profile Card */}
         <div style={{
@@ -128,7 +139,7 @@ export default function SettingsScreen() {
               {role === 'candidate' ? '👨‍💻' : '💼'}
             </div>
             <div>
-              <div style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b' }}>{username}</div>
+              <div style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b' }}>{username === 'Guest' ? t('guest') : username}</div>
               <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', marginTop: '0.15rem' }}>
                 {t('settingsLoggedInAs')} {role}
               </div>
@@ -163,7 +174,10 @@ export default function SettingsScreen() {
                 <button
                   key={code}
                   type="button"
-                  onClick={() => setLanguage(code)}
+                  onClick={() => {
+                    setLanguage(code);
+                    persistSetting('pref-lang', code);
+                  }}
                   style={{
                     flex: 1,
                     padding: '0.65rem 1rem',
@@ -202,7 +216,11 @@ export default function SettingsScreen() {
                 </div>
                 <select
                   value={fontSize}
-                  onChange={e => setFontSize(e.target.value)}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setFontSize(val);
+                    persistSetting('pref-font-size', val);
+                  }}
                   style={{
                     padding: '0.5rem 1rem', borderRadius: '8px', border: '1.5px solid #e2e8f0',
                     fontSize: '0.85rem', fontWeight: '600', outline: 'none',
@@ -226,7 +244,11 @@ export default function SettingsScreen() {
                 <input
                   type="checkbox"
                   checked={highContrast}
-                  onChange={e => setHighContrast(e.target.checked)}
+                  onChange={e => {
+                    const val = e.target.checked;
+                    setHighContrast(val);
+                    persistSetting('pref-high-contrast', String(val));
+                  }}
                   style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                 />
               </div>
@@ -241,7 +263,11 @@ export default function SettingsScreen() {
                 </div>
                 <select
                   value={sttLang}
-                  onChange={e => setSttLang(e.target.value)}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setSttLang(val);
+                    persistSetting('pref-stt-lang', val);
+                  }}
                   style={{
                     padding: '0.5rem 1rem', borderRadius: '8px', border: '1.5px solid #e2e8f0',
                     fontSize: '0.85rem', fontWeight: '600', outline: 'none',
@@ -277,7 +303,11 @@ export default function SettingsScreen() {
                       min="50"
                       max="100"
                       value={readinessThreshold}
-                      onChange={e => setReadinessThreshold(e.target.value)}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setReadinessThreshold(val);
+                        persistSetting('pref-readiness-threshold', val);
+                      }}
                       style={{ cursor: 'pointer', width: isMobile ? '100%' : '120px' }}
                     />
                     <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#4f46e5', minWidth: '35px', textAlign: 'right' }}>
@@ -301,7 +331,11 @@ export default function SettingsScreen() {
                     <input
                       type="text"
                       value={companyName}
-                      onChange={e => setCompanyName(e.target.value)}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setCompanyName(val);
+                        persistSetting('pref-recruiter-company', val);
+                      }}
                       style={{
                         padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1.5px solid #e2e8f0',
                         fontSize: '0.9rem', outline: 'none', fontWeight: '600',
@@ -321,7 +355,11 @@ export default function SettingsScreen() {
                     </div>
                     <select
                       value={defaultQuestions}
-                      onChange={e => setDefaultQuestions(e.target.value)}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setDefaultQuestions(val);
+                        persistSetting('pref-recruiter-qcount', val);
+                      }}
                       style={{
                         padding: '0.5rem 1rem', borderRadius: '8px', border: '1.5px solid #e2e8f0',
                         fontSize: '0.85rem', fontWeight: '600', outline: 'none',
@@ -355,22 +393,7 @@ export default function SettingsScreen() {
           </div>
         )}
 
-        {/* Action Button */}
-        <button
-          type="submit"
-          style={{
-            padding: '1rem', borderRadius: '12px', border: 'none',
-            background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-            color: '#fff', fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(79, 70, 229, 0.35)',
-            marginTop: '0.5rem', transition: 'all 0.2s'
-          }}
-          onMouseEnter={e => e.target.style.opacity = '0.92'}
-          onMouseLeave={e => e.target.style.opacity = '1'}
-        >
-          ✓ {t('settingsSaveBtn')}
-        </button>
-      </form>
+      </div>
 
       {/* Danger Zone */}
       <div style={{

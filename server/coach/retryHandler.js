@@ -2,18 +2,22 @@ const express = require('express');
 const router = express.Router();
 const coachFeedbackPrompt = require("../../ai/coach/coachFeedbackPrompt");
 const { findBySessionId } = require("../../database/simulator/sessionDB");
-const { saveProgress } = require("../../database/progress/progressDB");
+const { ProgressModel } = require("../../database/progress/progressDB");
 const { detectWeaknesses } = require("../progress/weaknessDetector");
 
 router.post('/', async (req, res) => {
   try {
-    const { original_answer, retry_answer, question_text, expected_method, session_id, original_score } = req.body;
+    const { original_answer, retry_answer, question_text, expected_method, session_id, original_score, language: clientLang } = req.body;
 
     if (!original_answer || !retry_answer || !question_text) {
       return res.status(400).json({ error: "original_answer, retry_answer, and question_text are required." });
     }
 
     const method = expected_method || "STAR";
+
+    const heChars = (retry_answer.match(/[֐-׿]/g) || []).length;
+    const totalChars = retry_answer.replace(/\s/g, '').length;
+    const language = clientLang || (totalChars > 0 && heChars / totalChars > 0.2 ? 'he' : 'en');
 
     // Evaluate only the retry answer — original score comes from the client
     // to prevent non-deterministic re-evaluation causing score inconsistency
@@ -22,7 +26,8 @@ router.post('/', async (req, res) => {
       question_text,
       session_id,
       previous_feedback_history: [],
-      expected_method: method
+      expected_method: method,
+      language
     });
 
     const originalScoreVal = typeof original_score === 'number' ? original_score : 0;
@@ -61,7 +66,7 @@ router.post('/', async (req, res) => {
 
         if (retryFeedback.star_breakdown) {
           const userId = existingSession.user_id || session_id.split('-').slice(0, -1).join('-');
-          const weaknessEvaluation = await detectWeaknesses([retryFeedback.star_breakdown]);
+          const weaknessEvaluation = await detectWeaknesses([retryFeedback.star_breakdown], language);
           const s = retryFeedback.star_breakdown.S || 0;
           const t = retryFeedback.star_breakdown.T || 0;
           const a = retryFeedback.star_breakdown.A || 0;
@@ -71,13 +76,11 @@ router.post('/', async (req, res) => {
             ? Math.max(0, Math.min(100, Math.round((s + a + r) / 3)))
             : Math.max(0, Math.min(100, Math.round((s + t + a + r) / 4)));
 
-          await saveProgress({
-            user_id: userId,
-            session_id,
-            readiness_score,
-            star_breakdown: { S: s, T: t, A: a, R: r },
-            weakness_tags: weaknessEvaluation.weakness_profile || []
-          });
+          await ProgressModel.findOneAndUpdate(
+            { user_id: userId, session_id },
+            { $set: { readiness_score, star_breakdown: { S: s, T: t, A: a, R: r }, weakness_tags: weaknessEvaluation.weakness_profile || [] } },
+            { sort: { date: -1 } }
+          );
         }
       }
     }

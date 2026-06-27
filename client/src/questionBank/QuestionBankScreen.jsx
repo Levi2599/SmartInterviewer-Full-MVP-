@@ -31,6 +31,17 @@ export default function QuestionBankScreen() {
   const { t, language } = useLanguage();
   const location = useLocation();
 
+  // Cache eviction: clear recruiter dashboard cache on mount and unmount
+  // so that any navigation away from this screen forces a fresh DB fetch.
+  useEffect(() => {
+    sessionStorage.removeItem('recruiterGuides');
+    sessionStorage.removeItem('recruiterGuidesTime');
+    return () => {
+      sessionStorage.removeItem('recruiterGuides');
+      sessionStorage.removeItem('recruiterGuidesTime');
+    };
+  }, []);
+
   useEffect(() => {
     if (location.state && location.state.resumeGuide) {
       const g = location.state.resumeGuide;
@@ -66,6 +77,10 @@ export default function QuestionBankScreen() {
       if (!res.ok) throw new Error(data.error || 'Could not generate questions.');
       setQuestionBankId(data.question_bank_id);
       setQuestions(data.questions || []);
+
+      // Cache eviction: clear recruiter guides cache on successful generation
+      sessionStorage.removeItem('recruiterGuides');
+      sessionStorage.removeItem('recruiterGuidesTime');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -124,13 +139,17 @@ export default function QuestionBankScreen() {
         <Link
           to="/"
           style={{
-            display: 'inline-block',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
             backgroundColor: '#fff', color: '#64748b',
             padding: '0.5rem 1.25rem', borderRadius: '10px', fontWeight: '700',
             border: '1px solid #e2e8f0', textDecoration: 'none', fontSize: '0.9rem',
+            direction: 'ltr',
           }}
         >
-          {t('qbBackDashboard')}
+          <span>←</span>
+          <span>{t('qbBackDashboard')}</span>
         </Link>
       </div>
 
@@ -156,7 +175,7 @@ export default function QuestionBankScreen() {
                 type="text"
                 value={jobRole}
                 onChange={e => setJobRole(e.target.value)}
-                placeholder="e.g. Frontend Developer"
+                placeholder={t('qbJobRolePlaceholder')}
                 required
                 style={{
                   width: '100%', padding: '0.65rem 0.875rem',
@@ -177,7 +196,7 @@ export default function QuestionBankScreen() {
                 type="text"
                 value={industry}
                 onChange={e => setIndustry(e.target.value)}
-                placeholder="e.g. FinTech"
+                placeholder={t('qbIndustryPlaceholder')}
                 required
                 style={{
                   width: '100%', padding: '0.65rem 0.875rem',
@@ -207,9 +226,9 @@ export default function QuestionBankScreen() {
                 onFocus={e => e.target.style.borderColor = INDIGO}
                 onBlur={e => e.target.style.borderColor = '#e2e8f0'}
               >
-                <option value="Junior">Junior Track</option>
-                <option value="Mid">Mid Profile</option>
-                <option value="Senior">Senior Leadership</option>
+                <option value="Junior">{t('qbSeniorityJunior')}</option>
+                <option value="Mid">{t('qbSeniorityMid')}</option>
+                <option value="Senior">{t('qbSenioritySenior')}</option>
               </select>
             </div>
             {/* Count */}
@@ -241,7 +260,7 @@ export default function QuestionBankScreen() {
             <textarea
               value={jdText}
               onChange={e => setJdText(e.target.value)}
-              placeholder="Paste job requirements, tech stack, or role description for more targeted questions..."
+              placeholder={t('qbOptionalJdPlaceholder')}
               style={{
                 width: '100%', height: '70px', padding: '0.65rem 0.875rem',
                 borderRadius: '10px', border: '1.5px solid #e2e8f0',
@@ -277,7 +296,7 @@ export default function QuestionBankScreen() {
                 }} />
                 {t('qbGeneratingBtn')}
               </>
-            ) : `✨ ${t('qbGenerateQsBtn')}`}
+            ) : t('qbGenerateQsBtn')}
           </button>
         </form>
       </div>
@@ -309,7 +328,7 @@ export default function QuestionBankScreen() {
                 backgroundColor: '#fafafa',
               }}>
                 <span style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>
-                  🤖 {t('qbAiQuestionsHeader')} ({questions.length})
+                  {t('qbAiQuestionsHeader')} ({questions.length})
                 </span>
                 <span style={{
                   fontSize: '0.75rem', color: INDIGO,
@@ -445,7 +464,7 @@ export default function QuestionBankScreen() {
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
                 <span style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>
-                  🗂 {t('qbBasketTitle')}
+                  {t('qbBasketTitle')}
                 </span>
                 <span style={{
                   backgroundColor: INDIGO_LIGHT, color: INDIGO,
@@ -521,7 +540,7 @@ export default function QuestionBankScreen() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
                     }}
                   >
-                    {exporting === 'pdf' ? `⏳ ${t('qbExporting')}` : `📄 ${t('qbExportPdfBtn')}`}
+                    {exporting === 'pdf' ? `⏳ ${t('qbExporting')}` : ` ${t('qbExportPdfBtn')}`}
                   </button>
                 </div>
               )}

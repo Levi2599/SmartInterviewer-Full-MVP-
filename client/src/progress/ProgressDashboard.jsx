@@ -72,15 +72,15 @@ export default function ProgressDashboard() {
   const [deleteStatus, setDeleteStatus] = useState('');
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     const fetchProgress = async () => {
       const activeUserId = localStorage.getItem('userId') || 'user-001';
 
       try {
-        const cached = sessionStorage.getItem('progressData');
-        const cachedTime = sessionStorage.getItem('progressDataTime');
+        const cached = sessionStorage.getItem(`progressData_${language}`);
+        const cachedTime = sessionStorage.getItem(`progressDataTime_${language}`);
         if (cached && cachedTime && (Date.now() - Number(cachedTime)) < 5 * 60 * 1000) {
           setData(JSON.parse(cached));
           setLoading(false);
@@ -88,8 +88,9 @@ export default function ProgressDashboard() {
         }
       } catch (_) {}
 
+      setLoading(true);
       try {
-        const res = await fetch(`/api/progress/${activeUserId}`, {
+        const res = await fetch(`/api/progress/${activeUserId}?lang=${language}`, {
           headers: getAuthHeaders(),
         });
         if (res.status === 404) { setData(null); setLoading(false); return; }
@@ -97,8 +98,8 @@ export default function ProgressDashboard() {
         const json = await res.json();
         setData(json);
         try {
-          sessionStorage.setItem('progressData', JSON.stringify(json));
-          sessionStorage.setItem('progressDataTime', String(Date.now()));
+          sessionStorage.setItem(`progressData_${language}`, JSON.stringify(json));
+          sessionStorage.setItem(`progressDataTime_${language}`, String(Date.now()));
         } catch (_) {}
       } catch (err) {
         setError(err.message);
@@ -107,7 +108,7 @@ export default function ProgressDashboard() {
       }
     };
     fetchProgress();
-  }, []);
+  }, [language]);
 
   if (loading) return (
     <div style={{
@@ -243,7 +244,7 @@ export default function ProgressDashboard() {
               {t('progressScoreTrendDesc')}
             </p>
           </div>
-          <div style={{ width: '100%', height: 200 }}>
+          <div style={{ width: '100%', height: 200 }} dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trendData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                 <defs>
@@ -292,11 +293,18 @@ export default function ProgressDashboard() {
           <h2 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>
             {t('progressFrameworkBalance')}
           </h2>
-          <div style={{ width: '100%', height: 220 }}>
+          <div style={{ width: '100%', height: 280 }} dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radarData}>
+              <RadarChart
+                data={radarData}
+                outerRadius={60}
+                margin={{ top: 20, right: 45, bottom: 10, left: 45 }}
+              >
                 <PolarGrid stroke="#e2e8f0" />
-                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#64748b', fontWeight: '600' }} />
+                <PolarAngleAxis
+                  dataKey="subject"
+                  tick={{ fontSize: 10, fill: '#64748b', fontWeight: '600' }}
+                />
                 <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
                 <Radar
                   dataKey="score"
@@ -447,13 +455,29 @@ export default function ProgressDashboard() {
               <button
                 onClick={async () => {
                   const activeUserId = localStorage.getItem('userId') || 'user-001';
-                  fetch(`/api/progress/${activeUserId}`, {
-                    method: 'DELETE',
-                    headers: getAuthHeaders(),
-                  }).catch(() => {});
-                  sessionStorage.clear();
-                  localStorage.clear();
-                  window.location.replace('/');
+                  try {
+                    const res = await fetch(`/api/progress/${activeUserId}/data-only`, {
+                      method: 'DELETE',
+                      headers: getAuthHeaders(),
+                    });
+                    if (!res.ok) {
+                      const err = await res.json().catch(() => ({}));
+                      throw new Error(err.error || 'Delete failed');
+                    }
+                    sessionStorage.removeItem('progressData');
+                    sessionStorage.removeItem('progressDataTime');
+                    sessionStorage.removeItem('progressData_en');
+                    sessionStorage.removeItem('progressDataTime_en');
+                    sessionStorage.removeItem('progressData_he');
+                    sessionStorage.removeItem('progressDataTime_he');
+                    setData(null);
+                    setDeleteConfirm(false);
+                    setDeleteStatus('');
+                  } catch (e) {
+                    console.error('Dashboard delete error:', e.message);
+                    setDeleteStatus(t('progressDeleteFailMsg'));
+                    setDeleteConfirm(false);
+                  }
                 }}
                 style={{ flex: 2, padding: '0.65rem', borderRadius: '8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', fontWeight: '700', cursor: 'pointer' }}
               >

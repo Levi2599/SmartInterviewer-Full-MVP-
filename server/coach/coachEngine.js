@@ -8,7 +8,8 @@ const { detectWeaknesses } = require("../progress/weaknessDetector");
 router.post('/', async (req, res) => {
   const start = Date.now();
   try {
-    const { answer_text, question_text, expected_method, star_target, topic_tag, session_id } = req.body;
+    console.log("COACH ENGINE REQUEST BODY:", req.body);
+    const { answer_text, question_text, expected_method, star_target, topic_tag, session_id, language: clientLang } = req.body;
 
     if (!answer_text || !question_text) {
       return res.status(400).json({ error: "answer_text and question_text are required." });
@@ -16,7 +17,8 @@ router.post('/', async (req, res) => {
 
     const heChars = (answer_text.match(/[֐-׿]/g) || []).length;
     const totalChars = answer_text.replace(/\s/g, '').length;
-    const language = totalChars > 0 && heChars / totalChars > 0.2 ? 'he' : 'en';
+    const language = clientLang || (totalChars > 0 && heChars / totalChars > 0.2 ? 'he' : 'en');
+    console.log("RESOLVED COACH LANGUAGE:", language);
 
     let previous_feedback_history = [];
     let existingSession = null;
@@ -62,7 +64,7 @@ router.post('/', async (req, res) => {
 
       if (feedbackResult.star_breakdown) {
         const userId = existingSession.user_id || session_id.split('-').slice(0, -1).join('-');
-        const weaknessEvaluation = await detectWeaknesses([feedbackResult.star_breakdown]);
+        const weaknessEvaluation = await detectWeaknesses([feedbackResult.star_breakdown], language);
         const s = feedbackResult.star_breakdown.S || 0;
         const t = feedbackResult.star_breakdown.T || 0;
         const a = feedbackResult.star_breakdown.A || 0;

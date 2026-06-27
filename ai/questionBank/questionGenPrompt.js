@@ -1,4 +1,9 @@
 const { callGeminiJson } = require('../geminiClient');
+const fs = require('fs');
+const path = require('path');
+
+const SYSTEM_PROMPT_PATH = path.join(__dirname, '../prompts/questionBank_system.txt');
+const SYSTEM_PROMPT_TEMPLATE = fs.readFileSync(SYSTEM_PROMPT_PATH, 'utf8');
 
 /**
  * Automates high-fidelity structured question generation for the application's question repository.
@@ -34,23 +39,11 @@ async function questionGenPrompt(input) {
     : "LANGUAGE: Write all text fields in English.\n\n";
 
   // 2. Define System Instructions
-  const systemInstruction =
-    "You are an expert HR consultant AI for SmartInterviewer. Generate high-quality structured " +
-    "interview questions for recruiters using behavioral and technical best practices.\n\n" +
-    langInstruction +
-    "Return ONLY a valid JSON " +
-    "array where every element matches the following item schema exactly:\n" +
-    "[\n" +
-    "  {\n" +
-    "    \"text\": \"string\",\n" +
-    "    \"type\": \"technical\" | \"behavioral\",\n" +
-    "    \"competency\": \"string\",\n" +
-    "    \"methodology_expectation\": \"STAR\" | \"PREP\" | \"Step-by-Step\",\n" +
-    "    \"follow_ups\": [\"string\"],\n" +
-    "    \"hr_keywords\": [\"string\"],\n" +
-    "    \"red_flags\": [\"string\"]\n" +
-    "  }\n" +
-    "]";
+  const systemInstruction = SYSTEM_PROMPT_TEMPLATE.replace('{{LANGUAGE_INSTRUCTION}}', langInstruction);
+
+  const languageMandate = lang === 'he'
+    ? "IMPORTANT LANGUAGE MANDATE: You MUST write the generated questions, competency, follow_ups, hr_keywords, and red_flags in Hebrew (עברית) only. "
+    : "IMPORTANT LANGUAGE MANDATE: You MUST write everything in English. ";
 
   // 3. Construct Stateless User Payload
   const userPayload = {
@@ -63,14 +56,15 @@ async function questionGenPrompt(input) {
     generation_constraints: {
       exact_question_count_to_generate: input.question_count,
       follow_ups_per_question: 2,
-      required_action: "Ensure absolute deduplication across the array. Calibrate structural depth to the seniority level. " +
-                       "Classify each question as technical or behavioral. Set methodology_expectation (STAR for behavioral, PREP for conceptual/theory, Step-by-Step for technical/coding). " +
+      required_action: languageMandate +
+                       "Ensure absolute deduplication across the array. Calibrate structural depth to the seniority level. " +
+                       "Classify each question as technical or behavioral. Set methodology_expectation (STAR for behavioral, CAR for concise behavioral, PREP for conceptual/theory, Step-by-Step for technical/coding). " +
                        "List Red Flags to watch out for in poor answers."
     }
   };
 
   // 4. Dispatch to Gemini JSON Engine
-  return await callGeminiJson(systemInstruction, userPayload);
+  return await callGeminiJson(systemInstruction, userPayload, 'questionBank');
 }
 
 module.exports = questionGenPrompt;

@@ -12,7 +12,7 @@ export default function SimulatorScreen() {
   const location = useLocation();
   const state = location.state || {};
   const isMobile = useIsMobile();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // Persist cv_text/jd_text in sessionStorage so a page refresh doesn't lose them
   const cv_text = state.cv_text || sessionStorage.getItem('sim-cv') || '';
@@ -25,7 +25,7 @@ export default function SimulatorScreen() {
     const total = text.replace(/\s/g, '').length;
     return total > 0 && heChars / total > 0.25 ? 'he' : 'en';
   };
-  const sessionLang = detectLang(jd_text + ' ' + cv_text);
+  const sessionLang = language === 'he' ? 'he' : detectLang(jd_text + ' ' + cv_text);
   const ttsLang = sessionLang === 'he' ? 'he-IL' : 'en-US';
   const sttLang = sessionLang === 'he' ? 'he-IL' : (localStorage.getItem('pref-stt-lang') || 'en-US');
 
@@ -56,6 +56,22 @@ export default function SimulatorScreen() {
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [recognition, setRecognition] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  useEffect(() => {
+    if (state.cv_text) {
+      const uid = localStorage.getItem('userId') || 'user-001';
+      sessionStorage.removeItem(`sim-turn-${uid}`);
+      sessionStorage.removeItem(`sim-history-${uid}`);
+      setTurnNumber(1);
+      setConversationHistory([]);
+    }
+    return () => {
+      sessionStorage.removeItem('progressData_en');
+      sessionStorage.removeItem('progressDataTime_en');
+      sessionStorage.removeItem('progressData_he');
+      sessionStorage.removeItem('progressDataTime_he');
+    };
+  }, []);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -161,16 +177,28 @@ export default function SimulatorScreen() {
     setLoading(msg);
     setError('');
     try {
+      // Turn 1: send full context to seed the server-side cache.
+      // Turn 2+: only session_id + trimmed history (CV/JD served from server cache).
+      const body = currentTurn === 1
+        ? {
+            cv_text, jd_text,
+            session_id: sessionId,
+            turn_number: currentTurn,
+            conversation_history: [],
+            language: sessionLang,
+          }
+        : {
+            session_id: sessionId,
+            turn_number: currentTurn,
+            // Send only the last 8 exchanges — enough context, far fewer tokens
+            conversation_history: currentHistory.slice(-8),
+            language: sessionLang,
+          };
+
       const res = await fetch('/api/simulator/generate-question', {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({
-          cv_text, jd_text,
-          session_id: sessionId,
-          turn_number: currentTurn,
-          conversation_history: currentHistory.slice(-6),
-          language: sessionLang,
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error('Failed to retrieve next question.');
       const data = await res.json();
@@ -202,15 +230,35 @@ export default function SimulatorScreen() {
           {t('simMissingDataBody')}
         </p>
         <Link to="/" style={{
-          display: 'inline-block', marginTop: '1.5rem',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          marginTop: '1.5rem',
           backgroundColor: INDIGO, color: '#fff',
           padding: '0.75rem 1.5rem', borderRadius: '10px', fontWeight: '600',
+          textDecoration: 'none',
+          direction: 'ltr',
         }}>
-          {t('simBackSetup')}
+          <span>←</span>
+          <span>{t('simBackSetup')}</span>
         </Link>
       </div>
     );
   }
+
+  // Clears the progress cache and notifies the server to evict the session entry.
+  // Called both on explicit exit and when a session naturally ends.
+  const endSession = () => {
+    sessionStorage.removeItem('progressData_en');
+    sessionStorage.removeItem('progressDataTime_en');
+    sessionStorage.removeItem('progressData_he');
+    sessionStorage.removeItem('progressDataTime_he');
+    // Best-effort: evict the server-side cache entry so CV/JD are not held in memory
+    fetch(`/api/simulator/session/${sessionId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).catch(() => {}); // fire-and-forget
+  };
 
   const handleAnswerSubmit = async (e) => {
     e.preventDefault();
@@ -233,6 +281,11 @@ export default function SimulatorScreen() {
       });
       if (!res.ok) throw new Error('Failed to process feedback analysis.');
       const data = await res.json();
+      // Invalidate progress cache so dashboard shows fresh data immediately
+      sessionStorage.removeItem('progressData_en');
+      sessionStorage.removeItem('progressDataTime_en');
+      sessionStorage.removeItem('progressData_he');
+      sessionStorage.removeItem('progressDataTime_he');
       setFeedback(data);
     } catch (err) {
       setError(err.message);
@@ -256,6 +309,7 @@ export default function SimulatorScreen() {
     setFeedback(null);
     fetchQuestion(nextTurn, updatedHistory);
   };
+
 
   // Step logic: 2=Question loading, 3=Answering, 4=Feedback
   const activeStep = loading ? 2 : feedback ? 4 : 3;
@@ -317,7 +371,7 @@ export default function SimulatorScreen() {
         </div>
         <button
           type="button"
-          onClick={() => setExitConfirm(true)}
+          onClick={() => { endSession(); setExitConfirm(true); }}
           style={{
             backgroundColor: '#fee2e2', color: '#dc2626',
             padding: '0.4rem 0.75rem', borderRadius: '8px',

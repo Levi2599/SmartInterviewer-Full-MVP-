@@ -5,7 +5,7 @@ const morgan = require("morgan");
 const config = require("./config.js");
 const { connectDB } = require("./database/db.js");
 
-const questionGenerator = require("./server/simulator/questionGenerator");
+const { router: questionGenerator, clearCacheEntry } = require("./server/simulator/questionGenerator");
 const fileParserService = require("./server/simulator/fileParserService");
 
 const coachEngine = require("./server/coach/coachEngine");
@@ -74,6 +74,10 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authController);
 
 app.use("/api/simulator/generate-question", rateLimiter, authenticate, questionGenerator);
+app.delete("/api/simulator/session/:id", authenticate, (req, res) => {
+  clearCacheEntry(req.params.id);
+  res.json({ ok: true });
+});
 app.use("/api/simulator/parse-file", authenticate, fileParserService);
 
 app.use("/api/coach/analyze", rateLimiter, authenticate, coachEngine);

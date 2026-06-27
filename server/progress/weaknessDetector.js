@@ -2,9 +2,12 @@
  * Detects the lowest performing STAR framework component and constructs a weakness profile.
  * @param {Array} star_history - Array of objects containing scores: { situation, task, action, result }
  */
-async function detectWeaknesses(star_history) {
+async function detectWeaknesses(star_history, language = 'en') {
   if (!star_history || star_history.length === 0) {
-    return { weakness_profile: ["No historic behavioral data captured yet."], lowest_component: "N/A" };
+    const noDataMsg = language === 'he'
+      ? 'אין עדיין נתוני התנהגות היסטוריים.'
+      : 'No historic behavioral data captured yet.';
+    return { weakness_profile: [noDataMsg], lowest_component: "N/A" };
   }
 
   const totals = { situation: 0, task: 0, action: 0, result: 0 };
@@ -38,7 +41,6 @@ async function detectWeaknesses(star_history) {
     }
   });
 
-  // Map components to clean human-readable outputs mapping to system needs
   const componentMapping = {
     situation: "Context Setting (Situation)",
     task: "Objective Alignment (Task)",
@@ -46,8 +48,19 @@ async function detectWeaknesses(star_history) {
     result: "Impact Presentation (Result)"
   };
 
+  const heComponentMapping = {
+    situation: "הגדרת הקשר (מצב)",
+    task: "יישור מטרות (משימה)",
+    action: "טקטיקות ביצוע (פעולה)",
+    result: "הצגת השפעה (תוצאה)"
+  };
+
+  const profile = language === 'he'
+    ? `המועמד מדגים צורך בצמיחה במדדים המבניים של ${heComponentMapping[lowest_component]}.`
+    : `Candidate demonstrates room for growth inside structural ${componentMapping[lowest_component]} metrics.`;
+
   return {
-    weakness_profile: [`Candidate demonstrates room for growth inside structural ${componentMapping[lowest_component]} metrics.`],
+    weakness_profile: [profile],
     lowest_component: lowest_component.toUpperCase()
   };
 }

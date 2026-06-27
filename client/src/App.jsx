@@ -9,6 +9,44 @@ import SettingsScreen from './settings/SettingsScreen';
 import { useIsMobile } from './hooks/useIsMobile';
 import { useLanguage } from './utils/LanguageContext';
 
+function UserDropdown({ onClose, onLogout, t, isRtl }) {
+  return (
+    <div style={{
+      position: 'absolute',
+      right: isRtl ? 'auto' : 0,
+      left: isRtl ? 0 : 'auto',
+      marginTop: '0.5rem',
+      backgroundColor: '#ffffff', border: '1px solid #e2e8f0',
+      borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+      width: '150px', zIndex: 200, display: 'flex', flexDirection: 'column',
+      padding: '0.4rem 0',
+    }}>
+      <NavLink
+        to="/settings"
+        onClick={onClose}
+        style={{
+          padding: '0.5rem 1rem', textDecoration: 'none', color: '#334155',
+          fontSize: '0.85rem', fontWeight: '600', display: 'flex',
+          alignItems: 'center', gap: '0.5rem',
+        }}
+      >
+        ⚙️ {t('navSettings')}
+      </NavLink>
+      <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '0.3rem 0' }} />
+      <button
+        onClick={onLogout}
+        style={{
+          padding: '0.5rem 1rem', background: 'none', border: 'none',
+          color: '#dc2626', fontSize: '0.85rem', fontWeight: '700',
+          textAlign: 'start', cursor: 'pointer', width: '100%',
+        }}
+      >
+        🚪 {t('navLogout')}
+      </button>
+    </div>
+  );
+}
+
 export default function App() {
   const { language, setLanguage, t } = useLanguage();
 
@@ -185,41 +223,6 @@ export default function App() {
     border: '1px solid #e0d9ff', fontSize: '0.8rem',
     fontWeight: '700', cursor: 'pointer',
   };
-
-  function UserDropdown({ onClose, onLogout }) {
-    return (
-      <div style={{
-        position: 'absolute', right: 0, marginTop: '0.5rem',
-        backgroundColor: '#ffffff', border: '1px solid #e2e8f0',
-        borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-        width: '150px', zIndex: 200, display: 'flex', flexDirection: 'column',
-        padding: '0.4rem 0',
-      }}>
-        <NavLink
-          to="/settings"
-          onClick={onClose}
-          style={{
-            padding: '0.5rem 1rem', textDecoration: 'none', color: '#334155',
-            fontSize: '0.85rem', fontWeight: '600', display: 'flex',
-            alignItems: 'center', gap: '0.5rem',
-          }}
-        >
-          ⚙️ {t('navSettings')}
-        </NavLink>
-        <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '0.3rem 0' }} />
-        <button
-          onClick={onLogout}
-          style={{
-            padding: '0.5rem 1rem', background: 'none', border: 'none',
-            color: '#dc2626', fontSize: '0.85rem', fontWeight: '700',
-            textAlign: 'left', cursor: 'pointer', width: '100%',
-          }}
-        >
-          🚪 {t('navLogout')}
-        </button>
-      </div>
-    );
-  }
 
   const inputStyle = {
     width: '100%', padding: '0.65rem 0.875rem',
@@ -730,9 +733,9 @@ export default function App() {
                       padding: '0.45rem 1rem', borderRadius: '20px',
                     }}
                   >
-                    👤 {username} <span style={{ fontSize: '0.7rem' }}>▼</span>
+                    👤 {username === 'Guest' ? t('guest') : username} <span style={{ fontSize: '0.7rem' }}>▼</span>
                   </button>
-                  {menuOpen && <UserDropdown onClose={() => setMenuOpen(false)} onLogout={handleLogout} />}
+                  {menuOpen && <UserDropdown onClose={() => setMenuOpen(false)} onLogout={handleLogout} t={t} isRtl={language === 'he'} />}
                 </div>
               </div>
             )}
@@ -759,12 +762,12 @@ export default function App() {
                 </>
               )}
               <NavLink to="/settings" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>⚙️ {t('navSettings')}</NavLink>
-              <button onClick={handleSwitchRole} style={{ ...mobileNavLinkStyle(false), textAlign: 'left', border: 'none', cursor: 'pointer', width: '100%' }}>
+              <button onClick={handleSwitchRole} style={{ ...mobileNavLinkStyle(false), textAlign: 'start', border: 'none', cursor: 'pointer', width: '100%' }}>
                 🔄 {role === 'candidate' ? t('switchToRecruiter') : t('switchToCandidate')}
               </button>
               <button
                 onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
-                style={{ ...mobileNavLinkStyle(false), textAlign: 'left', border: 'none', cursor: 'pointer', color: '#dc2626', width: '100%' }}
+                style={{ ...mobileNavLinkStyle(false), textAlign: 'start', border: 'none', cursor: 'pointer', color: '#dc2626', width: '100%' }}
               >
                 🚪 {t('navLogout')}
               </button>

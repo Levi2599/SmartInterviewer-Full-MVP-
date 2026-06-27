@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { getAuthHeaders } from '../utils/auth';
+import { useLanguage } from '../utils/LanguageContext';
+import translations from '../utils/translations';
 
 const INDIGO = '#4f46e5';
 
@@ -11,19 +13,43 @@ function getBarColor(score) {
 }
 
 function ComponentChecklist({ labels, star, missing_components }) {
-  const missingSet = new Set(
-    (missing_components || []).map(m => m.toLowerCase().trim())
-  );
+  const { t } = useLanguage();
+
+  const isMissing = (key, labelKey) => {
+    if (!missing_components || missing_components.length === 0) return false;
+
+    const labelHe = translations['he']?.[labelKey]?.toLowerCase() || '';
+    const labelEn = translations['en']?.[labelKey]?.toLowerCase() || '';
+
+    const standardNames = {
+      S: ['situation', 'context', 'point', 'goal', 's', 'מצב', 'הקשר', 'נקודה', 'מטרה'],
+      T: ['task', 'reason', 'strategy', 't', 'משימה', 'נימוק', 'אסטרטגיה'],
+      A: ['action', 'example', 'analysis', 'a', 'פעולה', 'דוגמה', 'ניתוח'],
+      R: ['result', 'point-revisited', 'point revisited', 'reporting', 'r', 'תוצאה', 'חזרה על הנקודה', 'דיווח']
+    };
+
+    const possibleMatches = [
+      key.toLowerCase(),
+      labelKey.toLowerCase(),
+      labelHe,
+      labelEn,
+      ...(standardNames[key] || [])
+    ];
+
+    return missing_components.some(mc => {
+      const cleanMc = mc.toLowerCase().trim();
+      return possibleMatches.some(pm => pm && (cleanMc.includes(pm) || pm.includes(cleanMc)));
+    });
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-      {Object.entries(labels).map(([key, label]) => {
+      {Object.entries(labels).map(([key, labelKey]) => {
+        const label = t(labelKey);
         const score = star?.[key] ?? 0;
         const barColor = getBarColor(score);
 
-        const flaggedByAI = missingSet.size > 0
-          ? missingSet.has(label.toLowerCase()) || missingSet.has(key.toLowerCase())
-          : null;
+        const flaggedByAI = missing_components ? isMissing(key, labelKey) : null;
         const isPresent = flaggedByAI !== null ? !flaggedByAI : score >= 40;
 
         return (
@@ -49,7 +75,7 @@ function ComponentChecklist({ labels, star, missing_components }) {
                   <span style={{
                     marginLeft: '0.4rem', fontSize: '0.7rem',
                     color: '#dc2626', fontWeight: '600',
-                  }}>— Missing</span>
+                  }}>— {t('coachMissing')}</span>
                 )}
               </div>
               <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b', flexShrink: 0 }}>{score}/100</span>
@@ -64,7 +90,7 @@ function ComponentChecklist({ labels, star, missing_components }) {
             </div>
             {!isPresent && (
               <p style={{ fontSize: '0.72rem', color: '#ef4444', marginTop: '0.35rem', fontStyle: 'italic' }}>
-                Tip: Describe the {label.split(' ')[0].toLowerCase()} clearly in your answer.
+                {t('coachTip').replace('{component}', label.split(' ')[0].toLowerCase())}
               </p>
             )}
           </div>
@@ -78,6 +104,7 @@ const HIGH_SCORE_THRESHOLD = 85;
 
 export default function CoachOverlay({ feedback, originalAnswer, questionText, sessionId, expectedMethod, onNext }) {
   const isMobile = useIsMobile();
+  const { t, language } = useLanguage();
   const {
     overall_score,
     framework_detected,
@@ -110,10 +137,17 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           session_id: sessionId,
           expected_method: expectedMethod || 'STAR',
           original_score: overall_score,
+          language,
         }),
       });
       if (!res.ok) throw new Error('Failed to process retry analysis.');
       const data = await res.json();
+      if (data.improvement) {
+        sessionStorage.removeItem('progressData_en');
+        sessionStorage.removeItem('progressDataTime_en');
+        sessionStorage.removeItem('progressData_he');
+        sessionStorage.removeItem('progressDataTime_he');
+      }
       setRetryResult(data);
       if (data.retry_feedback) setLastRetryFeedback(data.retry_feedback);
     } catch (err) {
@@ -124,10 +158,10 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
   };
 
   const method = framework_detected || expectedMethod || 'STAR';
-  let labels = { S: 'Situation', T: 'Task', A: 'Action', R: 'Result' };
-  if (method === 'CAR') labels = { S: 'Context', A: 'Action', R: 'Result' };
-  if (method === 'PREP') labels = { S: 'Point', T: 'Reason', A: 'Example', R: 'Point (Revisited)' };
-  if (method === 'Step-by-Step') labels = { S: 'Goal', T: 'Strategy', A: 'Analysis', R: 'Reporting' };
+  let labels = { S: 'labelSituation', T: 'labelTask', A: 'labelAction', R: 'labelResult' };
+  if (method === 'CAR') labels = { S: 'labelContext', A: 'labelAction', R: 'labelResult' };
+  if (method === 'PREP') labels = { S: 'labelPoint', T: 'labelReason', A: 'labelExample', R: 'labelPointRevisited' };
+  if (method === 'Step-by-Step') labels = { S: 'labelGoal', T: 'labelStrategy', A: 'labelAnalysis', R: 'labelReporting' };
 
   // When retry result exists, show updated scores and components.
   // Fall back to lastRetryFeedback so "Try Again" doesn't revert colors to original.
@@ -139,7 +173,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
   const isExcellent = activeScore >= HIGH_SCORE_THRESHOLD;
   const statusColor = isGood ? '#166534' : '#b91c1c';
   const statusBg = isGood ? '#dcfce7' : '#fee2e2';
-  const statusText = isExcellent ? 'Excellent' : isGood ? 'Good' : 'Needs Improvement';
+  const statusText = isExcellent ? t('coachExcellent') : isGood ? t('coachGood') : t('coachNeedsImprovement');
 
   const cardPadding = isMobile ? '1rem' : '1.5rem';
   const headerPadding = isMobile ? '1rem' : '1.25rem 1.5rem';
@@ -163,10 +197,10 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
         }}>
           <div>
             <div style={{ fontSize: '0.65rem', color: '#a5b4fc', letterSpacing: '0.1em', fontWeight: '700', marginBottom: '0.2rem' }}>
-              AI COACH FEEDBACK
+              {t('coachTitle')}
             </div>
             <div style={{ color: '#fff', fontWeight: '700', fontSize: isMobile ? '1rem' : '1.1rem' }}>
-              Session Review
+              {t('coachSessionReview')}
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -199,9 +233,9 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
             }}>
               <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>🏆</span>
               <div>
-                <div style={{ fontWeight: '700', color: '#166534', fontSize: '0.9rem' }}>Outstanding Answer!</div>
+                <div style={{ fontWeight: '700', color: '#166534', fontSize: '0.9rem' }}>{t('coachOutstandingTitle')}</div>
                 <div style={{ color: '#15803d', fontSize: '0.8rem', marginTop: '0.1rem' }}>
-                  Your score of {activeScore}/100 is excellent — no revisions needed. Keep up the great work!
+                  {t('coachOutstandingBody').replace('{score}', activeScore)}
                 </div>
               </div>
             </div>
@@ -210,7 +244,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           {/* Method tag */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>
-              Detected Framework:
+              {t('coachDetectedFramework')}
             </span>
             <span style={{
               backgroundColor: '#f5f3ff', color: INDIGO,
@@ -225,7 +259,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           {/* Component checklist */}
           <div>
             <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
-              RESPONSE COMPONENTS
+              {t('coachComponents')}
             </div>
             <ComponentChecklist labels={labels} star={activeStar} missing_components={activeMissing} />
           </div>
@@ -234,7 +268,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           {fillers_detected && fillers_detected.length > 0 && (
             <div>
               <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>
-                FILLER WORDS DETECTED
+                {t('coachFillers')}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                 {fillers_detected.map((filler, idx) => (
@@ -259,7 +293,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
               padding: '0.875rem 1rem',
             }}>
               <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#92400e', marginBottom: '0.25rem', letterSpacing: '0.05em' }}>
-                💡 ACTIONABLE TIP
+                💡 {t('coachActionableTip')}
               </div>
               <p style={{ color: '#78350f', fontSize: '0.9rem', lineHeight: '1.5', margin: 0 }}>
                 {improvement_tip}
@@ -284,7 +318,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                   transition: 'all 0.15s',
                 }}
               >
-                {isExcellent ? '🚀 Continue to Next Question →' : 'Keep & Continue →'}
+                {isExcellent ? t('coachContinueExcellent') : t('coachKeepContinue')}
               </button>
               {!isExcellent && (
                 <button
@@ -299,7 +333,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                     transition: 'all 0.15s',
                   }}
                 >
-                  ↻ Retry Answer
+                  {t('coachRetryAnswer')}
                 </button>
               )}
             </div>
@@ -313,16 +347,16 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
               display: 'flex', flexDirection: 'column', gap: '0.75rem',
             }}>
               <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>
-                ✏️ Revise Your Answer
+                {t('coachReviseTitle')}
               </div>
               <p style={{ fontSize: '0.82rem', color: '#64748b', margin: 0 }}>
-                Apply the tip above. Use the {method} framework to structure your response.
+                {t('coachReviseSubtitle').replace('{method}', method)}
               </p>
               <textarea
                 value={retryAnswer}
                 onChange={(e) => setRetryAnswer(e.target.value)}
                 disabled={retryLoading}
-                placeholder={`Use the ${method} structure to rewrite your answer...`}
+                placeholder={t('coachRetryPlaceholder').replace('{method}', method)}
                 style={{
                   width: '100%',
                   height: isMobile ? '130px' : '110px',
@@ -356,7 +390,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                     fontWeight: '600', cursor: 'pointer',
                   }}
                 >
-                  Cancel
+                  {t('coachCancel')}
                 </button>
                 <button
                   type="submit"
@@ -375,7 +409,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                     transition: 'all 0.2s',
                   }}
                 >
-                  {retryLoading ? 'Evaluating...' : 'Submit Revision'}
+                  {retryLoading ? t('coachEvaluating') : t('coachSubmitRevision')}
                 </button>
               </div>
             </form>
@@ -390,14 +424,14 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
               padding: isMobile ? '1rem' : '1.25rem',
             }}>
               <div style={{ fontWeight: '700', color: retryResult.improvement ? '#166534' : '#991b1b', marginBottom: '0.75rem' }}>
-                {retryResult.improvement ? '✅ Revision Comparison' : '📊 Revision Comparison'}
+                {retryResult.improvement ? '✅' : '📊'} {t('coachRevisionComparison')}
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
                 <div style={{
                   flex: '1 1 80px',
                   backgroundColor: '#fee2e2', borderRadius: '8px', padding: '0.75rem', textAlign: 'center',
                 }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#991b1b', marginBottom: '0.2rem' }}>ORIGINAL</div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#991b1b', marginBottom: '0.2rem' }}>{t('coachOriginal')}</div>
                   <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#dc2626' }}>
                     {retryResult.original_score ?? 0}
                   </div>
@@ -406,7 +440,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                   flex: '1 1 80px',
                   backgroundColor: '#dcfce7', borderRadius: '8px', padding: '0.75rem', textAlign: 'center',
                 }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#166534', marginBottom: '0.2rem' }}>REVISION</div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#166534', marginBottom: '0.2rem' }}>{t('coachRevision')}</div>
                   <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#16a34a' }}>
                     {retryResult.retry_feedback?.overall_score ?? 0}
                   </div>
@@ -417,7 +451,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                     backgroundColor: retryResult.score_delta >= 0 ? '#f0fdf4' : '#fef2f2',
                     borderRadius: '8px', padding: '0.75rem', textAlign: 'center',
                   }}>
-                    <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#64748b', marginBottom: '0.2rem' }}>DELTA</div>
+                    <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#64748b', marginBottom: '0.2rem' }}>{t('coachDelta')}</div>
                     <div style={{
                       fontSize: '1.4rem', fontWeight: '800',
                       color: retryResult.score_delta >= 0 ? '#16a34a' : '#dc2626',
@@ -433,7 +467,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                   borderRadius: '8px', padding: '0.75rem',
                   fontSize: '0.83rem', color: '#9a3412', marginBottom: '0.75rem',
                 }}>
-                  💡 Your revision didn't improve the score this time. Try incorporating all {method} components clearly and submit again.
+                  💡 {t('coachNoImprovement').replace('{method}', method)}
                 </div>
               )}
               {retryResult.retry_feedback?.improvement_tip && retryResult.improvement && (
@@ -453,7 +487,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                       fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem',
                     }}
                   >
-                    ↻ Try Again
+                    {t('coachTryAgain')}
                   </button>
                 )}
                 <button
@@ -467,7 +501,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                     boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
                   }}
                 >
-                  {retryResult.improvement ? 'Accept & Continue →' : 'Continue Anyway →'}
+                  {retryResult.improvement ? t('coachAcceptContinue') : t('coachContinueAnyway')}
                 </button>
               </div>
             </div>

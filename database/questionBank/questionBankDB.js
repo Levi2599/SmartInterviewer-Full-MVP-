@@ -4,7 +4,7 @@ const IndividualQuestionSchema = new mongoose.Schema({
   text: { type: String, required: true },
   type: { type: String, enum: ['technical', 'behavioral'], default: 'behavioral' },
   competency: { type: String },
-  methodology_expectation: { type: String, enum: ['STAR', 'PREP', 'Step-by-Step'], default: 'STAR' },
+  methodology_expectation: { type: String, enum: ['STAR', 'CAR', 'PREP', 'Step-by-Step'], default: 'STAR' },
   follow_ups: { type: [String], default: [] },
   hr_keywords: { type: [String], default: [] },
   red_flags: { type: [String], default: [] }
@@ -27,9 +27,13 @@ const QuestionBankSchema = new mongoose.Schema({
     type: String 
   },
   questions_array: [IndividualQuestionSchema],
-  created_at: { 
-    type: Date, 
-    default: Date.now 
+  created_by: {
+    type: String,
+    index: true
+  },
+  created_at: {
+    type: Date,
+    default: Date.now
   }
 });
 

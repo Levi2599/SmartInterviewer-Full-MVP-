@@ -1,4 +1,9 @@
 const { callGeminiJson } = require('../geminiClient');
+const fs = require('fs');
+const path = require('path');
+
+const SYSTEM_PROMPT_PATH = path.join(__dirname, '../prompts/simulator_system.txt');
+const SYSTEM_PROMPT_TEMPLATE = fs.readFileSync(SYSTEM_PROMPT_PATH, 'utf8');
 
 /**
  * Simulates a realistic job interview turn by evaluating the CV, JD, 
@@ -28,34 +33,34 @@ async function interviewProfilePrompt(input) {
   }
 
   const lang = input.language || 'en';
+  console.log("INTERVIEW PROFILE PROMPT INPUT LANG:", input.language);
+  console.log("INTERVIEW PROFILE PROMPT RESOLVED LANG:", lang);
   const langInstruction = lang === 'he'
-    ? "LANGUAGE: Write the next_question and interviewer_persona fields in Hebrew (עברית). All text output must be in Hebrew only.\n\n"
-    : "LANGUAGE: Write all text fields in English.\n\n";
+    ? "You MUST write the next_question and interviewer_persona fields in Hebrew (עברית) only. Even if the CV/JD context or history is in English, you MUST translate your questions and output to Hebrew."
+    : "You MUST write all text fields in English.";
 
   // 2. Define System Instructions
-  const systemInstruction =
-    "You are an expert interviewer AI for SmartInterviewer. Simulate realistic, challenging job " +
-    "interviews based on the candidate's CV and the target Job Description (JD). Calibrate the depth and tone to the role's seniority.\n\n" +
-    langInstruction +
-    "CORE RULES:\n" +
-    "1. STATELESS: Generate exactly ONE focused, relevant question at a time representing the current turn.\n" +
-    "2. METADATA: Classify every question you generate. Map it to one of these methodologies:\n" +
-    "   - STAR (Situation, Task, Action, Result) for standard behavioral questions (e.g. asking about past experiences).\n" +
-    "   - CAR (Context, Action, Result) for concise behavioral questions (e.g. focusing on context and direct action/impact).\n" +
-    "   - PREP (Point, Reason, Example, Point) for conceptual/theoretical questions (e.g. explaining a paradigm or architecture).\n" +
-    "   - Step-by-Step for technical execution questions (e.g. asking to outline the steps of implementing a feature or solving a coding problem).\n" +
-    "3. EXTREME GAP RULE: If the candidate lacks experience or technical skills required in the JD, do NOT ask them to design or implement complex systems in that unknown technology. Instead, ask how they would approach learning it, or design a question that tests their foundational problem-solving or related concepts they do know.\n\n" +
-    "Return ONLY valid JSON matching this schema:\n" +
-    "{\n" +
-    "  \"session_id\": \"string\",\n" +
-    "  \"interviewer_persona\": \"string\",\n" +
-    "  \"next_question\": \"string\",\n" +
-    "  \"session_status\": \"active\",\n" +
-    "  \"expected_method\": \"STAR\" | \"CAR\" | \"PREP\" | \"Step-by-Step\",\n" +
-    "  \"type\": \"technical\" | \"behavioral\"\n" +
-    "}";
+  const systemInstruction = SYSTEM_PROMPT_TEMPLATE.replace('{{LANGUAGE_INSTRUCTION}}', langInstruction);
+  console.log("INTERVIEW PROFILE PROMPT SYSTEM INSTRUCTION:", systemInstruction);
 
-  // 3. Construct Stateless User Payload
+  // 3. Pick a random interview angle to ensure cross-session diversity
+  const DIVERSITY_ANGLES = [
+    "Focus on a TECHNICAL ARCHITECTURE or design decision — probe depth of judgment and trade-offs made.",
+    "Focus on a CHALLENGE, FAILURE, or SETBACK the candidate faced — ask how they handled it and what they learned.",
+    "Focus on TEAMWORK, COLLABORATION, or CROSS-TEAM coordination — probe communication and influence.",
+    "Focus on OWNERSHIP or INITIATIVE the candidate demonstrated — ask about proactively identifying and solving a problem.",
+    "Focus on SCALABILITY, PERFORMANCE, or OPTIMIZATION — probe specific metrics, bottlenecks, and impact.",
+    "Focus on PROCESS IMPROVEMENT, CODE QUALITY, or OPERATIONAL EXCELLENCE — testing, reliability, or engineering practices.",
+    "Focus on a difficult TRADE-OFF or CONFLICT the candidate navigated — technical debt vs. speed, security vs. UX, etc.",
+    "Focus on GROWTH, LEARNING, or ADAPTING to a new technology, domain, or unexpected challenge.",
+  ];
+  const diversityAngle = DIVERSITY_ANGLES[Math.floor(Math.random() * DIVERSITY_ANGLES.length)];
+
+  const languageMandate = lang === 'he'
+    ? "IMPORTANT LANGUAGE MANDATE: You MUST write the next_question and interviewer_persona fields in Hebrew (עברית) only. "
+    : "IMPORTANT LANGUAGE MANDATE: You MUST write the next_question and interviewer_persona fields in English. ";
+
+  // 4. Construct Stateless User Payload
   const userPayload = {
     session_id: input.session_id,
     turn_number: input.turn_number,
@@ -64,12 +69,15 @@ async function interviewProfilePrompt(input) {
       target_job_description: input.jd_text
     },
     conversation_history: input.conversation_history,
-    directives: "Analyze candidate CV against JD. Detect key skill gaps. Select a gap or requirement to target. " +
-                "Generate a single question. Determine the expected method (STAR/PREP/Step-by-Step) and type (technical/behavioral)."
+    directives: languageMandate +
+                "Analyze candidate CV against JD. Detect key skill gaps. Select a gap or requirement to target. " +
+                "Generate a single question. Determine the expected method (STAR/CAR/PREP/Step-by-Step) and type (technical/behavioral). " +
+                `DIVERSITY MANDATE: ${diversityAngle} ` +
+                "ANTI-REPETITION: Never repeat a question or topic already covered in conversation_history."
   };
 
   // 4. Dispatch to Gemini JSON Engine
-  return await callGeminiJson(systemInstruction, userPayload);
+  return await callGeminiJson(systemInstruction, userPayload, 'simulator');
 }
 
 module.exports = interviewProfilePrompt;

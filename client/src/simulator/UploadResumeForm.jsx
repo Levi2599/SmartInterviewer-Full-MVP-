@@ -22,6 +22,14 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, setI
     if (file) onFileUpload({ target: { files: [file] } });
   };
 
+  const handleImageDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (isLoading) return;
+    const file = e.dataTransfer.files[0];
+    if (file) handleImageUpload({ target: { files: [file] } });
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -126,9 +134,21 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, setI
               ) : text ? (
                 <>
                   <span style={{ fontSize: '1.5rem' }}>✅</span>
-                  <span style={{ color: '#166634', fontWeight: '700', fontSize: '0.85rem' }}>File parsed successfully</span>
-                  <span style={{ color: '#64748b', fontSize: '0.75rem' }}>{text.slice(0, 60)}...</span>
-                  <span style={{ color: INDIGO, fontSize: '0.75rem', textDecoration: 'underline' }}>Click to replace</span>
+                  <span style={{ color: '#166634', fontWeight: '700', fontSize: '0.85rem' }}>{t('uploadFileParsed')}</span>
+                  <span style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>{text.slice(0, 60)}...</span>
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                    <span style={{ color: INDIGO, fontSize: '0.75rem', textDecoration: 'underline' }}>{t('uploadClickReplace')}</span>
+                    <span
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setText('');
+                      }}
+                      style={{ color: '#ef4444', fontSize: '0.75rem', textDecoration: 'underline', fontWeight: '600', cursor: 'pointer' }}
+                    >
+                      ❌ {t('uploadDiscard')}
+                    </span>
+                  </div>
                 </>
               ) : (
                 <>
@@ -143,35 +163,55 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, setI
         )}
 
         {mode === 'image' && (
-          <label style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            justifyContent: 'center', gap: '0.5rem',
-            border: '2px dashed #c7d2fe', borderRadius: '12px', padding: '2rem 1rem',
-            cursor: isLoading ? 'default' : 'pointer',
-            backgroundColor: INDIGO_LIGHT, transition: 'all 0.15s',
-          }}>
-            {isLoading ? (
-              <>
-                <div style={{ width: '28px', height: '28px', border: `3px solid #c7d2fe`, borderTopColor: INDIGO, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                <style>{`@keyframes spin { to { transform: rotate(360deg); }}`}</style>
-                <span style={{ color: INDIGO, fontWeight: '600', fontSize: '0.85rem' }}>{ocrProgress || t('uploadProcessing')}</span>
-              </>
-            ) : text ? (
-              <>
-                <span style={{ fontSize: '1.5rem' }}>✅</span>
-                <span style={{ color: '#166634', fontWeight: '700', fontSize: '0.85rem' }}>Image text extracted</span>
-                <span style={{ color: '#64748b', fontSize: '0.75rem' }}>{text.slice(0, 60)}...</span>
-                <span style={{ color: INDIGO, fontSize: '0.75rem', textDecoration: 'underline' }}>Click to replace</span>
-              </>
-            ) : (
-              <>
-                <span style={{ fontSize: '2rem' }}>🖼️</span>
-                <span style={{ color: INDIGO, fontWeight: '700', fontSize: '0.9rem' }}>{t('uploadImageDropzone')}</span>
-                <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{t('uploadImageTypes')}</span>
-              </>
-            )}
-            <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" style={{ display: 'none' }} onChange={handleImageUpload} disabled={isLoading} />
-          </label>
+          <div
+            onDragOver={(e) => { e.preventDefault(); if (!isLoading) setIsDragOver(true); }}
+            onDragLeave={() => setIsDragOver(false)}
+            onDrop={handleImageDrop}
+          >
+            <label style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              justifyContent: 'center', gap: '0.5rem',
+              border: isDragOver ? '2px dashed #4f46e5' : '2px dashed #c7d2fe',
+              borderRadius: '12px', padding: '2rem 1rem',
+              cursor: isLoading ? 'default' : 'pointer',
+              backgroundColor: isDragOver ? '#ede9fe' : INDIGO_LIGHT,
+              transition: 'all 0.15s',
+            }}>
+              {isLoading ? (
+                <>
+                  <div style={{ width: '28px', height: '28px', border: `3px solid #c7d2fe`, borderTopColor: INDIGO, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  <style>{`@keyframes spin { to { transform: rotate(360deg); }}`}</style>
+                  <span style={{ color: INDIGO, fontWeight: '600', fontSize: '0.85rem' }}>{ocrProgress || t('uploadProcessing')}</span>
+                </>
+              ) : text ? (
+                <>
+                  <span style={{ fontSize: '1.5rem' }}>✅</span>
+                  <span style={{ color: '#166634', fontWeight: '700', fontSize: '0.85rem' }}>{t('uploadImageExtracted')}</span>
+                  <span style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>{text.slice(0, 60)}...</span>
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                    <span style={{ color: INDIGO, fontSize: '0.75rem', textDecoration: 'underline' }}>{t('uploadClickReplace')}</span>
+                    <span
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setText('');
+                      }}
+                      style={{ color: '#ef4444', fontSize: '0.75rem', textDecoration: 'underline', fontWeight: '600', cursor: 'pointer' }}
+                    >
+                      ❌ {t('uploadDiscard')}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span style={{ fontSize: '2rem' }}>🖼️</span>
+                  <span style={{ color: INDIGO, fontWeight: '700', fontSize: '0.9rem' }}>{t('uploadImageDropzone')}</span>
+                  <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{t('uploadImageTypes')}</span>
+                </>
+              )}
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" style={{ display: 'none' }} onChange={handleImageUpload} disabled={isLoading} />
+            </label>
+          </div>
         )}
       </div>
     </div>
@@ -180,14 +220,18 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, setI
 
 export default function UploadResumeForm() {
   const { t } = useLanguage();
-  const [autoSaveCv, setAutoSaveCv] = useState(() => localStorage.getItem('pref-auto-save-cv') === 'true');
+  const userId = localStorage.getItem('userId') || 'guest';
+  const cvCacheKey = `cached-cv-${userId}`;
+  const jdCacheKey = `cached-jd-${userId}`;
+
+  const [autoSaveCv, setAutoSaveCv] = useState(() => localStorage.getItem(`pref-auto-save-cv-${userId}`) === 'true');
   const [cvText, setCvText] = useState(() => {
-    const autoSave = localStorage.getItem('pref-auto-save-cv') === 'true';
-    return autoSave ? (localStorage.getItem('cached-cv') || '') : '';
+    const autoSave = localStorage.getItem(`pref-auto-save-cv-${userId}`) === 'true';
+    return autoSave ? (localStorage.getItem(cvCacheKey) || '') : '';
   });
   const [jdText, setJdText] = useState(() => {
-    const autoSave = localStorage.getItem('pref-auto-save-cv') === 'true';
-    return autoSave ? (localStorage.getItem('cached-jd') || '') : '';
+    const autoSave = localStorage.getItem(`pref-auto-save-cv-${userId}`) === 'true';
+    return autoSave ? (localStorage.getItem(jdCacheKey) || '') : '';
   });
   const [cvMode, setCvMode] = useState('paste');
   const [jdMode, setJdMode] = useState('paste');
@@ -233,13 +277,13 @@ export default function UploadResumeForm() {
     }
     setError('');
 
-    const autoSave = localStorage.getItem('pref-auto-save-cv') === 'true';
+    const autoSave = localStorage.getItem(`pref-auto-save-cv-${userId}`) === 'true';
     if (autoSave) {
-      localStorage.setItem('cached-cv', cvText);
-      localStorage.setItem('cached-jd', jdText);
+      localStorage.setItem(cvCacheKey, cvText);
+      localStorage.setItem(jdCacheKey, jdText);
     } else {
-      localStorage.removeItem('cached-cv');
-      localStorage.removeItem('cached-jd');
+      localStorage.removeItem(cvCacheKey);
+      localStorage.removeItem(jdCacheKey);
     }
 
     navigate('/simulator', { state: { cv_text: cvText, jd_text: jdText } });
@@ -324,16 +368,16 @@ export default function UploadResumeForm() {
             checked={autoSaveCv}
             onChange={e => {
               setAutoSaveCv(e.target.checked);
-              localStorage.setItem('pref-auto-save-cv', String(e.target.checked));
+              localStorage.setItem(`pref-auto-save-cv-${userId}`, String(e.target.checked));
               if (!e.target.checked) {
-                localStorage.removeItem('cached-cv');
-                localStorage.removeItem('cached-jd');
+                localStorage.removeItem(cvCacheKey);
+                localStorage.removeItem(jdCacheKey);
               }
             }}
             style={{ width: '16px', height: '16px', cursor: 'pointer' }}
           />
           <label htmlFor="remember-cv" style={{ fontSize: '0.85rem', color: '#475569', fontWeight: '600', cursor: 'pointer' }}>
-            💾 Remember my CV and Job Description for next session
+            💾 {t('uploadRememberCv')}
           </label>
         </div>
 

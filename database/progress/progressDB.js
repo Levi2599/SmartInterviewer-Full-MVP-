@@ -32,7 +32,8 @@ const ProgressSchema = new mongoose.Schema({
     focus_area: { type: String, default: null },
     actionable_steps: { type: [String], default: [] },
     generated_at: { type: Date, default: null },
-    session_count_at_generation: { type: Number, default: 0 }
+    session_count_at_generation: { type: Number, default: 0 },
+    language: { type: String, default: null }
   }
 });
 
@@ -65,9 +66,10 @@ async function getHistory(userId) {
 }
 
 async function updateRecommendationCache(userId, cacheData) {
-  return await ProgressModel.updateMany(
+  return await ProgressModel.findOneAndUpdate(
     { user_id: userId },
-    { $set: { recommendation_cache: cacheData } }
+    { $set: { recommendation_cache: cacheData } },
+    { sort: { date: -1 } }
   );
 }
 

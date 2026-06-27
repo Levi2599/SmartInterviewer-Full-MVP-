@@ -1,12 +1,16 @@
 import React from 'react';
-
-/**
- * Stepper component – shows the current phase of the interview simulation.
- * @param {number} activeStep - 1-indexed step number (1-5)
- */
-const STEPS = ['Upload', 'Question', 'Answer', 'Feedback', 'Next'];
+import { useLanguage } from '../utils/LanguageContext';
 
 export default function Stepper({ activeStep = 1 }) {
+  const { t } = useLanguage();
+  const STEPS = [
+    t('stepperUpload'),
+    t('stepperQuestion'),
+    t('stepperAnswer'),
+    t('stepperFeedback'),
+    t('stepperNext'),
+  ];
+
   return (
     <div style={{
       display: 'flex',

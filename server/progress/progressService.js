@@ -39,10 +39,33 @@ router.post('/save', async (req, res) => {
   }
 });
 
+// DELETE /:userId/data-only - deletes only Progress + Session records, preserves user account
+router.delete('/:userId/data-only', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (userId !== req.user.userId) {
+      return res.status(403).json({ error: 'Forbidden.' });
+    }
+    const { SessionModel } = require("../../database/simulator/sessionDB");
+    const { ProgressModel } = require("../../database/progress/progressDB");
+
+    await ProgressModel.deleteMany({ user_id: userId });
+    await SessionModel.deleteMany({ user_id: userId });
+
+    return res.json({ success: true });
+  } catch (e) {
+    console.error('Data-only delete error:', e.message);
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 // DELETE /:userId - GDPR deletion of all progress, session, and user account records
 router.delete('/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
+    if (userId !== req.user.userId) {
+      return res.status(403).json({ error: 'Forbidden.' });
+    }
     const { SessionModel } = require("../../database/simulator/sessionDB");
     const { ProgressModel } = require("../../database/progress/progressDB");
     const { UserModel } = require("../../database/users/userDB");
@@ -66,12 +89,24 @@ router.delete('/:userId', async (req, res) => {
 router.get('/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
+    if (userId !== req.user.userId) {
+      return res.status(403).json({ error: 'Forbidden.' });
+    }
+    const lang = req.query.lang || 'en';
 
     // Use getHistory directly to avoid single-record findByUserId crash on forEach
     const history = await getHistory(userId) || [];
 
     if (history.length === 0) {
-      return res.status(404).json({ error: "Not found" });
+      return res.status(200).json({
+        user_id: userId,
+        session_history: [],
+        star_breakdown: { S: 0, T: 0, A: 0, R: 0 },
+        weakness_profile: [],
+        training_plan: [],
+        priority_focus: null,
+        readiness_score: 0,
+      });
     }
 
     // Accumulate total metrics to assemble a global breakdown overview profile
@@ -103,7 +138,7 @@ router.get('/:userId', async (req, res) => {
       star_breakdown.R = parseFloat((star_breakdown.R / recordCount).toFixed(2));
     }
 
-    const { weakness_profile, lowest_component } = await detectWeaknesses(aggregateStarScores);
+    const { weakness_profile, lowest_component } = await detectWeaknesses(aggregateStarScores, lang);
 
     const clean_history = history.map(h => ({
       date: h.date,
@@ -120,7 +155,8 @@ router.get('/:userId', async (req, res) => {
     const existingCache = latestRecord?.recommendation_cache;
     const cacheIsValid = existingCache &&
       existingCache.generated_at &&
-      existingCache.session_count_at_generation === recordCount;
+      existingCache.session_count_at_generation === recordCount &&
+      existingCache.language === lang;
 
     let weaknessPattern, focusArea, actionableSteps;
 
@@ -135,7 +171,8 @@ router.get('/:userId', async (req, res) => {
           weakness_profile,
           lowest_component,
           session_count: recordCount,
-          session_history: clean_history
+          session_history: clean_history,
+          language: lang
         });
 
         weaknessPattern = aiRecommendation.detected_weakness_pattern || `Growth needed in ${lowest_component}.`;
@@ -147,7 +184,8 @@ router.get('/:userId', async (req, res) => {
           focus_area: focusArea,
           actionable_steps: actionableSteps,
           generated_at: new Date(),
-          session_count_at_generation: recordCount
+          session_count_at_generation: recordCount,
+          language: lang
         }).catch(err => console.error('Cache update failed (non-critical):', err));
       } catch (aiErr) {
         console.error('AI recommendation failed (non-critical):', aiErr.message);

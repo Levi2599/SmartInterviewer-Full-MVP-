@@ -29,6 +29,7 @@ router.post('/generate', async (req, res) => {
       industry,
       seniority_level,
       questions_array: aiQuestions,
+      created_by: req.user.userId,
       created_at: new Date()
     };
 
@@ -47,7 +48,7 @@ router.post('/generate', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const { QuestionBankModel } = require("../../database/questionBank/questionBankDB");
-    const records = await QuestionBankModel.find({}).sort({ created_at: -1 }).exec();
+    const records = await QuestionBankModel.find({ created_by: req.user.userId }).sort({ created_at: -1 }).exec();
     return res.json(records);
   } catch (e) {
     return res.status(500).json({ error: e.message });

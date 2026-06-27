@@ -1,4 +1,9 @@
 const { callGeminiJson } = require('../geminiClient');
+const fs = require('fs');
+const path = require('path');
+
+const SYSTEM_PROMPT_PATH = path.join(__dirname, '../prompts/recommendation_system.txt');
+const SYSTEM_PROMPT_TEMPLATE = fs.readFileSync(SYSTEM_PROMPT_PATH, 'utf8');
 
 /**
  * Generates personalized training plans and weakness pattern identification using Gemini AI.
@@ -23,20 +28,17 @@ async function recommendationPrompt(input) {
     throw new Error('Invalid session_history provided. Must be an array.');
   }
 
+  const lang = input.language || 'en';
+  const langInstruction = lang === 'he'
+    ? "LANGUAGE: Write all text fields (detected_weakness_pattern, analysis_summary, focus_area, actionable_steps) in Hebrew (עברית) only.\n\n"
+    : "LANGUAGE: Write all text fields in English.\n\n";
+
   // 2. Define System Instructions
-  const systemInstruction = 
-    "You are an expert career consultant AI for SmartInterviewer. Evaluate the candidate's historical interview " +
-    "performance telemetry, including readiness scores, STAR breakdown averages, weaknesses, and transcript history. " +
-    "Analyze their progress trend, identify recurring behavioral or technical patterns, and construct a targeted educational roadmap.\n\n" +
-    "Return ONLY valid JSON matching this schema:\n" +
-    "{\n" +
-    "  \"detected_weakness_pattern\": \"string\",\n" +
-    "  \"analysis_summary\": \"string\",\n" +
-    "  \"strategic_recommendation\": {\n" +
-    "    \"focus_area\": \"string\",\n" +
-    "    \"actionable_steps\": [\"string\"]\n" +
-    "  }\n" +
-    "}";
+  const systemInstruction = SYSTEM_PROMPT_TEMPLATE.replace('{{LANGUAGE_INSTRUCTION}}', langInstruction);
+
+  const languageMandate = lang === 'he'
+    ? "IMPORTANT LANGUAGE MANDATE: You MUST write all generated text fields (detected_weakness_pattern, analysis_summary, focus_area, actionable_steps) in Hebrew (עברית) only. "
+    : "IMPORTANT LANGUAGE MANDATE: You MUST write all text fields in English. ";
 
   // 3. Construct Stateless User Payload
   const userPayload = {
@@ -46,12 +48,13 @@ async function recommendationPrompt(input) {
       overall_weakness_profile: input.weakness_profile
     },
     historical_sessions: input.session_history,
-    directives: "Identify the primary conceptual, technical, or behavioral bottleneck in the candidate's history. " +
+    directives: languageMandate +
+                "Identify the primary conceptual, technical, or behavioral bottleneck in the candidate's history. " +
                 "Summarize their trend. Recommend a primary focus area. Generate 3-5 concrete, actionable steps for improvement."
   };
 
   // 4. Dispatch to Gemini JSON Engine
-  return await callGeminiJson(systemInstruction, userPayload);
+  return await callGeminiJson(systemInstruction, userPayload, 'recommendations');
 }
 
 module.exports = recommendationPrompt;
