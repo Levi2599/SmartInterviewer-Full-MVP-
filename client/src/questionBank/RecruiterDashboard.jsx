@@ -286,7 +286,7 @@ export default function RecruiterDashboard() {
                         </span>
                       </td>
                       <td style={{ padding: '1rem 0.5rem', color: '#4f46e5', fontWeight: '700', fontSize: '0.85rem' }}>
-                        {g.questions_array?.length || 0} {language === 'he' ? 'שאלות' : 'questions'}
+                        {g.questions_array?.length || 0}
                       </td>
                       <td style={{ padding: '1rem 0.5rem', color: '#94a3b8', fontSize: '0.8rem' }}>
                         {new Date(g.created_at).toLocaleDateString(language === 'he' ? 'he-IL' : 'en-US')}
