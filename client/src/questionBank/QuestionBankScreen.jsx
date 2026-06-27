@@ -67,6 +67,8 @@ export default function QuestionBankScreen() {
       if (!res.ok) throw new Error(data.error || 'Could not generate questions.');
       setQuestionBankId(data.question_bank_id);
       setQuestions(data.questions || []);
+      // Notify the recruiter dashboard (if mounted) to re-fetch its guide list.
+      window.dispatchEvent(new Event('dashboard:refresh'));
     } catch (err) {
       setError(err.message);
     } finally {

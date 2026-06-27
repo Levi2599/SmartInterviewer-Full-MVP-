@@ -54,7 +54,15 @@ export default function RecruiterDashboard() {
   useEffect(() => {
     const controller = new AbortController();
     fetchGuides(controller.signal);
-    return () => controller.abort();
+
+    // Also re-fetch whenever another screen fires the global refresh event.
+    const handleRefreshEvent = () => fetchGuides();
+    window.addEventListener('dashboard:refresh', handleRefreshEvent);
+
+    return () => {
+      controller.abort();
+      window.removeEventListener('dashboard:refresh', handleRefreshEvent);
+    };
   // location.key changes on every navigation — guarantees a fresh fetch whenever
   // the user arrives at this route, even if the component instance is reused.
   }, [location.key]);

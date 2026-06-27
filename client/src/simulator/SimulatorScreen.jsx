@@ -288,6 +288,8 @@ export default function SimulatorScreen() {
       sessionStorage.removeItem('progressData_he');
       sessionStorage.removeItem('progressDataTime_he');
       setFeedback(data);
+      // Notify the dashboard (if mounted) to re-fetch fresh progress immediately.
+      window.dispatchEvent(new Event('dashboard:refresh'));
     } catch (err) {
       setError(err.message);
     } finally {
