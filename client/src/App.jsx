@@ -60,6 +60,7 @@ export default function App() {
   const [inputUsername, setInputUsername] = useState('');
   const [inputEmail, setInputEmail] = useState('');
   const [inputPassword, setInputPassword] = useState('');
+  const [inputRegisterPassword, setInputRegisterPassword] = useState('');
   const [inputConfirmPassword, setInputConfirmPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState('candidate');
   const [loading, setLoading] = useState(false);
@@ -126,8 +127,8 @@ export default function App() {
     e.preventDefault();
     if (!inputUsername.trim()) { setError(t('usernameRequired')); return; }
     if (!inputEmail.trim()) { setError(t('emailRequired')); return; }
-    if (!inputPassword) { setError(t('passwordRequired')); return; }
-    if (inputPassword !== inputConfirmPassword) {
+    if (!inputRegisterPassword) { setError(t('passwordRequired')); return; }
+    if (inputRegisterPassword !== inputConfirmPassword) {
       setError(t('passwordsDoNotMatch'));
       return;
     }
@@ -141,7 +142,7 @@ export default function App() {
         body: JSON.stringify({
           username: inputUsername.trim(),
           email: inputEmail.trim(),
-          password: inputPassword,
+          password: inputRegisterPassword,
           role: selectedRole,
         }),
       });
@@ -415,8 +416,8 @@ export default function App() {
             <input
               type="password"
               placeholder={t('passwordPlaceholderMin')}
-              value={inputPassword}
-              onChange={e => setInputPassword(e.target.value)}
+              value={inputRegisterPassword}
+              onChange={e => setInputRegisterPassword(e.target.value)}
               disabled={loading}
               required
               minLength={6}
@@ -436,10 +437,10 @@ export default function App() {
               required
               style={{
                 ...inputStyle,
-                borderColor: inputConfirmPassword && inputPassword !== inputConfirmPassword ? '#fca5a5' : '#e2e8f0',
+                borderColor: inputConfirmPassword && inputRegisterPassword !== inputConfirmPassword ? '#fca5a5' : '#e2e8f0',
               }}
             />
-            {inputConfirmPassword && inputPassword !== inputConfirmPassword && (
+            {inputConfirmPassword && inputRegisterPassword !== inputConfirmPassword && (
               <span style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem', display: 'block' }}>
                 {t('passwordsNoMatch')}
               </span>
@@ -447,15 +448,15 @@ export default function App() {
           </div>
           <button
             type="submit"
-            disabled={loading || !inputUsername.trim() || !inputEmail.trim() || !inputPassword || inputPassword !== inputConfirmPassword}
+            disabled={loading || !inputUsername.trim() || !inputEmail.trim() || !inputRegisterPassword || inputRegisterPassword !== inputConfirmPassword}
             style={{
               width: '100%', padding: '0.75rem', marginTop: '0.25rem',
-              background: (!loading && inputUsername.trim() && inputEmail.trim() && inputPassword && inputPassword === inputConfirmPassword)
+              background: (!loading && inputUsername.trim() && inputEmail.trim() && inputRegisterPassword && inputRegisterPassword === inputConfirmPassword)
                 ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : '#e2e8f0',
-              color: (!loading && inputUsername.trim() && inputEmail.trim() && inputPassword && inputPassword === inputConfirmPassword)
+              color: (!loading && inputUsername.trim() && inputEmail.trim() && inputRegisterPassword && inputRegisterPassword === inputConfirmPassword)
                 ? '#fff' : '#94a3b8',
               border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '0.95rem',
-              cursor: (!loading && inputUsername.trim() && inputEmail.trim() && inputPassword && inputPassword === inputConfirmPassword)
+              cursor: (!loading && inputUsername.trim() && inputEmail.trim() && inputRegisterPassword && inputRegisterPassword === inputConfirmPassword)
                 ? 'pointer' : 'default',
             }}
           >

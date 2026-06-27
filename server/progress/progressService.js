@@ -69,9 +69,11 @@ router.delete('/:userId', async (req, res) => {
     const { SessionModel } = require("../../database/simulator/sessionDB");
     const { ProgressModel } = require("../../database/progress/progressDB");
     const { UserModel } = require("../../database/users/userDB");
+    const { QuestionBankModel } = require("../../database/questionBank/questionBankDB");
 
     await ProgressModel.deleteMany({ user_id: userId });
     await SessionModel.deleteMany({ user_id: userId });
+    await QuestionBankModel.deleteMany({ created_by: userId });
 
     // Extract MongoDB _id from userId format "user-<mongoId>"
     const mongoId = userId.startsWith('user-') ? userId.slice(5) : null;
