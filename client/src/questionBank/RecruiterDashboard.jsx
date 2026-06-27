@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getAuthHeaders } from '../utils/auth';
 import { useLanguage } from '../utils/LanguageContext';
 
@@ -33,38 +33,31 @@ export default function RecruiterDashboard() {
   const [error, setError] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useLanguage();
 
-  const fetchGuides = async () => {
+  const fetchGuides = async (signal) => {
+    setLoading(true);
+    setError('');
     try {
-      const cached = sessionStorage.getItem('recruiterGuides');
-      const cachedTime = sessionStorage.getItem('recruiterGuidesTime');
-      if (cached && cachedTime && (Date.now() - Number(cachedTime)) < 2 * 60 * 1000) {
-        setGuides(JSON.parse(cached));
-        setLoading(false);
-        return;
-      }
-    } catch (_) {}
-
-    try {
-      const res = await fetch('/api/questionBank', { headers: getAuthHeaders() });
+      const res = await fetch('/api/questionBank', { headers: getAuthHeaders(), signal, cache: 'no-store' });
       if (!res.ok) throw new Error('Failed to retrieve question guides.');
       const data = await res.json();
       setGuides(data);
-      try {
-        sessionStorage.setItem('recruiterGuides', JSON.stringify(data));
-        sessionStorage.setItem('recruiterGuidesTime', String(Date.now()));
-      } catch (_) {}
     } catch (err) {
-      setError(err.message);
+      if (err.name !== 'AbortError') setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchGuides();
-  }, []);
+    const controller = new AbortController();
+    fetchGuides(controller.signal);
+    return () => controller.abort();
+  // location.key changes on every navigation — guarantees a fresh fetch whenever
+  // the user arrives at this route, even if the component instance is reused.
+  }, [location.key]);
 
   const handleDeleteRequest = (id, e) => {
     e.stopPropagation();
@@ -72,6 +65,7 @@ export default function RecruiterDashboard() {
   };
 
   const handleDeleteConfirm = async () => {
+    setError('');
     const id = pendingDeleteId;
     setPendingDeleteId(null);
     try {
@@ -81,8 +75,6 @@ export default function RecruiterDashboard() {
       });
       if (!res.ok) throw new Error('Failed to delete guide.');
       setGuides(prev => prev.filter(g => g.question_id !== id));
-      sessionStorage.removeItem('recruiterGuides');
-      sessionStorage.removeItem('recruiterGuidesTime');
     } catch (err) {
       setError(err.message);
     }

@@ -79,8 +79,9 @@ export default function SettingsScreen() {
       localStorage.removeItem('userId');
       localStorage.removeItem('username');
       localStorage.removeItem('role');
-      localStorage.removeItem('cached-cv');
-      localStorage.removeItem('cached-jd');
+      localStorage.removeItem(`cached-cv-${activeUserId}`);
+      localStorage.removeItem(`cached-jd-${activeUserId}`);
+      localStorage.removeItem(`pref-auto-save-cv-${activeUserId}`);
       sessionStorage.clear();
       window.location.replace('/');
     } catch (err) {

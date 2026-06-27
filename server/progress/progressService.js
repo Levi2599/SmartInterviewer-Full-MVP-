@@ -89,6 +89,7 @@ router.delete('/:userId', async (req, res) => {
 });
 
 router.get('/:userId', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
   try {
     const { userId } = req.params;
     if (userId !== req.user.userId) {

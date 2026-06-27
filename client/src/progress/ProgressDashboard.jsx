@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ReferenceLine
 } from 'recharts';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { getAuthHeaders } from '../utils/auth';
 import { useLanguage } from '../utils/LanguageContext';
@@ -70,45 +70,42 @@ export default function ProgressDashboard() {
   const [error, setError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteStatus, setDeleteStatus] = useState('');
+  const isMountedRef = useRef(true);
   const navigate = useNavigate();
+  useEffect(() => { return () => { isMountedRef.current = false; }; }, []);
   const isMobile = useIsMobile();
   const { t, language } = useLanguage();
+  const location = useLocation();
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchProgress = async () => {
       const activeUserId = localStorage.getItem('userId') || 'user-001';
-
-      try {
-        const cached = sessionStorage.getItem(`progressData_${language}`);
-        const cachedTime = sessionStorage.getItem(`progressDataTime_${language}`);
-        if (cached && cachedTime && (Date.now() - Number(cachedTime)) < 5 * 60 * 1000) {
-          setData(JSON.parse(cached));
-          setLoading(false);
-          return;
-        }
-      } catch (_) {}
-
       setLoading(true);
+      setError('');
       try {
         const res = await fetch(`/api/progress/${activeUserId}?lang=${language}`, {
           headers: getAuthHeaders(),
+          signal: controller.signal,
+          cache: 'no-store',
         });
         if (res.status === 404) { setData(null); setLoading(false); return; }
         if (!res.ok) throw new Error('Failed to retrieve progress data.');
         const json = await res.json();
         setData(json);
-        try {
-          sessionStorage.setItem(`progressData_${language}`, JSON.stringify(json));
-          sessionStorage.setItem(`progressDataTime_${language}`, String(Date.now()));
-        } catch (_) {}
-      } catch (err) {
-        setError(err.message);
-      } finally {
         setLoading(false);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          setError(err.message);
+          setLoading(false);
+        }
       }
     };
     fetchProgress();
-  }, [language]);
+    return () => controller.abort();
+  // location.key changes on every navigation — guarantees a fresh fetch whenever
+  // the user arrives at this route, even if the component instance is reused.
+  }, [language, location.key]);
 
   if (loading) return (
     <div style={{
@@ -244,6 +241,13 @@ export default function ProgressDashboard() {
               {t('progressScoreTrendDesc')}
             </p>
           </div>
+          {trendData.length === 1 && (
+            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic', textAlign: 'center' }}>
+              {language === 'he'
+                ? 'השלם עוד סשנים כדי לראות מגמת ציוניך'
+                : 'Complete more sessions to see your score trend'}
+            </p>
+          )}
           <div style={{ width: '100%', height: 200 }} dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trendData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
@@ -272,7 +276,9 @@ export default function ProgressDashboard() {
                   stroke="#6366f1"
                   strokeWidth={2.5}
                   fill="url(#colorScore)"
-                  dot={{ fill: '#6366f1', r: 4, strokeWidth: 2, stroke: '#fff' }}
+                  dot={trendData.length === 1
+                    ? { fill: '#6366f1', r: 8, strokeWidth: 3, stroke: '#fff' }
+                    : { fill: '#6366f1', r: 4, strokeWidth: 2, stroke: '#fff' }}
                   activeDot={{ r: 6, fill: '#4f46e5' }}
                 />
               </AreaChart>
@@ -464,17 +470,13 @@ export default function ProgressDashboard() {
                       const err = await res.json().catch(() => ({}));
                       throw new Error(err.error || 'Delete failed');
                     }
-                    sessionStorage.removeItem('progressData');
-                    sessionStorage.removeItem('progressDataTime');
-                    sessionStorage.removeItem('progressData_en');
-                    sessionStorage.removeItem('progressDataTime_en');
-                    sessionStorage.removeItem('progressData_he');
-                    sessionStorage.removeItem('progressDataTime_he');
+                    if (!isMountedRef.current) return;
                     setData(null);
                     setDeleteConfirm(false);
                     setDeleteStatus('');
                   } catch (e) {
                     console.error('Dashboard delete error:', e.message);
+                    if (!isMountedRef.current) return;
                     setDeleteStatus(t('progressDeleteFailMsg'));
                     setDeleteConfirm(false);
                   }

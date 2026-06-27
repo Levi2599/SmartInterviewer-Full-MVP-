@@ -31,17 +31,6 @@ export default function QuestionBankScreen() {
   const { t, language } = useLanguage();
   const location = useLocation();
 
-  // Cache eviction: clear recruiter dashboard cache on mount and unmount
-  // so that any navigation away from this screen forces a fresh DB fetch.
-  useEffect(() => {
-    sessionStorage.removeItem('recruiterGuides');
-    sessionStorage.removeItem('recruiterGuidesTime');
-    return () => {
-      sessionStorage.removeItem('recruiterGuides');
-      sessionStorage.removeItem('recruiterGuidesTime');
-    };
-  }, []);
-
   useEffect(() => {
     if (location.state && location.state.resumeGuide) {
       const g = location.state.resumeGuide;
@@ -77,10 +66,6 @@ export default function QuestionBankScreen() {
       if (!res.ok) throw new Error(data.error || 'Could not generate questions.');
       setQuestionBankId(data.question_bank_id);
       setQuestions(data.questions || []);
-
-      // Cache eviction: clear recruiter guides cache on successful generation
-      sessionStorage.removeItem('recruiterGuides');
-      sessionStorage.removeItem('recruiterGuidesTime');
     } catch (err) {
       setError(err.message);
     } finally {

@@ -88,7 +88,7 @@ async function generateWithRetry(model, systemInstruction, userPayload, agent = 
           config: {
             systemInstruction,
             responseMimeType: "application/json",
-            temperature: 0.4,
+            temperature: 0.1,
           },
         });
       } catch (error) {

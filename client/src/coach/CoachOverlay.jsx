@@ -135,19 +135,13 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           retry_answer: retryAnswer,
           question_text: questionText,
           session_id: sessionId,
-          expected_method: expectedMethod || 'STAR',
+          expected_method: method,
           original_score: overall_score,
           language,
         }),
       });
       if (!res.ok) throw new Error('Failed to process retry analysis.');
       const data = await res.json();
-      if (data.improvement) {
-        sessionStorage.removeItem('progressData_en');
-        sessionStorage.removeItem('progressDataTime_en');
-        sessionStorage.removeItem('progressData_he');
-        sessionStorage.removeItem('progressDataTime_he');
-      }
       setRetryResult(data);
       if (data.retry_feedback) setLastRetryFeedback(data.retry_feedback);
     } catch (err) {
@@ -157,7 +151,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
     }
   };
 
-  const method = framework_detected || expectedMethod || 'STAR';
+  const method = (framework_detected && framework_detected !== 'NONE') ? framework_detected : (expectedMethod || 'STAR');
   let labels = { S: 'labelSituation', T: 'labelTask', A: 'labelAction', R: 'labelResult' };
   if (method === 'CAR') labels = { S: 'labelContext', A: 'labelAction', R: 'labelResult' };
   if (method === 'PREP') labels = { S: 'labelPoint', T: 'labelReason', A: 'labelExample', R: 'labelPointRevisited' };

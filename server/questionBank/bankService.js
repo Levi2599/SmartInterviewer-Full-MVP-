@@ -46,6 +46,7 @@ router.post('/generate', async (req, res) => {
 
 // GET /api/questionBank
 router.get('/', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
   try {
     const { QuestionBankModel } = require("../../database/questionBank/questionBankDB");
     const records = await QuestionBankModel.find({ created_by: req.user.userId }).sort({ created_at: -1 }).exec();

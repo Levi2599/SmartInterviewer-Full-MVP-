@@ -73,6 +73,7 @@ async function interviewProfilePrompt(input) {
                 "Analyze candidate CV against JD. Detect key skill gaps. Select a gap or requirement to target. " +
                 "Generate a single question. Determine the expected method (STAR/CAR/PREP/Step-by-Step) and type (technical/behavioral). " +
                 `DIVERSITY MANDATE: ${diversityAngle} ` +
+                "METHODOLOGY DIVERSITY MANDATE: Do not stick only to STAR. Alternate between behavioral questions (STAR/CAR) and technical/conceptual/execution questions (PREP/Step-by-Step) as the interview progresses based on turn count. " +
                 "ANTI-REPETITION: Never repeat a question or topic already covered in conversation_history."
   };
 

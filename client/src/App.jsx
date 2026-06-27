@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import UploadResumeForm from './simulator/UploadResumeForm';
 import SimulatorScreen from './simulator/SimulatorScreen';
 import QuestionBankScreen from './questionBank/QuestionBankScreen';
@@ -45,6 +45,15 @@ function UserDropdown({ onClose, onLogout, t, isRtl }) {
       </button>
     </div>
   );
+}
+
+// Forces a full remount of the dashboard on every navigation to '/',
+// ensuring fresh data is always fetched regardless of component identity.
+function HomeRoute({ role }) {
+  const location = useLocation();
+  return role === 'candidate'
+    ? <ProgressDashboard key={location.key} />
+    : <RecruiterDashboard key={location.key} />;
 }
 
 export default function App() {
@@ -182,23 +191,32 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    const uid = localStorage.getItem('userId');
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     localStorage.removeItem('username');
     localStorage.removeItem('role');
-    setToken(null);
-    setUserId(null);
-    setUsername('User');
-    setRole('candidate');
-    setMenuOpen(false);
+    localStorage.removeItem('pref-lang');
+    localStorage.removeItem('pref-font-size');
+    localStorage.removeItem('pref-high-contrast');
+    localStorage.removeItem('pref-stt-lang');
+    localStorage.removeItem('pref-readiness-threshold');
+    localStorage.removeItem('pref-recruiter-company');
+    localStorage.removeItem('pref-recruiter-qcount');
+    localStorage.removeItem('pref-tts-enabled');
+    if (uid) {
+      localStorage.removeItem(`cached-cv-${uid}`);
+      localStorage.removeItem(`cached-jd-${uid}`);
+      localStorage.removeItem(`pref-auto-save-cv-${uid}`);
+    }
+    sessionStorage.clear();
+    window.location.replace('/');
   };
 
   const handleSwitchRole = () => {
     const newRole = role === 'candidate' ? 'interviewer' : 'candidate';
     localStorage.setItem('role', newRole);
-    setRole(newRole);
-    setMobileMenuOpen(false);
-    setMenuOpen(false);
+    sessionStorage.clear();
     window.location.replace('/');
   };
 
@@ -767,7 +785,7 @@ export default function App() {
                 🔄 {role === 'candidate' ? t('switchToRecruiter') : t('switchToCandidate')}
               </button>
               <button
-                onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                onClick={handleLogout}
                 style={{ ...mobileNavLinkStyle(false), textAlign: 'start', border: 'none', cursor: 'pointer', color: '#dc2626', width: '100%' }}
               >
                 🚪 {t('navLogout')}
@@ -783,7 +801,7 @@ export default function App() {
           padding: isMobile ? '1rem' : '2rem 1.5rem',
         }}>
           <Routes>
-            <Route path="/" element={role === 'candidate' ? <ProgressDashboard /> : <RecruiterDashboard />} />
+            <Route path="/" element={<HomeRoute role={role} />} />
             <Route path="/prepare" element={<UploadResumeForm />} />
             <Route path="/simulator" element={<SimulatorScreen />} />
             <Route path="/questions" element={<QuestionBankScreen />} />
