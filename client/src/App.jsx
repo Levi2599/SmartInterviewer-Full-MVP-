@@ -48,11 +48,11 @@ function UserDropdown({ onClose, onLogout, t, isRtl }) {
 }
 
 // Forces a full remount of the dashboard on every navigation to '/'.
-// Including location.state?.refresh guarantees a fresh fetch even when
-// location.key stays the same (e.g. same-path re-navigation).
+// Including role + location.state?.refresh guarantees a fresh fetch when
+// the role switches or when a child screen navigates home with a refresh token.
 function HomeRoute({ role }) {
   const location = useLocation();
-  const mountKey = `${location.key}-${location.state?.refresh ?? ''}`;
+  const mountKey = `${role}-${location.key}-${location.state?.refresh ?? ''}`;
   return role === 'candidate'
     ? <ProgressDashboard key={mountKey} />
     : <RecruiterDashboard key={mountKey} />;
@@ -219,7 +219,13 @@ export default function App() {
     const newRole = role === 'candidate' ? 'interviewer' : 'candidate';
     localStorage.setItem('role', newRole);
     sessionStorage.clear();
-    window.location.replace('/');
+    setRole(newRole);
+    // If already on '/', updating React state + the role-based key in HomeRoute
+    // remounts the dashboard instantly with no page reload needed.
+    // If on a different route (simulator, questions…), navigate home fully.
+    if (window.location.pathname !== '/') {
+      window.location.href = '/';
+    }
   };
 
   const navLinkStyle = (isActive) => ({
