@@ -143,7 +143,7 @@ export default function SimulatorScreen() {
     setConversationHistory(newHistory);
     try {
       sessionStorage.setItem(`sim-history-${localStorage.getItem('userId') || 'user-001'}`, JSON.stringify(newHistory));
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const toggleRecording = () => {
@@ -182,19 +182,19 @@ export default function SimulatorScreen() {
       // Turn 2+: only session_id + trimmed history (CV/JD served from server cache).
       const body = currentTurn === 1
         ? {
-            cv_text, jd_text,
-            session_id: sessionId,
-            turn_number: currentTurn,
-            conversation_history: [],
-            language: sessionLang,
-          }
+          cv_text, jd_text,
+          session_id: sessionId,
+          turn_number: currentTurn,
+          conversation_history: [],
+          language: sessionLang,
+        }
         : {
-            session_id: sessionId,
-            turn_number: currentTurn,
-            // Send only the last 8 exchanges — enough context, far fewer tokens
-            conversation_history: currentHistory.slice(-8),
-            language: sessionLang,
-          };
+          session_id: sessionId,
+          turn_number: currentTurn,
+          // Send only the last 8 exchanges — enough context, far fewer tokens
+          conversation_history: currentHistory.slice(-8),
+          language: sessionLang,
+        };
 
       const res = await fetch('/api/simulator/generate-question', {
         method: 'POST',
@@ -258,7 +258,7 @@ export default function SimulatorScreen() {
     fetch(`/api/simulator/session/${sessionId}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
-    }).catch(() => {}); // fire-and-forget
+    }).catch(() => { }); // fire-and-forget
   };
 
   const handleAnswerSubmit = async (e) => {
@@ -307,7 +307,7 @@ export default function SimulatorScreen() {
     const nextTurn = turnNumber + 1;
     updateConversationHistory(updatedHistory);
     setTurnNumber(nextTurn);
-    try { sessionStorage.setItem(`sim-turn-${localStorage.getItem('userId') || 'user-001'}`, String(nextTurn)); } catch (_) {}
+    try { sessionStorage.setItem(`sim-turn-${localStorage.getItem('userId') || 'user-001'}`, String(nextTurn)); } catch (_) { }
     setAnswerText('');
     setFeedback(null);
     fetchQuestion(nextTurn, updatedHistory);

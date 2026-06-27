@@ -37,34 +37,60 @@ export default function RecruiterDashboard() {
   const { t } = useLanguage();
 
   const fetchGuides = async (signal) => {
+    const startTime = Date.now();
     setLoading(true);
     setError('');
     try {
       const res = await fetch('/api/questionBank', { headers: getAuthHeaders(), signal, cache: 'no-store' });
       if (!res.ok) throw new Error('Failed to retrieve question guides.');
       const data = await res.json();
+      
+      // Enforce a minimum 800ms loading duration for a smooth visual transition
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, 800 - elapsed);
+      if (remainingDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, remainingDelay));
+      }
+
       setGuides(data);
-    } catch (err) {
-      if (err.name !== 'AbortError') setError(err.message);
-    } finally {
       setLoading(false);
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        setError(err.message);
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
     const controller = new AbortController();
+    let refreshTimeoutId = null;
     fetchGuides(controller.signal);
 
+    // Refresh data when user returns to the dashboard tab
+    const handleFocusEvent = () => {
+      fetchGuides(controller.signal);
+    };
+    window.addEventListener('focus', handleFocusEvent);
+
     // Also re-fetch whenever another screen fires the global refresh event.
-    const handleRefreshEvent = () => fetchGuides();
+    // Implement a 1000ms delay to ensure backend writes are fully saved/indexed.
+    const handleRefreshEvent = () => {
+      if (refreshTimeoutId) clearTimeout(refreshTimeoutId);
+      refreshTimeoutId = setTimeout(() => {
+        fetchGuides(controller.signal);
+      }, 1000);
+    };
     window.addEventListener('dashboard:refresh', handleRefreshEvent);
 
     return () => {
       controller.abort();
+      if (refreshTimeoutId) clearTimeout(refreshTimeoutId);
+      window.removeEventListener('focus', handleFocusEvent);
       window.removeEventListener('dashboard:refresh', handleRefreshEvent);
     };
-  // location.key changes on every navigation — guarantees a fresh fetch whenever
-  // the user arrives at this route, even if the component instance is reused.
+    // location.key changes on every navigation — guarantees a fresh fetch whenever
+    // the user arrives at this route, even if the component instance is reused.
   }, [location.key]);
 
   const handleDeleteRequest = (id, e) => {
@@ -183,11 +209,11 @@ export default function RecruiterDashboard() {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
             <RecruiterStatCard label={t('recruiterActivePositions')} value={guides.length} icon="💼" sub={t('recruiterGuidesSaved')} />
             <RecruiterStatCard label={t('recruiterTotalQs')} value={totalQuestions} icon="❓" sub={t('recruiterAcrossTemplates')} />
-            <RecruiterStatCard 
-              label={t('recruiterRoiLabel')} 
-              value={t('recruiterRoiValue').replace('{hours}', displayHours)} 
-              icon="⚡" 
-              sub={t('recruiterRoiSub')} 
+            <RecruiterStatCard
+              label={t('recruiterRoiLabel')}
+              value={t('recruiterRoiValue').replace('{hours}', displayHours)}
+              icon="⚡"
+              sub={t('recruiterRoiSub')}
             />
           </div>
 

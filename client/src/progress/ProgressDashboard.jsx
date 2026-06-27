@@ -79,7 +79,10 @@ export default function ProgressDashboard() {
 
   useEffect(() => {
     const controller = new AbortController();
+    let refreshTimeoutId = null;
+
     const fetchProgress = async () => {
+      const startTime = Date.now();
       const activeUserId = localStorage.getItem('userId') || 'user-001';
       setLoading(true);
       setError('');
@@ -92,6 +95,14 @@ export default function ProgressDashboard() {
         if (res.status === 404) { setData(null); setLoading(false); return; }
         if (!res.ok) throw new Error('Failed to retrieve progress data.');
         const json = await res.json();
+        
+        // Enforce a minimum 800ms loading duration for a smooth visual transition
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = Math.max(0, 800 - elapsed);
+        if (remainingDelay > 0) {
+          await new Promise(resolve => setTimeout(resolve, remainingDelay));
+        }
+
         setData(json);
         setLoading(false);
       } catch (err) {
@@ -103,17 +114,29 @@ export default function ProgressDashboard() {
     };
     fetchProgress();
 
-    // Also re-fetch whenever another screen fires the global refresh event
-    // (e.g. SimulatorScreen after saving progress, without requiring navigation).
-    const handleRefreshEvent = () => fetchProgress();
+    // Refresh data when user returns to the dashboard tab
+    const handleFocusEvent = () => {
+      fetchProgress();
+    };
+    window.addEventListener('focus', handleFocusEvent);
+
+    // Refresh data upon session completion event (with 1000ms delay to ensure server persistence finishes)
+    const handleRefreshEvent = () => {
+      if (refreshTimeoutId) clearTimeout(refreshTimeoutId);
+      refreshTimeoutId = setTimeout(() => {
+        fetchProgress();
+      }, 1000);
+    };
     window.addEventListener('dashboard:refresh', handleRefreshEvent);
 
     return () => {
       controller.abort();
+      if (refreshTimeoutId) clearTimeout(refreshTimeoutId);
+      window.removeEventListener('focus', handleFocusEvent);
       window.removeEventListener('dashboard:refresh', handleRefreshEvent);
     };
-  // location.key changes on every navigation — guarantees a fresh fetch whenever
-  // the user arrives at this route, even if the component instance is reused.
+    // location.key changes on every navigation — guarantees a fresh fetch whenever
+    // the user arrives at this route, even if the component instance is reused.
   }, [language, location.key]);
 
   if (loading) return (
@@ -273,11 +296,11 @@ export default function ProgressDashboard() {
                   contentStyle={{ borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   labelStyle={{ fontWeight: '700', color: '#1e293b' }}
                 />
-                <ReferenceLine 
-                  y={Number(localStorage.getItem('pref-readiness-threshold') || '75')} 
+                <ReferenceLine
+                  y={Number(localStorage.getItem('pref-readiness-threshold') || '75')}
                   label={{ value: `${t('chartTargetLabel')} (${localStorage.getItem('pref-readiness-threshold') || '75'}%)`, fill: '#ef4444', fontSize: 10, position: 'top' }}
-                  stroke="#ef4444" 
-                  strokeDasharray="3 3" 
+                  stroke="#ef4444"
+                  strokeDasharray="3 3"
                 />
                 <Area
                   type="monotone"

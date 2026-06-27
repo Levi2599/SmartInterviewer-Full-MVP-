@@ -121,7 +121,7 @@ export default function SettingsScreen() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        
+
         {/* Profile Card */}
         <div style={{
           backgroundColor: '#fff', borderRadius: '16px',
@@ -207,7 +207,7 @@ export default function SettingsScreen() {
             <h2 style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b', margin: '0 0 1.25rem 0', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
               ♿ {t('settingsAccessibilityTitle')}
             </h2>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {/* Font Size */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexWrap: 'wrap', gap: '0.5rem' }}>

@@ -42,8 +42,8 @@ router.post('/', async (req, res, next) => {
     const resolvedTurn = (typeof turn_number === 'number' && turn_number > 0) ? turn_number : 1;
 
     // ── Resolve cv/jd from cache or from request body ──────────────────────
-    let resolvedCv  = cv_text  || null;
-    let resolvedJd  = jd_text  || null;
+    let resolvedCv = cv_text || null;
+    let resolvedJd = jd_text || null;
     let resolvedLang = null;
 
     if (resolvedTurn === 1 && resolvedCv && resolvedJd) {
@@ -54,8 +54,8 @@ router.post('/', async (req, res, next) => {
       // Subsequent turns: retrieve from cache — no need for client to resend CV/JD
       const cached = getCacheEntry(session_id);
       if (cached) {
-        resolvedCv   = cached.cv_text;
-        resolvedJd   = cached.jd_text;
+        resolvedCv = cached.cv_text;
+        resolvedJd = cached.jd_text;
         resolvedLang = cached.language;
       }
     }

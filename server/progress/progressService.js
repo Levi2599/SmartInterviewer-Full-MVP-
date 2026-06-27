@@ -78,7 +78,7 @@ router.delete('/:userId', async (req, res) => {
     // Extract MongoDB _id from userId format "user-<mongoId>"
     const mongoId = userId.startsWith('user-') ? userId.slice(5) : null;
     if (mongoId) {
-      await UserModel.deleteOne({ _id: mongoId }).catch(() => {});
+      await UserModel.deleteOne({ _id: mongoId }).catch(() => { });
     }
 
     return res.json({ success: true });
@@ -124,7 +124,7 @@ router.get('/:userId', async (req, res) => {
         const t = breakdown.T ?? 0;
         const a = breakdown.A ?? 0;
         const r = breakdown.R ?? 0;
-        
+
         star_breakdown.S += s;
         star_breakdown.T += t;
         star_breakdown.A += a;
