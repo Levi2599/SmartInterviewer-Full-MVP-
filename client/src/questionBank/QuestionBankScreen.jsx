@@ -350,7 +350,7 @@ export default function QuestionBankScreen() {
                             backgroundColor: isTechnical ? '#dbeafe' : '#dcfce7',
                             color: isTechnical ? '#1d4ed8' : '#166534',
                           }}>
-                            {isTechnical ? `⚙️ ${t('qbTechnical')}` : `💬 ${t('qbBehavioral')}`}
+                            {isTechnical ? `${t('qbTechnical')}` : `💬 ${t('qbBehavioral')}`}
                           </span>
                           {q.methodology_expectation && (
                             <span style={{
@@ -408,7 +408,7 @@ export default function QuestionBankScreen() {
                           borderLeft: '3px solid #ef4444',
                         }}>
                           <div style={{ fontSize: '0.72rem', fontWeight: '700', color: '#dc2626', marginBottom: '0.25rem' }}>
-                            🚩 {t('qbRedFlags')}
+                             {t('qbRedFlags')}
                           </div>
                           <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.8rem', color: '#b91c1c', lineHeight: '1.4' }}>
                             {q.red_flags.map((f, fi) => <li key={fi}>{f}</li>)}
@@ -424,7 +424,7 @@ export default function QuestionBankScreen() {
                           borderLeft: '3px solid #94a3b8',
                         }}>
                           <div style={{ fontSize: '0.72rem', fontWeight: '700', color: '#64748b', marginBottom: '0.25rem' }}>
-                            🔍 {t('qbFollowUps')}
+                            {t('qbFollowUps')}
                           </div>
                           <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.8rem', color: '#475569', lineHeight: '1.4' }}>
                             {q.follow_ups.map((f, fi) => <li key={fi}>{f}</li>)}

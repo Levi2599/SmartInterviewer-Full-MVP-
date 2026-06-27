@@ -34,7 +34,16 @@ export default function RecruiterDashboard() {
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+
+  const translateSeniority = (level) => {
+    if (!level) return '';
+    const lvl = String(level).trim().toLowerCase();
+    if (lvl === 'junior') return t('qbSeniorityJunior');
+    if (lvl === 'mid') return t('qbSeniorityMid');
+    if (lvl === 'senior') return t('qbSenioritySenior');
+    return level;
+  };
 
   const fetchGuides = async (signal) => {
     const startTime = Date.now();
@@ -273,20 +282,20 @@ export default function RecruiterDashboard() {
                           backgroundColor: '#f1f5f9', color: '#475569',
                           padding: '0.2rem 0.5rem', borderRadius: '4px'
                         }}>
-                          {g.seniority_level}
+                          {translateSeniority(g.seniority_level)}
                         </span>
                       </td>
                       <td style={{ padding: '1rem 0.5rem', color: '#4f46e5', fontWeight: '700', fontSize: '0.85rem' }}>
-                        {g.questions_array?.length || 0} questions
+                        {g.questions_array?.length || 0} {language === 'he' ? 'שאלות' : 'questions'}
                       </td>
                       <td style={{ padding: '1rem 0.5rem', color: '#94a3b8', fontSize: '0.8rem' }}>
-                        {new Date(g.created_at).toLocaleDateString()}
+                        {new Date(g.created_at).toLocaleDateString(language === 'he' ? 'he-IL' : 'en-US')}
                       </td>
                       <td style={{ padding: '1rem 0.5rem', textAlign: 'end' }}>
                         <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
                           <button
                             onClick={(e) => handleExportPDF(g.question_id, e)}
-                            title="Download PDF"
+                            title={language === 'he' ? 'הורד PDF' : 'Download PDF'}
                             style={{
                               padding: '0.35rem 0.6rem', borderRadius: '6px',
                               backgroundColor: '#fff', border: '1px solid #e2e8f0',
@@ -297,7 +306,7 @@ export default function RecruiterDashboard() {
                           </button>
                           <button
                             onClick={(e) => handleDeleteRequest(g.question_id, e)}
-                            title="Delete Guide"
+                            title={language === 'he' ? 'מחק מדריך' : 'Delete Guide'}
                             style={{
                               padding: '0.35rem 0.6rem', borderRadius: '6px',
                               backgroundColor: '#fee2e2', color: '#dc2626',

@@ -270,7 +270,7 @@ const translations = {
     settingsTitle: 'App Settings',
     settingsSubtitle: 'Configure your accessibility, language inputs, and role preferences.',
     settingsDashboardBtn: 'Dashboard',
-    settingsLoggedInAs: 'Logged in as',
+    settingsLoggedInAs: 'Logged in as ',
     settingsActiveSession: 'Active Session',
     settingsInterfaceLang: 'Interface Language',
     settingsLangEn: 'English',

@@ -142,7 +142,7 @@ export default function SettingsScreen() {
             <div>
               <div style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b' }}>{username === 'Guest' ? t('guest') : username}</div>
               <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', marginTop: '0.15rem' }}>
-                {t('settingsLoggedInAs')} {role}
+                {t('settingsLoggedInAs')}{role === 'candidate' ? t('roleCandidate') : role === 'interviewer' ? t('roleInterviewer') : role}
               </div>
             </div>
           </div>
