@@ -372,21 +372,25 @@ export default function SimulatorScreen() {
             </span>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => { endSession(); setExitConfirm(true); }}
-          style={{
-            backgroundColor: '#fee2e2', color: '#dc2626',
-            padding: '0.4rem 0.75rem', borderRadius: '8px',
-            fontSize: '0.78rem', fontWeight: '700',
-            border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '0.25rem',
-            cursor: 'pointer', transition: 'opacity 0.15s', whiteSpace: 'nowrap',
-          }}
-          onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-        >
-          🚪 {t('simExitSession')}
-        </button>
+        {/* Exit button: hidden during coach analysis to prevent race condition
+             where the user navigates before saveProgress has completed. */}
+        {!loading && (
+          <button
+            type="button"
+            onClick={() => { endSession(); setExitConfirm(true); }}
+            style={{
+              backgroundColor: '#fee2e2', color: '#dc2626',
+              padding: '0.4rem 0.75rem', borderRadius: '8px',
+              fontSize: '0.78rem', fontWeight: '700',
+              border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '0.25rem',
+              cursor: 'pointer', transition: 'opacity 0.15s', whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+          >
+            🚪 {t('simExitSession')}
+          </button>
+        )}
       </div>
 
       {sttWarning && (
@@ -401,7 +405,9 @@ export default function SimulatorScreen() {
         </div>
       )}
 
-      {exitConfirm && (
+      {/* Block exit confirmation while coach is analysing to prevent navigation
+           before saveProgress has completed — avoids stale dashboard reads. */}
+      {exitConfirm && !loading && (
         <div style={{
           backgroundColor: '#fff', border: '1px solid #fecaca',
           borderRadius: '12px', padding: '1.25rem 1.5rem',
