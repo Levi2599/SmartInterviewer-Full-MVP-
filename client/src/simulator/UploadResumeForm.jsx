@@ -438,6 +438,24 @@ export default function UploadResumeForm() {
     }
   };
 
+  const handleClearAllHistory = async () => {
+    if (!window.confirm(t('uploadHistoryClearAllConfirm'))) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/simulator/history', {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      if (res.ok) {
+        setHistory([]);
+      }
+    } catch (err) {
+      console.error('Failed to clear history:', err);
+    }
+  };
+
   const isGuest = userId.startsWith('guest-') || userId === 'guest';
 
   return (
@@ -530,9 +548,27 @@ export default function UploadResumeForm() {
           paddingTop: '2rem',
           textAlign: 'start'
         }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.25rem', letterSpacing: '-0.02em' }}>
-            ⏳ {t('uploadHistoryTitle')}
-          </h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+              ⏳ {t('uploadHistoryTitle')}
+            </h2>
+            {history.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAllHistory}
+                style={{
+                  background: 'none', border: 'none', color: '#dc2626',
+                  fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer',
+                  padding: '0.25rem 0.5rem', borderRadius: '6px',
+                  transition: 'background-color 0.15s'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#fee2e2'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+              >
+                {t('uploadHistoryClearAll')}
+              </button>
+            )}
+          </div>
           <p style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '1.25rem' }}>
             {t('uploadHistorySubtitle')}
           </p>

@@ -57,6 +57,17 @@ router.get('/', async (req, res) => {
   }
 });
 
+// DELETE /api/questionBank (Deletes all guides for this recruiter)
+router.delete('/', async (req, res) => {
+  try {
+    const { QuestionBankModel } = require("../../database/questionBank/questionBankDB");
+    const result = await QuestionBankModel.deleteMany({ created_by: req.user.userId }).exec();
+    return res.json({ success: true, deletedCount: result.deletedCount });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 // DELETE /api/questionBank/:id
 router.delete('/:id', async (req, res) => {
   try {

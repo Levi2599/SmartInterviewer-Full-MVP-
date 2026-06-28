@@ -123,6 +123,23 @@ export default function RecruiterDashboard() {
     }
   };
 
+  const handleClearAllGuides = async () => {
+    if (!window.confirm(t('qbClearAllConfirm'))) {
+      return;
+    }
+    setError('');
+    try {
+      const res = await fetch('/api/questionBank', {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to delete all guides.');
+      setGuides([]);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const handleExportPDF = (id, e) => {
     e.stopPropagation();
     const brand = localStorage.getItem('pref-recruiter-company') || 'SmartInterviewer AI';
@@ -232,9 +249,27 @@ export default function RecruiterDashboard() {
             border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
             padding: '1.5rem',
           }}>
-            <h2 style={{ margin: '0 0 1.25rem 0', fontSize: '1.1rem', fontWeight: '800', color: '#1e293b' }}>
-              {t('recruiterActiveGuides')}
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#1e293b' }}>
+                {t('recruiterActiveGuides')}
+              </h2>
+              {guides.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearAllGuides}
+                  style={{
+                    background: 'none', border: 'none', color: '#dc2626',
+                    fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer',
+                    padding: '0.25rem 0.5rem', borderRadius: '6px',
+                    transition: 'background-color 0.15s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#fee2e2'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                >
+                  {t('qbClearAll')}
+                </button>
+              )}
+            </div>
 
             {pendingDeleteId && (
               <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '1rem', marginBottom: '1.25rem' }}>

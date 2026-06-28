@@ -93,6 +93,18 @@ router.get('/last-active', async (req, res) => {
   }
 });
 
+// DELETE /api/simulator/history (Deletes all practice sessions for this candidate)
+router.delete('/history', async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const result = await SessionModel.deleteMany({ user_id: userId });
+    return res.json({ success: true, deletedCount: result.deletedCount });
+  } catch (err) {
+    console.error('History clear error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // DELETE /api/simulator/history/:sessionId
 router.delete('/history/:sessionId', async (req, res) => {
   try {

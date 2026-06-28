@@ -159,6 +159,10 @@ const translations = {
     qbShowJd: 'Show Job Description',
     qbHideJd: 'Hide Job Description',
     qbCreateNewGuideBtn: '📋 Create New Guide',
+    qbClearAll: '🗑️ Clear All',
+    qbClearAllConfirm: 'Are you sure you want to delete all guides?',
+    uploadHistoryClearAll: '🗑️ Clear All',
+    uploadHistoryClearAllConfirm: 'Are you sure you want to delete all your practice history?',
 
     // ── Progress Dashboard ────────────────────────────────
     progressTitle: 'My Progress',
@@ -514,6 +518,10 @@ const translations = {
     qbShowJd: 'הצג תיאור משרה',
     qbHideJd: 'הסתר תיאור משרה',
     qbCreateNewGuideBtn: '📋 יצירת מדריך חדש',
+    qbClearAll: '🗑️ מחק הכל',
+    qbClearAllConfirm: 'האם אתה בטוח שברצונך למחוק את כל המדריכים?',
+    uploadHistoryClearAll: '🗑️ מחק הכל',
+    uploadHistoryClearAllConfirm: 'האם אתה בטוח שברצונך למחוק את כל היסטוריית האימונים שלך?',
 
     // ── Progress Dashboard ────────────────────────────────
     progressTitle: 'ההתקדמות שלי',
