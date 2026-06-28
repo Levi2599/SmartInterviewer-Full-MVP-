@@ -26,6 +26,9 @@ const QuestionBankSchema = new mongoose.Schema({
   seniority_level: { 
     type: String 
   },
+  jd_text: {
+    type: String
+  },
   questions_array: [IndividualQuestionSchema],
   created_by: {
     type: String,

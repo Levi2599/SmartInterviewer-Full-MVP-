@@ -28,6 +28,7 @@ router.post('/generate', async (req, res) => {
       job_role,
       industry,
       seniority_level,
+      jd_text: jd_text || "",
       questions_array: aiQuestions,
       created_by: req.user.userId,
       created_at: new Date()

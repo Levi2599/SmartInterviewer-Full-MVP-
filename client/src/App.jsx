@@ -209,7 +209,7 @@ export default function App() {
     if (uid) {
       localStorage.removeItem(`cached-cv-${uid}`);
       localStorage.removeItem(`cached-jd-${uid}`);
-      localStorage.removeItem(`pref-auto-save-cv-${uid}`);
+      // Keep pref-auto-save-cv-${uid} so the checkbox choice persists across sessions
     }
     sessionStorage.clear();
     window.location.replace('/');
