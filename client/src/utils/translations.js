@@ -144,6 +144,14 @@ const translations = {
     uploadClickReplace: 'Click to replace',
     uploadImageExtracted: 'Image text extracted',
     uploadDiscard: 'Discard',
+    uploadDropzoneLabel: 'Drag a file or image here, or click to browse',
+    uploadDropzoneTypes: 'PDF \u00b7 DOCX \u00b7 PNG \u00b7 JPG',
+    uploadFileBtn: '\ud83d\udcc1 Upload File',
+    uploadTypeBtn: '\u270f\ufe0f Type Manually',
+    uploadOrType: '\u2014 or type manually \u2014',
+    uploadVoiceInput: 'Voice input',
+    uploadVoiceStop: 'Stop recording',
+    uploadVoiceNotSupported: 'Voice input is not supported in this browser.',
 
     // ── Progress Dashboard ────────────────────────────────
     progressTitle: 'My Progress',
@@ -484,6 +492,14 @@ const translations = {
     uploadClickReplace: 'לחץ להחלפה',
     uploadImageExtracted: 'הטקסט חולץ מהתמונה',
     uploadDiscard: 'הסר קובץ',
+    uploadDropzoneLabel: 'גרור קובץ או תמונה לכאן, או לחץ לבחירה',
+    uploadDropzoneTypes: 'PDF \u00b7 DOCX \u00b7 PNG \u00b7 JPG',
+    uploadFileBtn: '\ud83d\udcc1 העלה קובץ',
+    uploadTypeBtn: '\u270f\ufe0f הקלד ידנית',
+    uploadOrType: '\u2014 או הקלד ידנית \u2014',
+    uploadVoiceInput: 'הקלדה קולית (עברית)',
+    uploadVoiceStop: 'עצור הקלטה',
+    uploadVoiceNotSupported: 'הקלדה קולית אינה נתמכת בדפדפן זה.',
 
     // ── Progress Dashboard ────────────────────────────────
     progressTitle: 'ההתקדמות שלי',

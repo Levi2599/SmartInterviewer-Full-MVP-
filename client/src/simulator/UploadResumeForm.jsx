@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Stepper from '../components/Stepper';
 import { getAuthHeadersFormData } from '../utils/auth';
@@ -9,35 +9,76 @@ const INDIGO = '#4f46e5';
 const INDIGO_LIGHT = '#f5f3ff';
 const BORDER = '#e2e8f0';
 
-function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, setIsLoading, onFileUpload }) {
-  const { t } = useLanguage();
+// ─── Upload Zone ─────────────────────────────────────────────────────────────
+// mode === 'upload' → large drop zone (click to browse OR drag & drop)
+// mode === 'type'   → textarea (replaces drop zone entirely)
+// One small toggle button in the header row switches between modes.
+function UploadZone({ icon, label, text, setText, isLoading, setIsLoading, onFileUpload }) {
+  const { t, language } = useLanguage();
+  const [mode, setMode] = useState('upload'); // 'upload' | 'type'
   const [isDragOver, setIsDragOver] = useState(false);
   const [ocrProgress, setOcrProgress] = useState('');
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    if (isLoading) return;
-    const file = e.dataTransfer.files[0];
-    if (file) onFileUpload({ target: { files: [file] } });
+  // Hebrew voice input — only initialised when language === 'he'
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceWarning, setVoiceWarning] = useState('');
+  const recognitionRef = useRef(null);
+
+  useEffect(() => {
+    if (language !== 'he') return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+
+    const rec = new SR();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = 'he-IL';
+
+    rec.onresult = (event) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) transcript += event.results[i][0].transcript;
+      }
+      if (transcript) {
+        setText((prev) => prev + (prev.endsWith(' ') || prev === '' ? '' : ' ') + transcript);
+      }
+    };
+    rec.onerror = () => setIsRecording(false);
+    rec.onend   = () => setIsRecording(false);
+
+    recognitionRef.current = rec;
+    return () => {
+      try { rec.stop(); } catch (_) {}
+      recognitionRef.current = null;
+    };
+  }, [language]);
+
+  const toggleVoice = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { setVoiceWarning(t('uploadVoiceNotSupported')); return; }
+    if (!recognitionRef.current) return;
+    if (isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    } else {
+      try { recognitionRef.current.start(); setIsRecording(true); setVoiceWarning(''); }
+      catch (_) {}
+    }
   };
 
-  const handleImageDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    if (isLoading) return;
-    const file = e.dataTransfer.files[0];
-    if (file) handleImageUpload({ target: { files: [file] } });
+  // Toggle between upload / type modes; stop recording if leaving type mode
+  const toggleMode = () => {
+    if (isRecording) { try { recognitionRef.current?.stop(); } catch (_) {} setIsRecording(false); }
+    setMode((m) => (m === 'upload' ? 'type' : 'upload'));
   };
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // OCR for image files
+  const handleImageFile = async (file) => {
     setIsLoading(true);
     setOcrProgress(t('uploadExtractingOcr'));
     try {
       const worker = await createWorker('eng+heb', 1, {
-        logger: m => {
+        logger: (m) => {
           if (m.status === 'recognizing text') {
             setOcrProgress(`${t('uploadExtractingOcr')} ${Math.round(m.progress * 100)}%`);
           }
@@ -58,183 +99,200 @@ function UploadZone({ icon, label, mode, setMode, text, setText, isLoading, setI
     }
   };
 
-  const tabStyle = (active) => ({
-    flex: 1,
-    padding: '0.75rem',
-    fontWeight: '600',
-    fontSize: '0.75rem',
-    border: 'none',
-    cursor: 'pointer',
-    backgroundColor: active ? '#fff' : 'transparent',
-    color: active ? INDIGO : '#94a3b8',
-    borderBottom: active ? `2px solid ${INDIGO}` : '2px solid transparent',
-    transition: 'all 0.15s',
-  });
+  // Unified handler: auto-detects image vs document
+  const handleUnifiedFile = (e) => {
+    if (isLoading) return;
+    const file = e.target?.files?.[0] || e.dataTransfer?.files?.[0];
+    if (!file) return;
+    file.type.startsWith('image/') ? handleImageFile(file) : onFileUpload({ target: { files: [file] } });
+  };
+
+  // Drag handlers
+  const onDragOver  = (e) => { e.preventDefault(); if (!isLoading) setIsDragOver(true); };
+  const onDragLeave = () => setIsDragOver(false);
+  const onDrop      = (e) => {
+    e.preventDefault(); setIsDragOver(false);
+    if (!isLoading) handleUnifiedFile({ dataTransfer: e.dataTransfer });
+  };
+
+  // Drop zone inner content
+  const renderDropzoneContent = () => {
+    if (isLoading) return (
+      <>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <div style={{ width: '28px', height: '28px', border: '3px solid #c7d2fe', borderTopColor: INDIGO, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <span style={{ color: INDIGO, fontWeight: '600', fontSize: '0.85rem' }}>{ocrProgress || t('uploadExtractingFile')}</span>
+      </>
+    );
+
+    if (text) return (
+      <>
+        <span style={{ fontSize: '1.5rem' }}>✅</span>
+        <span style={{ color: '#166634', fontWeight: '700', fontSize: '0.85rem' }}>{t('uploadFileParsed')}</span>
+        <span style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>{text.slice(0, 60)}...</span>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+          <span style={{ color: INDIGO, fontSize: '0.75rem', textDecoration: 'underline' }}>{t('uploadClickReplace')}</span>
+          <span
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setText(''); }}
+            style={{ color: '#ef4444', fontSize: '0.75rem', textDecoration: 'underline', fontWeight: '600', cursor: 'pointer' }}
+          >
+            ❌ {t('uploadDiscard')}
+          </span>
+        </div>
+      </>
+    );
+
+    return (
+      <>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={INDIGO} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '0.25rem' }}>
+          <polyline points="16 16 12 12 8 16" />
+          <line x1="12" y1="12" x2="12" y2="21" />
+          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+        </svg>
+        <span style={{ color: INDIGO, fontWeight: '700', fontSize: '0.9rem', textAlign: 'center' }}>{t('uploadDropzoneLabel')}</span>
+        <span style={{ color: '#94a3b8', fontSize: '0.72rem', letterSpacing: '0.04em' }}>{t('uploadDropzoneTypes')}</span>
+      </>
+    );
+  };
 
   return (
-    <div style={{
-      background: '#fff',
-      borderRadius: '16px',
-      border: `1px solid ${BORDER}`,
-      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-      overflow: 'hidden',
-    }}>
-      {/* Toggle Header */}
-      <div style={{ display: 'flex', borderBottom: `1px solid ${BORDER}`, backgroundColor: '#f8fafc' }}>
-        <button type="button" onClick={() => setMode('paste')} style={tabStyle(mode === 'paste')}>✏️ {t('uploadPasteTab')}</button>
-        <button type="button" onClick={() => setMode('upload')} style={tabStyle(mode === 'upload')}>📎 {t('uploadFileTab')}</button>
-        <button type="button" onClick={() => setMode('image')} style={tabStyle(mode === 'image')}>🖼️ {t('uploadImageTab')}</button>
-      </div>
+    <div style={{ background: '#fff', borderRadius: '16px', border: `1px solid ${BORDER}`, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+      <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
 
-      {/* Content Area */}
-      <div style={{ padding: '1.25rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-          <span style={{ fontSize: '1.2rem' }}>{icon}</span>
-          <span style={{ fontWeight: '700', fontSize: '0.9rem', color: '#1e293b' }}>{label}</span>
+        {/* Header row: icon + label on left, toggle button on right */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '1.2rem' }}>{icon}</span>
+            <span style={{ fontWeight: '700', fontSize: '0.9rem', color: '#1e293b' }}>{label}</span>
+          </div>
+
+          {/* Toggle button: shows opposite-mode action */}
+          <button
+            type="button"
+            onClick={toggleMode}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.3rem',
+              padding: '0.35rem 0.75rem',
+              border: `1.5px solid ${mode === 'type' ? INDIGO : BORDER}`,
+              borderRadius: '20px', cursor: 'pointer',
+              fontSize: '0.75rem', fontWeight: '600',
+              color: mode === 'type' ? INDIGO : '#64748b',
+              backgroundColor: mode === 'type' ? INDIGO_LIGHT : '#f8fafc',
+              transition: 'all 0.15s', whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = INDIGO;
+              e.currentTarget.style.color = INDIGO;
+              e.currentTarget.style.backgroundColor = INDIGO_LIGHT;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = mode === 'type' ? INDIGO : BORDER;
+              e.currentTarget.style.color = mode === 'type' ? INDIGO : '#64748b';
+              e.currentTarget.style.backgroundColor = mode === 'type' ? INDIGO_LIGHT : '#f8fafc';
+            }}
+          >
+            {mode === 'upload' ? t('uploadTypeBtn') : t('uploadFileBtn')}
+          </button>
         </div>
 
-        {mode === 'paste' && (
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={`${label}...`}
+        {/* Content area — Drop Zone OR Textarea, never both */}
+        {mode === 'upload' ? (
+          <label
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            onDrop={onDrop}
             style={{
-              width: '100%', height: '150px', padding: '0.75rem',
-              borderRadius: '10px', border: `1.5px solid ${BORDER}`,
-              fontSize: '0.9rem', resize: 'vertical', outline: 'none',
-              fontFamily: 'inherit', lineHeight: '1.5', color: '#334155',
-              transition: 'border-color 0.15s', boxSizing: 'border-box',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              justifyContent: 'center', gap: '0.5rem',
+              border: isDragOver ? `2px dashed ${INDIGO}` : '2px dashed #c7d2fe',
+              borderRadius: '12px', padding: '1.75rem 1rem',
+              cursor: isLoading ? 'default' : 'pointer',
+              backgroundColor: isDragOver ? '#ede9fe' : INDIGO_LIGHT,
+              transition: 'all 0.15s', minHeight: '120px',
             }}
-            onFocus={e => e.target.style.borderColor = INDIGO}
-            onBlur={e => e.target.style.borderColor = BORDER}
-          />
-        )}
-
-        {mode === 'upload' && (
-          <div
-            onDragOver={(e) => { e.preventDefault(); if (!isLoading) setIsDragOver(true); }}
-            onDragLeave={() => setIsDragOver(false)}
-            onDrop={handleDrop}
           >
-            <label style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', gap: '0.5rem',
-              border: isDragOver ? '2px dashed #4f46e5' : '2px dashed #c7d2fe',
-              borderRadius: '12px', padding: '2rem 1rem',
-              cursor: isLoading ? 'default' : 'pointer',
-              backgroundColor: isDragOver ? '#ede9fe' : INDIGO_LIGHT,
-              transition: 'all 0.15s',
-            }}>
-              {isLoading ? (
-                <>
-                  <div style={{ width: '28px', height: '28px', border: `3px solid #c7d2fe`, borderTopColor: INDIGO, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                  <style>{`@keyframes spin { to { transform: rotate(360deg); }}`}</style>
-                  <span style={{ color: INDIGO, fontWeight: '600', fontSize: '0.85rem' }}>{t('uploadExtractingFile')}</span>
-                </>
-              ) : text ? (
-                <>
-                  <span style={{ fontSize: '1.5rem' }}>✅</span>
-                  <span style={{ color: '#166634', fontWeight: '700', fontSize: '0.85rem' }}>{t('uploadFileParsed')}</span>
-                  <span style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>{text.slice(0, 60)}...</span>
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                    <span style={{ color: INDIGO, fontSize: '0.75rem', textDecoration: 'underline' }}>{t('uploadClickReplace')}</span>
-                    <span
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setText('');
-                      }}
-                      style={{ color: '#ef4444', fontSize: '0.75rem', textDecoration: 'underline', fontWeight: '600', cursor: 'pointer' }}
-                    >
-                      ❌ {t('uploadDiscard')}
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <span style={{ fontSize: '2rem' }}>{icon}</span>
-                  <span style={{ color: INDIGO, fontWeight: '700', fontSize: '0.9rem' }}>{t('uploadFileDropzone')}</span>
-                  <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{t('uploadFileTypes')}</span>
-                </>
-              )}
-              <input type="file" accept=".pdf,.docx,.doc,.txt" style={{ display: 'none' }} onChange={onFileUpload} disabled={isLoading} />
-            </label>
+            {renderDropzoneContent()}
+            <input
+              type="file"
+              accept=".pdf,.docx,.doc,.txt,image/png,image/jpeg,image/webp,image/gif"
+              style={{ display: 'none' }}
+              onChange={handleUnifiedFile}
+              disabled={isLoading}
+            />
+          </label>
+        ) : (
+          <div style={{ position: 'relative' }}>
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={`${label}...`}
+              style={{
+                width: '100%', height: '150px',
+                padding: '0.75rem',
+                paddingBottom: language === 'he' ? '2.5rem' : '0.75rem',
+                borderRadius: '10px', border: `1.5px solid ${BORDER}`,
+                fontSize: '0.9rem', resize: 'vertical', outline: 'none',
+                fontFamily: 'inherit', lineHeight: '1.5',
+                color: '#334155', transition: 'border-color 0.15s',
+                boxSizing: 'border-box',
+              }}
+              onFocus={(e) => (e.target.style.borderColor = INDIGO)}
+              onBlur={(e)  => (e.target.style.borderColor = BORDER)}
+            />
+            {/* Hebrew mic — only when language is 'he' */}
+            {language === 'he' && (
+              <button
+                type="button"
+                onClick={toggleVoice}
+                title={isRecording ? t('uploadVoiceStop') : t('uploadVoiceInput')}
+                style={{
+                  position: 'absolute', bottom: '0.5rem', left: '0.5rem',
+                  display: 'flex', alignItems: 'center', gap: '0.25rem',
+                  padding: '0.3rem 0.6rem', borderRadius: '20px',
+                  border: `1.5px solid ${isRecording ? '#fca5a5' : BORDER}`,
+                  backgroundColor: isRecording ? '#fee2e2' : '#f8fafc',
+                  color: isRecording ? '#dc2626' : '#64748b',
+                  fontSize: '0.72rem', fontWeight: '700',
+                  cursor: 'pointer', transition: 'all 0.15s',
+                }}
+              >
+                {isRecording ? `🔴 ${t('uploadVoiceStop')}` : `🎤 ${t('uploadVoiceInput')}`}
+              </button>
+            )}
           </div>
         )}
 
-        {mode === 'image' && (
-          <div
-            onDragOver={(e) => { e.preventDefault(); if (!isLoading) setIsDragOver(true); }}
-            onDragLeave={() => setIsDragOver(false)}
-            onDrop={handleImageDrop}
-          >
-            <label style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', gap: '0.5rem',
-              border: isDragOver ? '2px dashed #4f46e5' : '2px dashed #c7d2fe',
-              borderRadius: '12px', padding: '2rem 1rem',
-              cursor: isLoading ? 'default' : 'pointer',
-              backgroundColor: isDragOver ? '#ede9fe' : INDIGO_LIGHT,
-              transition: 'all 0.15s',
-            }}>
-              {isLoading ? (
-                <>
-                  <div style={{ width: '28px', height: '28px', border: `3px solid #c7d2fe`, borderTopColor: INDIGO, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                  <style>{`@keyframes spin { to { transform: rotate(360deg); }}`}</style>
-                  <span style={{ color: INDIGO, fontWeight: '600', fontSize: '0.85rem' }}>{ocrProgress || t('uploadProcessing')}</span>
-                </>
-              ) : text ? (
-                <>
-                  <span style={{ fontSize: '1.5rem' }}>✅</span>
-                  <span style={{ color: '#166634', fontWeight: '700', fontSize: '0.85rem' }}>{t('uploadImageExtracted')}</span>
-                  <span style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>{text.slice(0, 60)}...</span>
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                    <span style={{ color: INDIGO, fontSize: '0.75rem', textDecoration: 'underline' }}>{t('uploadClickReplace')}</span>
-                    <span
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setText('');
-                      }}
-                      style={{ color: '#ef4444', fontSize: '0.75rem', textDecoration: 'underline', fontWeight: '600', cursor: 'pointer' }}
-                    >
-                      ❌ {t('uploadDiscard')}
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <span style={{ fontSize: '2rem' }}>🖼️</span>
-                  <span style={{ color: INDIGO, fontWeight: '700', fontSize: '0.9rem' }}>{t('uploadImageDropzone')}</span>
-                  <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{t('uploadImageTypes')}</span>
-                </>
-              )}
-              <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" style={{ display: 'none' }} onChange={handleImageUpload} disabled={isLoading} />
-            </label>
+        {/* Voice-not-supported warning */}
+        {voiceWarning && (
+          <div style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', color: '#92400e', padding: '0.5rem 0.75rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '500', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>⚠️ {voiceWarning}</span>
+            <button type="button" onClick={() => setVoiceWarning('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#92400e', fontWeight: '700' }}>✕</button>
           </div>
         )}
+
       </div>
     </div>
   );
 }
 
+// ─── Main UploadResumeForm ────────────────────────────────────────────────────
 export default function UploadResumeForm() {
   const { t } = useLanguage();
   const userId = localStorage.getItem('userId') || 'guest';
   const cvCacheKey = `cached-cv-${userId}`;
   const jdCacheKey = `cached-jd-${userId}`;
 
-  const [autoSaveCv, setAutoSaveCv] = useState(() => localStorage.getItem(`pref-auto-save-cv-${userId}`) === 'true');
+  const [autoSaveCv, setAutoSaveCv] = useState(
+    () => localStorage.getItem(`pref-auto-save-cv-${userId}`) === 'true'
+  );
   const [cvText, setCvText] = useState(() => {
     const autoSave = localStorage.getItem(`pref-auto-save-cv-${userId}`) === 'true';
-    return autoSave ? (localStorage.getItem(cvCacheKey) || '') : '';
+    return autoSave ? localStorage.getItem(cvCacheKey) || '' : '';
   });
   const [jdText, setJdText] = useState(() => {
     const autoSave = localStorage.getItem(`pref-auto-save-cv-${userId}`) === 'true';
-    return autoSave ? (localStorage.getItem(jdCacheKey) || '') : '';
+    return autoSave ? localStorage.getItem(jdCacheKey) || '' : '';
   });
-  const [cvMode, setCvMode] = useState('paste');
-  const [jdMode, setJdMode] = useState('paste');
   const [cvLoading, setCvLoading] = useState(false);
   const [jdLoading, setJdLoading] = useState(false);
   const [error, setError] = useState('');
@@ -258,11 +316,13 @@ export default function UploadResumeForm() {
       const data = await res.json();
       setText(data.text);
     } catch (err) {
-      setError(`Text extraction failed: "${err.message}". We have switched your session to General Interview Mode. Click 'Start Simulation' to begin.`);
+      setError(
+        `Text extraction failed: "${err.message}". We have switched your session to General Interview Mode. Click 'Start Simulation' to begin.`
+      );
       if (isCv) {
-        setText("General Candidate Profile: Junior software developer with foundational knowledge in HTML, CSS, JavaScript, React, and Node.js.");
+        setText('General Candidate Profile: Junior software developer with foundational knowledge in HTML, CSS, JavaScript, React, and Node.js.');
       } else {
-        setText("General Job Requirements: Looking for a frontend developer to build responsive UI components, collaborate with team members, and learn new technologies.");
+        setText('General Job Requirements: Looking for a frontend developer to build responsive UI components, collaborate with team members, and learn new technologies.');
       }
     } finally {
       setLoading(false);
@@ -276,7 +336,6 @@ export default function UploadResumeForm() {
       return;
     }
     setError('');
-
     const autoSave = localStorage.getItem(`pref-auto-save-cv-${userId}`) === 'true';
     if (autoSave) {
       localStorage.setItem(cvCacheKey, cvText);
@@ -285,7 +344,6 @@ export default function UploadResumeForm() {
       localStorage.removeItem(cvCacheKey);
       localStorage.removeItem(jdCacheKey);
     }
-
     navigate('/simulator', { state: { cv_text: cvText, jd_text: jdText } });
   };
 
@@ -295,13 +353,7 @@ export default function UploadResumeForm() {
 
       {/* Hero Header */}
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h1 style={{
-          fontSize: 'clamp(1.35rem, 5vw, 2rem)',
-          fontWeight: '800',
-          color: '#0f172a',
-          letterSpacing: '-0.03em',
-          marginBottom: '0.5rem',
-        }}>
+        <h1 style={{ fontSize: 'clamp(1.35rem, 5vw, 2rem)', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>
           {t('uploadTitle')}
         </h1>
         <p style={{ color: '#64748b', fontSize: '1rem', maxWidth: '500px', margin: '0 auto' }}>
@@ -310,69 +362,43 @@ export default function UploadResumeForm() {
       </div>
 
       {error && (
-        <div style={{
-          backgroundColor: '#fef2f2',
-          border: '1px solid #fecaca',
-          color: '#b91c1c',
-          padding: '0.875rem 1rem',
-          borderRadius: '10px',
-          marginBottom: '1.5rem',
-          fontWeight: '500',
-          fontSize: '0.9rem',
-        }}>
+        <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '0.875rem 1rem', borderRadius: '10px', marginBottom: '1.5rem', fontWeight: '500', fontSize: '0.9rem' }}>
           ⚠️ {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '1.25rem',
-          marginBottom: '1.5rem',
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
           <UploadZone
             icon="📄"
             label={t('uploadCvLabel')}
-            mode={cvMode}
-            setMode={setCvMode}
             text={cvText}
             setText={setCvText}
             isLoading={cvLoading}
             setIsLoading={setCvLoading}
-            onFileUpload={(e) => {
-              const file = e.target.files[0];
-              if (file) parseFile(file, setCvText, setCvLoading, true);
-            }}
+            onFileUpload={(e) => { const f = e.target.files[0]; if (f) parseFile(f, setCvText, setCvLoading, true); }}
           />
           <UploadZone
             icon="💼"
             label={t('uploadJdLabel')}
-            mode={jdMode}
-            setMode={setJdMode}
             text={jdText}
             setText={setJdText}
             isLoading={jdLoading}
             setIsLoading={setJdLoading}
-            onFileUpload={(e) => {
-              const file = e.target.files[0];
-              if (file) parseFile(file, setJdText, setJdLoading, false);
-            }}
+            onFileUpload={(e) => { const f = e.target.files[0]; if (f) parseFile(f, setJdText, setJdLoading, false); }}
           />
         </div>
 
+        {/* Remember CV checkbox */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.25rem', marginBottom: '1.25rem' }}>
           <input
             type="checkbox"
             id="remember-cv"
             checked={autoSaveCv}
-            onChange={e => {
+            onChange={(e) => {
               setAutoSaveCv(e.target.checked);
               localStorage.setItem(`pref-auto-save-cv-${userId}`, String(e.target.checked));
-              if (!e.target.checked) {
-                localStorage.removeItem(cvCacheKey);
-                localStorage.removeItem(jdCacheKey);
-              }
+              if (!e.target.checked) { localStorage.removeItem(cvCacheKey); localStorage.removeItem(jdCacheKey); }
             }}
             style={{ width: '16px', height: '16px', cursor: 'pointer' }}
           />
@@ -381,29 +407,22 @@ export default function UploadResumeForm() {
           </label>
         </div>
 
+        {/* Start Simulation */}
         <button
           type="submit"
           disabled={cvLoading || jdLoading}
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            width: '100%',
-            padding: '1rem',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+            width: '100%', padding: '1rem',
             background: cvLoading || jdLoading ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '12px',
-            fontSize: '1rem',
-            fontWeight: '700',
+            color: '#fff', border: 'none', borderRadius: '12px',
+            fontSize: '1rem', fontWeight: '700',
             cursor: cvLoading || jdLoading ? 'not-allowed' : 'pointer',
             boxShadow: cvLoading || jdLoading ? 'none' : '0 4px 14px rgba(79, 70, 229, 0.4)',
-            letterSpacing: '0.01em',
-            transition: 'all 0.2s ease',
+            letterSpacing: '0.01em', transition: 'all 0.2s ease',
           }}
-          onMouseEnter={e => { if (!cvLoading && !jdLoading) e.target.style.opacity = '0.92'; }}
-          onMouseLeave={e => { e.target.style.opacity = '1'; }}
+          onMouseEnter={(e) => { if (!cvLoading && !jdLoading) e.target.style.opacity = '0.92'; }}
+          onMouseLeave={(e) => { e.target.style.opacity = '1'; }}
         >
           {t('uploadStartBtn')}
         </button>
