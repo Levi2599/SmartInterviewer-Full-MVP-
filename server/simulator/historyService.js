@@ -93,4 +93,28 @@ router.get('/last-active', async (req, res) => {
   }
 });
 
+// DELETE /api/simulator/history/:sessionId
+router.delete('/history/:sessionId', async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { sessionId } = req.params;
+
+    // Find the target session to get its jd_text
+    const targetSession = await SessionModel.findOne({ session_id: sessionId, user_id: userId });
+    if (!targetSession) {
+      return res.status(404).json({ error: 'Session not found.' });
+    }
+
+    const targetJd = targetSession.jd_text;
+
+    // Delete all sessions for this user with this exact JD
+    await SessionModel.deleteMany({ user_id: userId, jd_text: targetJd });
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('History delete error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

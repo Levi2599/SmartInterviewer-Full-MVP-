@@ -400,6 +400,27 @@ export default function UploadResumeForm() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleDeleteHistoryItem = async (e, sessionId) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!window.confirm(language === 'he' ? 'האם אתה בטוח שברצונך למחוק משרה זו מההיסטוריה?' : 'Are you sure you want to delete this job from your history?')) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/simulator/history/${sessionId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      if (res.ok) {
+        setHistory(prev => prev.filter(item => item.session_id !== sessionId));
+      }
+    } catch (err) {
+      console.error('Failed to delete history item:', err);
+    }
+  };
+
   const isGuest = userId.startsWith('guest-') || userId === 'guest';
 
   return (
@@ -533,7 +554,8 @@ export default function UploadResumeForm() {
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-                    userSelect: 'none'
+                    userSelect: 'none',
+                    position: 'relative'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = '#4f46e5';
@@ -546,7 +568,40 @@ export default function UploadResumeForm() {
                     e.currentTarget.style.transform = 'translateY(0)';
                   }}
                 >
-                  <div style={{ fontWeight: '700', fontSize: '0.88rem', color: '#1e293b', lineHeight: '1.4', marginBottom: '0.4rem' }}>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteHistoryItem(e, item.session_id)}
+                    title={language === 'he' ? 'מחק משרה מההיסטוריה' : 'Delete job from history'}
+                    style={{
+                      position: 'absolute',
+                      top: '0.45rem',
+                      left: language === 'he' ? '0.5rem' : 'auto',
+                      right: language === 'he' ? 'auto' : '0.5rem',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      padding: '0.2rem',
+                      borderRadius: '4px',
+                      opacity: 0.4,
+                      transition: 'all 0.15s',
+                      zIndex: 10
+                    }}
+                    onMouseEnter={(e) => { e.target.style.opacity = '1'; e.target.style.transform = 'scale(1.2)'; }}
+                    onMouseLeave={(e) => { e.target.style.opacity = '0.4'; e.target.style.transform = 'scale(1)'; }}
+                  >
+                    🗑️
+                  </button>
+
+                  <div style={{
+                    fontWeight: '700',
+                    fontSize: '0.88rem',
+                    color: '#1e293b',
+                    lineHeight: '1.4',
+                    marginBottom: '0.4rem',
+                    paddingLeft: language === 'he' ? '1.5rem' : '0',
+                    paddingRight: language === 'he' ? '0' : '1.5rem'
+                  }}>
                     💼 {item.title}
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem' }}>
