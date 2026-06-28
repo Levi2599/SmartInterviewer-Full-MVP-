@@ -152,6 +152,13 @@ const translations = {
     uploadVoiceInput: 'Voice input',
     uploadVoiceStop: 'Stop recording',
     uploadVoiceNotSupported: 'Voice input is not supported in this browser.',
+    uploadHistoryTitle: 'Your Practice History',
+    uploadHistorySubtitle: 'Quickly reload CV and JD from a past session',
+    uploadHistoryNoData: 'No past practices found. Start your first session above!',
+    qbJobSpecification: 'Job Specification',
+    qbShowJd: 'Show Job Description',
+    qbHideJd: 'Hide Job Description',
+    qbCreateNewGuideBtn: '📋 Create New Guide',
 
     // ── Progress Dashboard ────────────────────────────────
     progressTitle: 'My Progress',
@@ -500,6 +507,13 @@ const translations = {
     uploadVoiceInput: 'הקלדה קולית (עברית)',
     uploadVoiceStop: 'עצור הקלטה',
     uploadVoiceNotSupported: 'הקלדה קולית אינה נתמכת בדפדפן זה.',
+    uploadHistoryTitle: 'היסטוריית האימונים שלך',
+    uploadHistorySubtitle: 'טען מחדש קורות חיים ותיאור משרה מאימון קודם',
+    uploadHistoryNoData: 'לא נמצאו אימונים קודמים. התחל את האימון הראשון שלך למעלה!',
+    qbJobSpecification: 'מפרט המשרה',
+    qbShowJd: 'הצג תיאור משרה',
+    qbHideJd: 'הסתר תיאור משרה',
+    qbCreateNewGuideBtn: '📋 יצירת מדריך חדש',
 
     // ── Progress Dashboard ────────────────────────────────
     progressTitle: 'ההתקדמות שלי',

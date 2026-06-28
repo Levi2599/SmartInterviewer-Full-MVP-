@@ -27,10 +27,21 @@ export default function QuestionBankScreen() {
   const [questions, setQuestions] = useState([]);
   const [basket, setBasket] = useState([]);
   const [exporting, setExporting] = useState(false);
+  const [isReadOnly, setIsReadOnly] = useState(false);
+  const [showJd, setShowJd] = useState(false);
 
   const { t, language } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const translateSeniority = (level) => {
+    if (!level) return '';
+    const lvl = String(level).trim().toLowerCase();
+    if (lvl === 'junior') return t('qbSeniorityJunior');
+    if (lvl === 'mid') return t('qbSeniorityMid');
+    if (lvl === 'senior') return t('qbSenioritySenior');
+    return level;
+  };
 
   useEffect(() => {
     if (location.state && location.state.resumeGuide) {
@@ -41,8 +52,23 @@ export default function QuestionBankScreen() {
       setQuestions(g.questions_array || []);
       setBasket(g.questions_array || []);
       setQuestionBankId(g.question_id);
+      setJdText(g.jd_text || '');
+      setIsReadOnly(true);
     }
   }, [location.state]);
+
+  const handleCreateNew = () => {
+    setJobRole('');
+    setIndustry('');
+    setSeniorityLevel('Mid');
+    setQuestions([]);
+    setBasket([]);
+    setQuestionBankId(null);
+    setJdText('');
+    setIsReadOnly(false);
+    setShowJd(false);
+    navigate('/questions', { replace: true, state: {} });
+  };
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -141,152 +167,223 @@ export default function QuestionBankScreen() {
         </button>
       </div>
 
-      {/* Filters Card */}
+      {/* Filters / Details Card */}
       <div style={{
         backgroundColor: '#fff', borderRadius: '16px',
         border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
         padding: '1.5rem',
       }}>
-        <form onSubmit={handleGenerate}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '1rem',
-            marginBottom: '1rem',
-          }}>
-            {/* Job Role */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
-                {t('qbJobRoleLabel')}
-              </label>
-              <input
-                type="text"
-                value={jobRole}
-                onChange={e => setJobRole(e.target.value)}
-                placeholder={t('qbJobRolePlaceholder')}
-                required
-                style={{
-                  width: '100%', padding: '0.65rem 0.875rem',
-                  borderRadius: '10px', border: '1.5px solid #e2e8f0',
-                  fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
-                  boxSizing: 'border-box', transition: 'border-color 0.15s',
-                }}
-                onFocus={e => e.target.style.borderColor = INDIGO}
-                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-              />
+        {isReadOnly ? (
+          /* Read-only view for existing saved guides */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div>
+                <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>
+                  {t('qbJobSpecification')}
+                </span>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>
+                  💼 {jobRole}
+                </h2>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                <span style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '0.35rem 0.75rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '700' }}>
+                  🏷️ {translateSeniority(seniorityLevel)}
+                </span>
+                <span style={{ backgroundColor: '#f5f3ff', color: '#4f46e5', padding: '0.35rem 0.75rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '700' }}>
+                  🏢 {industry}
+                </span>
+              </div>
             </div>
-            {/* Industry */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
-                {t('qbIndustryLabel')}
-              </label>
-              <input
-                type="text"
-                value={industry}
-                onChange={e => setIndustry(e.target.value)}
-                placeholder={t('qbIndustryPlaceholder')}
-                required
+
+            {jdText && jdText.trim() && (
+              <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '1rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowJd(!showJd)}
+                  style={{
+                    background: 'none', border: 'none', color: '#4f46e5',
+                    fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer',
+                    padding: 0, display: 'flex', alignItems: 'center', gap: '0.25rem'
+                  }}
+                >
+                  <span style={{ fontSize: '0.65rem' }}>{showJd ? '▲' : '▼'}</span>
+                  <span>{showJd ? t('qbHideJd') : t('qbShowJd')}</span>
+                </button>
+                {showJd && (
+                  <div style={{
+                    marginTop: '0.75rem', padding: '0.75rem 1rem',
+                    backgroundColor: '#f8fafc', borderRadius: '10px',
+                    fontSize: '0.85rem', color: '#475569', lineHeight: '1.6',
+                    whiteSpace: 'pre-wrap', maxHeight: '200px', overflowY: 'auto',
+                    border: '1.5px solid #e2e8f0'
+                  }}>
+                    {jdText}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '1rem', marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={handleCreateNew}
                 style={{
-                  width: '100%', padding: '0.65rem 0.875rem',
-                  borderRadius: '10px', border: '1.5px solid #e2e8f0',
-                  fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
-                  boxSizing: 'border-box', transition: 'border-color 0.15s',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                  width: '100%', padding: '0.85rem',
+                  background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                  color: '#fff', border: 'none', borderRadius: '10px',
+                  fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
+                  transition: 'all 0.2s ease',
                 }}
-                onFocus={e => e.target.style.borderColor = INDIGO}
-                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-              />
+              >
+                {t('qbCreateNewGuideBtn')}
+              </button>
             </div>
-            {/* Seniority */}
-            <div>
+          </div>
+        ) : (
+          /* Editable generation form */
+          <form onSubmit={handleGenerate}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: '1rem',
+              marginBottom: '1rem',
+            }}>
+              {/* Job Role */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
+                  {t('qbJobRoleLabel')}
+                </label>
+                <input
+                  type="text"
+                  value={jobRole}
+                  onChange={e => setJobRole(e.target.value)}
+                  placeholder={t('qbJobRolePlaceholder')}
+                  required
+                  style={{
+                    width: '100%', padding: '0.65rem 0.875rem',
+                    borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                    fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
+                    boxSizing: 'border-box', transition: 'border-color 0.15s',
+                  }}
+                  onFocus={e => e.target.style.borderColor = INDIGO}
+                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                />
+              </div>
+              {/* Industry */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
+                  {t('qbIndustryLabel')}
+                </label>
+                <input
+                  type="text"
+                  value={industry}
+                  onChange={e => setIndustry(e.target.value)}
+                  placeholder={t('qbIndustryPlaceholder')}
+                  required
+                  style={{
+                    width: '100%', padding: '0.65rem 0.875rem',
+                    borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                    fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
+                    boxSizing: 'border-box', transition: 'border-color 0.15s',
+                  }}
+                  onFocus={e => e.target.style.borderColor = INDIGO}
+                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                />
+              </div>
+              {/* Seniority */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
+                  {t('qbSeniorityLabel')}
+                </label>
+                <select
+                  value={seniorityLevel}
+                  onChange={e => setSeniorityLevel(e.target.value)}
+                  style={{
+                    width: '100%', padding: '0.65rem 0.875rem',
+                    borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                    fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
+                    boxSizing: 'border-box', backgroundColor: '#fff', cursor: 'pointer',
+                    transition: 'border-color 0.15s',
+                  }}
+                  onFocus={e => e.target.style.borderColor = INDIGO}
+                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                >
+                  <option value="Junior">{t('qbSeniorityJunior')}</option>
+                  <option value="Mid">{t('qbSeniorityMid')}</option>
+                  <option value="Senior">{t('qbSenioritySenior')}</option>
+                </select>
+              </div>
+              {/* Count */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
+                  {t('qbQuestionCountLabel')}
+                </label>
+                <input
+                  type="number" min="1" max="10"
+                  value={questionCount}
+                  onChange={e => setQuestionCount(e.target.value)}
+                  style={{
+                    width: '100%', padding: '0.65rem 0.875rem',
+                    borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                    fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
+                    boxSizing: 'border-box', transition: 'border-color 0.15s',
+                  }}
+                  onFocus={e => e.target.style.borderColor = INDIGO}
+                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                />
+              </div>
+            </div>
+
+            {/* Optional JD text */}
+            <div style={{ marginBottom: '1.25rem' }}>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
-                {t('qbSeniorityLabel')}
+                {t('qbOptionalJdLabel')}
               </label>
-              <select
-                value={seniorityLevel}
-                onChange={e => setSeniorityLevel(e.target.value)}
+              <textarea
+                value={jdText}
+                onChange={e => setJdText(e.target.value)}
+                placeholder={t('qbOptionalJdPlaceholder')}
                 style={{
-                  width: '100%', padding: '0.65rem 0.875rem',
+                  width: '100%', height: '70px', padding: '0.65rem 0.875rem',
                   borderRadius: '10px', border: '1.5px solid #e2e8f0',
                   fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
-                  boxSizing: 'border-box', backgroundColor: '#fff', cursor: 'pointer',
+                  boxSizing: 'border-box', resize: 'vertical', lineHeight: '1.5',
                   transition: 'border-color 0.15s',
                 }}
                 onFocus={e => e.target.style.borderColor = INDIGO}
                 onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-              >
-                <option value="Junior">{t('qbSeniorityJunior')}</option>
-                <option value="Mid">{t('qbSeniorityMid')}</option>
-                <option value="Senior">{t('qbSenioritySenior')}</option>
-              </select>
-            </div>
-            {/* Count */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
-                {t('qbQuestionCountLabel')}
-              </label>
-              <input
-                type="number" min="1" max="10"
-                value={questionCount}
-                onChange={e => setQuestionCount(e.target.value)}
-                style={{
-                  width: '100%', padding: '0.65rem 0.875rem',
-                  borderRadius: '10px', border: '1.5px solid #e2e8f0',
-                  fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
-                  boxSizing: 'border-box', transition: 'border-color 0.15s',
-                }}
-                onFocus={e => e.target.style.borderColor = INDIGO}
-                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
               />
             </div>
-          </div>
 
-          {/* Optional JD text */}
-          <div style={{ marginBottom: '1.25rem' }}>
-            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#64748b', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>
-              {t('qbOptionalJdLabel')}
-            </label>
-            <textarea
-              value={jdText}
-              onChange={e => setJdText(e.target.value)}
-              placeholder={t('qbOptionalJdPlaceholder')}
+            <button
+              type="submit"
+              disabled={loading}
               style={{
-                width: '100%', height: '70px', padding: '0.65rem 0.875rem',
-                borderRadius: '10px', border: '1.5px solid #e2e8f0',
-                fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
-                boxSizing: 'border-box', resize: 'vertical', lineHeight: '1.5',
-                transition: 'border-color 0.15s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                width: '100%', padding: '0.9rem',
+                background: loading ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                color: '#fff', border: 'none', borderRadius: '12px',
+                fontWeight: '700', fontSize: '0.95rem', cursor: loading ? 'not-allowed' : 'pointer',
+                boxShadow: loading ? 'none' : '0 4px 14px rgba(79,70,229,0.35)',
+                transition: 'all 0.2s ease',
               }}
-              onFocus={e => e.target.style.borderColor = INDIGO}
-              onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-              width: '100%', padding: '0.9rem',
-              background: loading ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-              color: '#fff', border: 'none', borderRadius: '12px',
-              fontWeight: '700', fontSize: '0.95rem', cursor: loading ? 'not-allowed' : 'pointer',
-              boxShadow: loading ? 'none' : '0 4px 14px rgba(79,70,229,0.35)',
-              transition: 'all 0.2s ease',
-            }}
-          >
-            {loading ? (
-              <>
-                <div style={{
-                  width: '18px', height: '18px',
-                  border: '2.5px solid rgba(255,255,255,0.4)',
-                  borderTopColor: '#fff', borderRadius: '50%',
-                  animation: 'spin 0.8s linear infinite',
-                }} />
-                {t('qbGeneratingBtn')}
-              </>
-            ) : t('qbGenerateQsBtn')}
-          </button>
-        </form>
+            >
+              {loading ? (
+                <>
+                  <div style={{
+                    width: '18px', height: '18px',
+                    border: '2.5px solid rgba(255,255,255,0.4)',
+                    borderTopColor: '#fff', borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite',
+                  }} />
+                  {t('qbGeneratingBtn')}
+                </>
+              ) : t('qbGenerateQsBtn')}
+            </button>
+          </form>
+        )}
       </div>
 
       {error && (

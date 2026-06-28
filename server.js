@@ -7,6 +7,7 @@ const { connectDB } = require("./database/db.js");
 
 const { router: questionGenerator, clearCacheEntry } = require("./server/simulator/questionGenerator");
 const fileParserService = require("./server/simulator/fileParserService");
+const historyService = require("./server/simulator/historyService");
 
 const coachEngine = require("./server/coach/coachEngine");
 const retryHandler = require("./server/coach/retryHandler");
@@ -79,6 +80,7 @@ app.delete("/api/simulator/session/:id", authenticate, (req, res) => {
   res.json({ ok: true });
 });
 app.use("/api/simulator/parse-file", authenticate, fileParserService);
+app.use("/api/simulator", authenticate, historyService);
 
 app.use("/api/coach/analyze", rateLimiter, authenticate, coachEngine);
 app.use("/api/coach/retry", rateLimiter, authenticate, retryHandler);

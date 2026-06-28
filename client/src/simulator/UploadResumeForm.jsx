@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Stepper from '../components/Stepper';
-import { getAuthHeadersFormData } from '../utils/auth';
+import { getAuthHeadersFormData, getAuthHeaders } from '../utils/auth';
 import { createWorker } from 'tesseract.js';
 import { useLanguage } from '../utils/LanguageContext';
 
@@ -277,7 +277,7 @@ function UploadZone({ icon, label, text, setText, isLoading, setIsLoading, onFil
 
 // ─── Main UploadResumeForm ────────────────────────────────────────────────────
 export default function UploadResumeForm() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const userId = localStorage.getItem('userId') || 'guest';
   const cvCacheKey = `cached-cv-${userId}`;
   const jdCacheKey = `cached-jd-${userId}`;
@@ -297,6 +297,52 @@ export default function UploadResumeForm() {
   const [jdLoading, setJdLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  // History and last active state
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  useEffect(() => {
+    const isGuest = userId.startsWith('guest-') || userId === 'guest';
+    if (isGuest) return;
+
+    // 1. Fetch last active CV/JD from database on mount if remember-cv is on
+    const fetchLastActive = async () => {
+      const autoSave = localStorage.getItem(`pref-auto-save-cv-${userId}`) === 'true';
+      if (!autoSave) return;
+
+      try {
+        const res = await fetch('/api/simulator/last-active', { headers: getAuthHeaders() });
+        if (res.ok) {
+          const data = await res.json();
+          // Only update if current text is empty (to avoid overwriting user typed content)
+          if (data.cv_text && !cvText) setCvText(data.cv_text);
+          if (data.jd_text && !jdText) setJdText(data.jd_text);
+        }
+      } catch (err) {
+        console.error('Failed to load last active CV/JD:', err);
+      }
+    };
+
+    // 2. Fetch unique practice history from sessions
+    const fetchHistory = async () => {
+      setHistoryLoading(true);
+      try {
+        const res = await fetch('/api/simulator/history', { headers: getAuthHeaders() });
+        if (res.ok) {
+          const data = await res.json();
+          setHistory(data);
+        }
+      } catch (err) {
+        console.error('Failed to load history:', err);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
+    fetchLastActive();
+    fetchHistory();
+  }, [userId]);
 
   const parseFile = async (file, setText, setLoading, isCv) => {
     setLoading(true);
@@ -346,6 +392,15 @@ export default function UploadResumeForm() {
     }
     navigate('/simulator', { state: { cv_text: cvText, jd_text: jdText } });
   };
+
+  const handleLoadHistoryItem = (item) => {
+    setCvText(item.cv_text || '');
+    setJdText(item.jd_text || '');
+    // Scroll smoothly to top of the page so the user sees fields filled
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const isGuest = userId.startsWith('guest-') || userId === 'guest';
 
   return (
     <div>
@@ -420,6 +475,7 @@ export default function UploadResumeForm() {
             cursor: cvLoading || jdLoading ? 'not-allowed' : 'pointer',
             boxShadow: cvLoading || jdLoading ? 'none' : '0 4px 14px rgba(79, 70, 229, 0.4)',
             letterSpacing: '0.01em', transition: 'all 0.2s ease',
+            marginBottom: '2rem'
           }}
           onMouseEnter={(e) => { if (!cvLoading && !jdLoading) e.target.style.opacity = '0.92'; }}
           onMouseLeave={(e) => { e.target.style.opacity = '1'; }}
@@ -427,6 +483,82 @@ export default function UploadResumeForm() {
           {t('uploadStartBtn')}
         </button>
       </form>
+
+      {/* Practice History Section (Authenticated users only) */}
+      {!isGuest && (
+        <div style={{
+          marginTop: '2.5rem',
+          borderTop: '1px solid #e2e8f0',
+          paddingTop: '2rem',
+          textAlign: 'start'
+        }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.25rem', letterSpacing: '-0.02em' }}>
+            ⏳ {t('uploadHistoryTitle')}
+          </h2>
+          <p style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '1.25rem' }}>
+            {t('uploadHistorySubtitle')}
+          </p>
+
+          {historyLoading ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem 0' }}>
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              <div style={{ width: '18px', height: '18px', border: '2.5px solid #c7d2fe', borderTopColor: '#4f46e5', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '500' }}>{t('uploadProcessing')}</span>
+            </div>
+          ) : history.length === 0 ? (
+            <div style={{
+              padding: '2rem 1rem', border: '1px dashed #cbd5e1', borderRadius: '12px',
+              backgroundColor: '#f8fafc', color: '#64748b', fontSize: '0.85rem', textAlign: 'center'
+            }}>
+              📁 {t('uploadHistoryNoData')}
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+              gap: '0.85rem'
+            }}>
+              {history.map((item) => (
+                <div
+                  key={item.session_id}
+                  onClick={() => handleLoadHistoryItem(item)}
+                  style={{
+                    backgroundColor: '#fff',
+                    border: '1.5px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '0.85rem 1rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease-in-out',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                    userSelect: 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#4f46e5';
+                    e.currentTarget.style.backgroundColor = '#f5f3ff';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.backgroundColor = '#fff';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  <div style={{ fontWeight: '700', fontSize: '0.88rem', color: '#1e293b', lineHeight: '1.4', marginBottom: '0.4rem' }}>
+                    💼 {item.title}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                    <span>📅 {new Date(item.created_at).toLocaleDateString(language === 'he' ? 'he-IL' : 'en-US')}</span>
+                    <span style={{ color: '#4f46e5', fontWeight: '600' }}>{language === 'he' ? 'טען ⚡' : 'Load ⚡'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -53,7 +53,7 @@ export default function RecruiterDashboard() {
       const res = await fetch('/api/questionBank', { headers: getAuthHeaders(), signal, cache: 'no-store' });
       if (!res.ok) throw new Error('Failed to retrieve question guides.');
       const data = await res.json();
-      
+
       // Enforce a minimum 800ms loading duration for a smooth visual transition
       const elapsed = Date.now() - startTime;
       const remainingDelay = Math.max(0, 800 - elapsed);
