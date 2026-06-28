@@ -414,7 +414,24 @@ export default function UploadResumeForm() {
         headers: getAuthHeaders()
       });
       if (res.ok) {
-        setHistory(prev => prev.filter(item => item.session_id !== sessionId));
+        // Find the item to delete
+        const targetItem = history.find(item => item.session_id === sessionId);
+        if (targetItem) {
+          const targetNormalized = (targetItem.jd_text || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '')
+            .slice(0, 300);
+
+          setHistory(prev => prev.filter(item => {
+            const itemNorm = (item.jd_text || '')
+              .toLowerCase()
+              .replace(/[^a-z0-9]/g, '')
+              .slice(0, 300);
+            return itemNorm !== targetNormalized;
+          }));
+        } else {
+          setHistory(prev => prev.filter(item => item.session_id !== sessionId));
+        }
       }
     } catch (err) {
       console.error('Failed to delete history item:', err);

@@ -105,10 +105,39 @@ router.delete('/history/:sessionId', async (req, res) => {
       return res.status(404).json({ error: 'Session not found.' });
     }
 
-    const targetJd = targetSession.jd_text;
+    if (!targetSession.jd_text || !targetSession.jd_text.trim()) {
+      // If no JD text, just delete this single session
+      await SessionModel.deleteOne({ session_id: sessionId, user_id: userId });
+      return res.json({ success: true });
+    }
 
-    // Delete all sessions for this user with this exact JD
-    await SessionModel.deleteMany({ user_id: userId, jd_text: targetJd });
+    // Normalize target JD
+    const targetNormalized = targetSession.jd_text
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '')
+      .slice(0, 300);
+
+    // Find all sessions for this user
+    const sessions = await SessionModel.find({ user_id: userId }).lean();
+    
+    // Filter sessions to delete (those that normalize to the same value)
+    const sessionIdsToDelete = [];
+    for (const session of sessions) {
+      if (!session.jd_text) continue;
+      const norm = session.jd_text
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '')
+        .slice(0, 300);
+      
+      if (norm === targetNormalized) {
+        sessionIdsToDelete.push(session.session_id);
+      }
+    }
+
+    // Delete them all!
+    if (sessionIdsToDelete.length > 0) {
+      await SessionModel.deleteMany({ session_id: { $in: sessionIdsToDelete }, user_id: userId });
+    }
 
     return res.json({ success: true });
   } catch (err) {
