@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Icon from '../components/ui/icons';
 
 const styles = {
   button: {
@@ -46,7 +47,7 @@ export default function InterviewGuideExport({ question_bank_id }) {
     <div>
       {exportError && (
         <div style={{ color: '#dc2626', fontSize: '0.8rem', fontWeight: '500', marginBottom: '0.4rem' }}>
-          ⚠️ Export error: {exportError}
+          <span className="si-icon-text"><Icon name="alert" size={14} />Export error: {exportError}</span>
         </div>
       )}
       <button onClick={handleExport} style={styles.button} disabled={exporting}>

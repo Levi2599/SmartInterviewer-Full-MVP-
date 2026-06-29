@@ -7,9 +7,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { getAuthHeaders } from '../utils/auth';
 import { useLanguage } from '../utils/LanguageContext';
+import Icon, { stripUiIcons } from '../components/ui/icons';
 
-const INDIGO = '#4f46e5';
-const INDIGO_LIGHT = '#f5f3ff';
+const INDIGO = '#3157d5';
+const INDIGO_LIGHT = '#eef3ff';
 
 function StatCard({ label, value, sub, icon, delta }) {
   const { t } = useLanguage();
@@ -18,27 +19,28 @@ function StatCard({ label, value, sub, icon, delta }) {
 
   return (
     <div style={{
-      backgroundColor: '#fff', borderRadius: '14px',
-      border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-      padding: '1.25rem', flex: '1 1 180px', minWidth: '150px',
+      backgroundColor: 'var(--si-surface)', borderRadius: '14px',
+      border: '1px solid var(--si-border)', boxShadow: 'var(--si-shadow-sm)',
+      padding: '1.25rem', flex: '1 1 240px', minWidth: '180px',
+      minHeight: '128px',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
         <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', letterSpacing: '0.05em' }}>
           {label}
         </span>
-        <span style={{ fontSize: '1.2rem' }}>{icon}</span>
+        <Icon name={icon} size={22} style={{ color: 'var(--si-primary)' }} />
       </div>
       <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1 }}>
         {value}
       </div>
       {trendUp && (
         <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: '600', marginTop: '0.3rem' }}>
-          ▲ {t('progressTrendingUp')} (+{delta})
+          <span className="si-icon-text"><Icon name="trendUp" size={14} />{t('progressTrendingUp')} (+{delta})</span>
         </div>
       )}
       {trendDown && (
         <div style={{ fontSize: '0.75rem', color: '#dc2626', fontWeight: '600', marginTop: '0.3rem' }}>
-          ▼ {t('progressTrendingDown')} ({delta})
+          <span className="si-icon-text"><Icon name="trendDown" size={14} />{t('progressTrendingDown')} ({delta})</span>
         </div>
       )}
       {sub && <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.3rem' }}>{sub}</div>}
@@ -158,7 +160,7 @@ export default function ProgressDashboard() {
       backgroundColor: '#fef2f2', border: '1px solid #fecaca',
       color: '#b91c1c', padding: '1rem', borderRadius: '10px', fontWeight: '500',
     }}>
-      ⚠️ {error}
+      <span className="si-icon-text"><Icon name="alert" size={16} />{error}</span>
     </div>
   );
 
@@ -166,10 +168,10 @@ export default function ProgressDashboard() {
     return (
       <div style={{
         textAlign: 'center', padding: '4rem 2rem',
-        backgroundColor: '#fff', borderRadius: '16px',
-        border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+        backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+        border: '1px solid var(--si-border)', boxShadow: 'var(--si-shadow-sm)',
       }}>
-        <span style={{ fontSize: '3rem' }}>📊</span>
+        <Icon name="barChart" size={48} style={{ color: 'var(--si-primary)' }} />
         <h2 style={{ marginTop: '1rem', color: '#1e293b', fontWeight: '800' }}>{t('progressNoProgressTitle')}</h2>
         <p style={{ color: '#64748b', marginTop: '0.5rem', maxWidth: '380px', margin: '0.5rem auto 1.5rem' }}>
           {t('progressNoProgressDesc')}
@@ -177,13 +179,15 @@ export default function ProgressDashboard() {
         <button
           onClick={() => navigate('/prepare')}
           style={{
-            background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+            background: 'linear-gradient(135deg, var(--si-primary), #214cba)',
             color: '#fff', border: 'none', borderRadius: '10px',
             padding: '0.75rem 2rem', fontWeight: '700', cursor: 'pointer',
             boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
           }}
         >
-          {t('progressFirstSimBtn')}
+          <span className="si-icon-text si-action-icon">
+            {stripUiIcons(t('progressFirstSimBtn'))}<Icon name={language === 'he' ? 'arrowLeft' : 'arrowRight'} size={16} />
+          </span>
         </button>
       </div>
     );
@@ -193,7 +197,6 @@ export default function ProgressDashboard() {
   const star = data.star_breakdown || {};
   const S = star.S ?? 0, T = star.T ?? 0, A = star.A ?? 0, R = star.R ?? 0;
   const bestScore = sessions.reduce((max, s) => Math.max(max, s.readiness_score ?? 0), 0);
-  const avgStar = Math.round((S + T + A + R) / 4);
 
   // Compute actual trend from last two sessions
   const scoreTrend = sessions.length >= 2
@@ -222,11 +225,11 @@ export default function ProgressDashboard() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="si-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: 'clamp(1.3rem, 5vw, 1.75rem)', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
-            📊 {t('progressDashTitle')}
+            <span className="si-icon-text"><Icon name="barChart" size={24} />{t('progressDashTitle')}</span>
           </h1>
           <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>
             {t('progressDashSubtitle')}
@@ -235,39 +238,45 @@ export default function ProgressDashboard() {
         <button
           onClick={() => navigate('/prepare')}
           style={{
-            background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+            background: 'linear-gradient(135deg, var(--si-primary), #214cba)',
             color: '#fff', border: 'none', borderRadius: '10px',
             padding: '0.75rem 1.5rem', fontWeight: '700', cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
+            boxShadow: '0 8px 20px rgba(49,87,213,0.22)',
             display: 'flex', alignItems: 'center', gap: '0.5rem',
             fontSize: '0.9rem',
             width: isMobile ? '100%' : 'auto',
             justifyContent: 'center',
           }}
         >
-          <span>{t('progressStartNewSim')}</span>
-          <span>🚀</span>
+          <span className="si-icon-text si-action-icon">
+            {t('progressStartNewSim')}
+            <Icon name={language === 'he' ? 'arrowLeft' : 'arrowRight'} size={18} />
+          </span>
         </button>
       </div>
 
       {/* ─── Stats Grid ─── */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-        <StatCard label={t('progressOverallScore')} value={`${data.readiness_score}%`} icon="🎯" delta={scoreTrend} />
-        <StatCard label={t('progressSimulations')} value={sessions.length} icon="🎤" sub={t('progressCompletedSessions')} />
-        <StatCard label={t('progressAvgStarScore')} value={avgStar} icon="⭐" sub={t('progressAcrossComponents')} />
-        <StatCard label={t('progressBestScoreLabel')} value={`${bestScore}%`} icon="🏆" sub={t('progressPersonalBest')} />
+        <StatCard label={t('progressOverallScore')} value={`${data.readiness_score}%`} icon="target" delta={scoreTrend} />
+        <StatCard label={t('progressSimulations')} value={sessions.length} icon="microphone" sub={t('progressCompletedSessions')} />
+        <StatCard
+          label={t('progressLastSessionKpi')}
+          value={`${sessions[sessions.length - 1]?.readiness_score ?? 0}%`}
+          icon="calendar"
+          sub={t('progressBestKpiSub').replace('{score}', bestScore)}
+        />
       </div>
 
       {/* ─── Score Trend Chart ─── */}
       {trendData.length > 0 && (
         <div style={{
-          backgroundColor: '#fff', borderRadius: '16px',
-          border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+          backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+          border: '1px solid var(--si-border)', boxShadow: 'var(--si-shadow-sm)',
           padding: '1.5rem',
         }}>
           <div style={{ marginBottom: '1rem' }}>
             <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>
-              {t('progressScoreTrendTitle')}
+              <span className="si-icon-text"><Icon name="trendUp" size={18} />{stripUiIcons(t('progressScoreTrendTitle'))}</span>
             </h2>
             <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>
               {t('progressScoreTrendDesc')}
@@ -324,12 +333,12 @@ export default function ProgressDashboard() {
         {/* Radar chart */}
         <div style={{
           flex: '1 1 280px',
-          backgroundColor: '#fff', borderRadius: '16px',
-          border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+          backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+          border: '1px solid var(--si-border)', boxShadow: 'var(--si-shadow-sm)',
           padding: '1.5rem',
         }}>
           <h2 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>
-            {t('progressFrameworkBalance')}
+            <span className="si-icon-text"><Icon name="target" size={18} />{stripUiIcons(t('progressFrameworkBalance'))}</span>
           </h2>
           <div style={{ width: '100%', height: 280 }} dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
@@ -359,12 +368,12 @@ export default function ProgressDashboard() {
         {/* Progress bars */}
         <div style={{
           flex: '1 1 280px',
-          backgroundColor: '#fff', borderRadius: '16px',
-          border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+          backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+          border: '1px solid var(--si-border)', boxShadow: 'var(--si-shadow-sm)',
           padding: '1.5rem',
         }}>
           <h2 style={{ margin: '0 0 1.25rem 0', fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>
-            {t('progressComponentScores')}
+            <span className="si-icon-text"><Icon name="barChart" size={18} />{stripUiIcons(t('progressComponentScores'))}</span>
           </h2>
           <ProgressBar label={t('starSituation')} score={S} color={getBarColor(S)} />
           <ProgressBar label={t('starTask')} score={T} color={getBarColor(T)} />
@@ -379,8 +388,8 @@ export default function ProgressDashboard() {
         {data.weakness_profile && data.weakness_profile.length > 0 && (
           <div style={{
             flex: '1 1 280px',
-            backgroundColor: '#fff', borderRadius: '16px',
-            border: '1px solid #fecaca', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+            border: '1px solid #fecaca', boxShadow: 'var(--si-shadow-sm)',
             padding: '1.5rem',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -388,7 +397,7 @@ export default function ProgressDashboard() {
                 width: '32px', height: '32px', borderRadius: '8px',
                 backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center',
                 justifyContent: 'center', fontSize: '1rem',
-              }}>⚠️</div>
+              }}><Icon name="alert" size={18} /></div>
               <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#991b1b' }}>
                 {t('progressWeaknessProfile')}
               </h2>
@@ -405,8 +414,8 @@ export default function ProgressDashboard() {
         {data.training_plan && data.training_plan.length > 0 && (
           <div style={{
             flex: '1 1 280px',
-            backgroundColor: '#fff', borderRadius: '16px',
-            border: '1px solid #bfdbfe', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+            border: '1px solid #bfdbfe', boxShadow: 'var(--si-shadow-sm)',
             padding: '1.5rem',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -414,7 +423,7 @@ export default function ProgressDashboard() {
                 width: '32px', height: '32px', borderRadius: '8px',
                 backgroundColor: '#dbeafe', display: 'flex', alignItems: 'center',
                 justifyContent: 'center', fontSize: '1rem',
-              }}>🎯</div>
+              }}><Icon name="target" size={18} /></div>
               <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#1d4ed8' }}>
                 {t('progressRecommendedTraining')}
               </h2>
@@ -428,13 +437,13 @@ export default function ProgressDashboard() {
               onClick={() => navigate('/prepare')}
               style={{
                 width: '100%', padding: '0.75rem',
-                background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                background: 'linear-gradient(135deg, var(--si-primary), #214cba)',
                 color: '#fff', border: 'none', borderRadius: '10px',
                 fontWeight: '700', fontSize: '0.875rem', cursor: 'pointer',
                 boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
               }}
             >
-              {t('progressPracticeThis')}
+              <span className="si-icon-text si-action-icon">{stripUiIcons(t('progressPracticeThis'))}<Icon name={language === 'he' ? 'arrowLeft' : 'arrowRight'} size={16} /></span>
             </button>
           </div>
         )}
@@ -443,14 +452,14 @@ export default function ProgressDashboard() {
       {/* GDPR Data Deletion */}
       <div style={{
         marginTop: '2rem',
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--si-surface)',
         borderRadius: '16px',
         border: '1px solid #fecaca',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+        boxShadow: 'var(--si-shadow-sm)',
         padding: '1.5rem',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-          <span style={{ fontSize: '1.2rem' }}>🔒</span>
+          <Icon name="lock" size={20} style={{ color: 'var(--si-danger)' }} />
           <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#991b1b' }}>
             {t('progressGdprTitle')}
           </h2>
@@ -461,7 +470,7 @@ export default function ProgressDashboard() {
 
         {deleteStatus && deleteStatus !== '' && (
           <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1rem', fontSize: '0.85rem', fontWeight: '500' }}>
-            ⚠️ {deleteStatus}
+            <span className="si-icon-text"><Icon name="alert" size={16} />{deleteStatus}</span>
           </div>
         )}
 
@@ -476,7 +485,7 @@ export default function ProgressDashboard() {
               transition: 'all 0.15s',
             }}
           >
-            {t('progressDeleteAllBtn')}
+            <span className="si-icon-text"><Icon name="trash" size={16} />{stripUiIcons(t('progressDeleteAllBtn'))}</span>
           </button>
         ) : (
           <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '1rem' }}>

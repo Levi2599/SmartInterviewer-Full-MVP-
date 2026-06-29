@@ -2,22 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getAuthHeaders } from '../utils/auth';
 import { useLanguage } from '../utils/LanguageContext';
+import Icon, { stripUiIcons } from '../components/ui/icons';
 
-const INDIGO = '#4f46e5';
-const INDIGO_LIGHT = '#f5f3ff';
+const INDIGO = '#3157d5';
+const INDIGO_LIGHT = '#eef3ff';
 
 function RecruiterStatCard({ label, value, icon, sub }) {
   return (
     <div style={{
-      backgroundColor: '#fff', borderRadius: '14px',
-      border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+      backgroundColor: 'var(--si-surface)', borderRadius: '14px',
+      border: '1px solid var(--si-border)', boxShadow: 'var(--si-shadow-sm)',
       padding: '1.25rem', flex: '1 1 200px', minWidth: '180px',
+      minHeight: '128px',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
         <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', letterSpacing: '0.05em' }}>
           {label}
         </span>
-        <span style={{ fontSize: '1.2rem' }}>{icon}</span>
+        <Icon name={icon} size={22} style={{ color: 'var(--si-primary)' }} />
       </div>
       <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1 }}>
         {value}
@@ -165,7 +167,7 @@ export default function RecruiterDashboard() {
       backgroundColor: '#fef2f2', border: '1px solid #fecaca',
       color: '#b91c1c', padding: '1rem', borderRadius: '10px', fontWeight: '500',
     }}>
-      ⚠️ {error}
+      <span className="si-icon-text"><Icon name="alert" size={16} />{error}</span>
     </div>
   );
 
@@ -174,12 +176,12 @@ export default function RecruiterDashboard() {
   const displayHours = Number.isInteger(hoursSaved) ? hoursSaved : hoursSaved.toFixed(1);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', fontFamily: 'Inter, sans-serif' }}>
+    <div className="si-page" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
-            📋 {t('recruiterDashTitle')}
+            <span className="si-icon-text"><Icon name="clipboard" size={24} />{t('recruiterDashTitle')}</span>
           </h1>
           <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0 }}>
             {t('recruiterDashSubtitle')}
@@ -189,16 +191,15 @@ export default function RecruiterDashboard() {
           <button
             onClick={() => navigate('/questions')}
             style={{
-              background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+              background: 'linear-gradient(135deg, var(--si-primary), #214cba)',
               color: '#fff', border: 'none', borderRadius: '10px',
               padding: '0.75rem 1.5rem', fontWeight: '700', cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
+              boxShadow: '0 8px 20px rgba(49,87,213,0.22)',
               display: 'flex', alignItems: 'center', gap: '0.5rem',
               fontSize: '0.9rem',
             }}
           >
-            <span>{t('recruiterCreateNewGuide')}</span>
-            <span>📋</span>
+            <span className="si-icon-text">{t('recruiterCreateNewGuide')}<Icon name="clipboard" size={18} /></span>
           </button>
         )}
       </div>
@@ -207,10 +208,10 @@ export default function RecruiterDashboard() {
         /* Clean centered Empty State Card for Recruiter */
         <div style={{
           textAlign: 'center', padding: '4rem 2rem',
-          backgroundColor: '#fff', borderRadius: '16px',
-          border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+          backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+          border: '1px solid var(--si-border)', boxShadow: 'var(--si-shadow-sm)',
         }}>
-          <span style={{ fontSize: '3rem' }}>📋</span>
+          <Icon name="clipboard" size={48} style={{ color: 'var(--si-primary)' }} />
           <h2 style={{ marginTop: '1rem', color: '#1e293b', fontWeight: '800' }}>
             {t('recruiterNoGuidesTitle')}
           </h2>
@@ -220,33 +221,34 @@ export default function RecruiterDashboard() {
           <button
             onClick={() => navigate('/questions')}
             style={{
-              background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+              background: 'linear-gradient(135deg, var(--si-primary), #214cba)',
               color: '#fff', border: 'none', borderRadius: '10px',
               padding: '0.75rem 2rem', fontWeight: '700', cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
+              boxShadow: '0 8px 20px rgba(49,87,213,0.22)',
             }}
           >
-            {t('recruiterGenerateFirstBtn')}
+            <span className="si-icon-text si-action-icon">
+              {t('recruiterGenerateFirstBtn')}<Icon name="clipboard" size={16} />
+            </span>
           </button>
         </div>
       ) : (
         <>
           {/* Recruiter Stats */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-            <RecruiterStatCard label={t('recruiterActivePositions')} value={guides.length} icon="💼" sub={t('recruiterGuidesSaved')} />
-            <RecruiterStatCard label={t('recruiterTotalQs')} value={totalQuestions} icon="❓" sub={t('recruiterAcrossTemplates')} />
+            <RecruiterStatCard label={t('recruiterActivePositions')} value={guides.length} icon="briefcase" sub={t('recruiterGuidesSaved')} />
+            <RecruiterStatCard label={t('recruiterQuestionBankKpi')} value={totalQuestions} icon="clipboard" sub={t('recruiterQuestionBankSub')} />
             <RecruiterStatCard
               label={t('recruiterRoiLabel')}
               value={t('recruiterRoiValue').replace('{hours}', displayHours)}
-              icon="⚡"
-              sub={t('recruiterRoiSub')}
+              icon="trendUp"
             />
           </div>
 
           {/* Guides Grid/Table */}
           <div style={{
-            backgroundColor: '#fff', borderRadius: '16px',
-            border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+            border: '1px solid var(--si-border)', boxShadow: 'var(--si-shadow-sm)',
             padding: '1.5rem',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -266,7 +268,7 @@ export default function RecruiterDashboard() {
                   onMouseEnter={(e) => e.target.style.backgroundColor = '#fee2e2'}
                   onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                 >
-                  {t('qbClearAll')}
+                  <span className="si-icon-text"><Icon name="trash" size={14} />{stripUiIcons(t('qbClearAll'))}</span>
                 </button>
               )}
             </div>
@@ -294,7 +296,7 @@ export default function RecruiterDashboard() {
             )}
 
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'start' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'start', minWidth: '760px' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid #f1f5f9' }}>
                     <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>{t('recruiterColPosition')}</th>
@@ -307,9 +309,9 @@ export default function RecruiterDashboard() {
                 </thead>
                 <tbody>
                   {guides.map((g) => (
-                    <tr key={g.question_id} style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }} onClick={() => navigate('/questions', { state: { resumeGuide: g } })}>
+                    <tr key={g.question_id} style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer', backgroundColor: '#fff' }} onClick={() => navigate('/questions', { state: { resumeGuide: g } })}>
                       <td style={{ padding: '1rem 0.5rem', fontWeight: '700', color: '#1e293b', fontSize: '0.9rem' }}>
-                        💼 {g.job_role}
+                        <span className="si-icon-text"><Icon name="briefcase" size={16} />{g.job_role}</span>
                       </td>
                       <td style={{ padding: '1rem 0.5rem', color: '#64748b', fontSize: '0.85rem' }}>{g.industry}</td>
                       <td style={{ padding: '1rem 0.5rem', fontSize: '0.8rem', fontWeight: '600' }}>
@@ -337,7 +339,7 @@ export default function RecruiterDashboard() {
                               cursor: 'pointer', fontSize: '0.8rem',
                             }}
                           >
-                            📄 PDF
+                            <span className="si-icon-text"><Icon name="download" size={14} />PDF</span>
                           </button>
                           <button
                             onClick={(e) => handleDeleteRequest(g.question_id, e)}
@@ -349,7 +351,7 @@ export default function RecruiterDashboard() {
                               fontSize: '0.8rem',
                             }}
                           >
-                            🗑️
+                            <Icon name="trash" size={14} />
                           </button>
                         </div>
                       </td>

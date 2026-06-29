@@ -3,8 +3,9 @@ import { useIsMobile } from '../hooks/useIsMobile';
 import { getAuthHeaders } from '../utils/auth';
 import { useLanguage } from '../utils/LanguageContext';
 import translations from '../utils/translations';
+import Icon, { stripUiIcons } from '../components/ui/icons';
 
-const INDIGO = '#4f46e5';
+const INDIGO = '#3157d5';
 
 function getBarColor(score) {
   if (score >= 70) return '#10b981';
@@ -54,10 +55,10 @@ function ComponentChecklist({ labels, star, missing_components }) {
 
         return (
           <div key={key} style={{
-            backgroundColor: '#f8fafc',
+            backgroundColor: 'var(--si-surface-muted)',
             borderRadius: '10px',
             padding: '0.75rem',
-            border: `1px solid ${isPresent ? '#e2e8f0' : '#fecaca'}`,
+            border: `1px solid ${isPresent ? 'var(--si-border)' : '#fecaca'}`,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
               <div style={{
@@ -67,7 +68,7 @@ function ComponentChecklist({ labels, star, missing_components }) {
                 backgroundColor: isPresent ? '#dcfce7' : '#fee2e2',
                 color: isPresent ? '#166534' : '#dc2626',
               }}>
-                {isPresent ? '✓' : '!'}
+                <Icon name={isPresent ? 'check' : 'alert'} size={13} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#1e293b' }}>{label}</span>
@@ -176,16 +177,16 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       {/* Main Coach Card */}
       <div style={{
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--si-surface)',
         borderRadius: '16px',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 4px 16px rgba(79, 70, 229, 0.1)',
+        border: '1px solid var(--si-border)',
+        boxShadow: 'var(--si-shadow)',
         overflow: 'hidden',
       }}>
         {/* Header */}
         <div style={{
           padding: headerPadding,
-          background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+          background: 'linear-gradient(135deg, #102033 0%, #143268 100%)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           flexWrap: 'wrap', gap: '0.75rem',
         }}>
@@ -203,7 +204,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
               padding: '0.3rem 0.7rem', borderRadius: '20px',
               fontWeight: '700', fontSize: '0.78rem',
             }}>
-              {isGood ? '✓' : '!'} {statusText}
+              <span className="si-icon-text"><Icon name={isGood ? 'check' : 'alert'} size={14} />{statusText}</span>
             </span>
             <div style={{
               backgroundColor: 'rgba(255,255,255,0.15)',
@@ -225,7 +226,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
               borderRadius: '10px', padding: '0.875rem 1rem',
               display: 'flex', alignItems: 'center', gap: '0.75rem',
             }}>
-              <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>🏆</span>
+              <Icon name="target" size={24} style={{ color: 'var(--si-success)' }} />
               <div>
                 <div style={{ fontWeight: '700', color: '#166534', fontSize: '0.9rem' }}>{t('coachOutstandingTitle')}</div>
                 <div style={{ color: '#15803d', fontSize: '0.8rem', marginTop: '0.1rem' }}>
@@ -271,7 +272,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                     border: '1px solid #fde68a', padding: '0.2rem 0.6rem',
                     borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600',
                   }}>
-                    ⚠ "{filler}"
+                  <span className="si-icon-text"><Icon name="alert" size={14} />"{filler}"</span>
                   </span>
                 ))}
               </div>
@@ -281,7 +282,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           {/* Improvement tip — only shown when score < 85 */}
           {improvement_tip && !isExcellent && (
             <div style={{
-              backgroundColor: '#fffbeb',
+              backgroundColor: 'var(--si-warning-soft)',
               border: '1px solid #fde68a',
               borderRadius: '10px',
               padding: '0.875rem 1rem',
@@ -312,7 +313,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                   transition: 'all 0.15s',
                 }}
               >
-                {isExcellent ? t('coachContinueExcellent') : t('coachKeepContinue')}
+                <span className="si-icon-text si-action-icon">{stripUiIcons(isExcellent ? t('coachContinueExcellent') : t('coachKeepContinue'))}<Icon name={language === 'he' ? 'arrowLeft' : 'arrowRight'} size={16} /></span>
               </button>
               {!isExcellent && (
                 <button
@@ -320,7 +321,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                   style={{
                     flex: 1, minWidth: isMobile ? '100%' : '120px',
                     padding: isMobile ? '1rem' : '0.875rem',
-                    background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                    background: 'linear-gradient(135deg, var(--si-primary), #214cba)',
                     color: '#fff', border: 'none', borderRadius: '10px',
                     fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem',
                     boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
@@ -336,12 +337,12 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
           {/* Retry form */}
           {isRetrying && !retryResult && (
             <form onSubmit={handleRetrySubmit} style={{
-              backgroundColor: '#f8fafc', borderRadius: '12px',
-              border: '1px solid #e2e8f0', padding: isMobile ? '1rem' : '1.25rem',
+              backgroundColor: 'var(--si-surface-muted)', borderRadius: '12px',
+              border: '1px solid var(--si-border)', padding: isMobile ? '1rem' : '1.25rem',
               display: 'flex', flexDirection: 'column', gap: '0.75rem',
             }}>
               <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>
-                {t('coachReviseTitle')}
+                <span className="si-icon-text"><Icon name="edit" size={16} />{stripUiIcons(t('coachReviseTitle'))}</span>
               </div>
               <p style={{ fontSize: '0.82rem', color: '#64748b', margin: 0 }}>
                 {t('coachReviseSubtitle').replace('{method}', method)}
@@ -355,7 +356,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                   width: '100%',
                   height: isMobile ? '130px' : '110px',
                   padding: '0.75rem',
-                  borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                  borderRadius: '10px', border: '1.5px solid var(--si-border)',
                   fontFamily: 'inherit',
                   fontSize: isMobile ? '1rem' : '0.9rem',
                   resize: 'vertical',
@@ -368,7 +369,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
               />
               {retryError && (
                 <div style={{ color: '#dc2626', fontSize: '0.85rem', fontWeight: '500' }}>
-                  ⚠️ {retryError}
+                  <span className="si-icon-text"><Icon name="alert" size={16} />{retryError}</span>
                 </div>
               )}
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -393,7 +394,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                     flex: 2, minWidth: isMobile ? '100%' : '120px',
                     padding: isMobile ? '0.875rem' : '0.75rem',
                     background: (!retryLoading && retryAnswer.trim())
-                      ? 'linear-gradient(135deg, #4f46e5, #7c3aed)'
+                      ? 'linear-gradient(135deg, var(--si-primary), #214cba)'
                       : '#e2e8f0',
                     color: (!retryLoading && retryAnswer.trim()) ? '#fff' : '#94a3b8',
                     border: 'none', borderRadius: '8px',
@@ -418,7 +419,7 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
               padding: isMobile ? '1rem' : '1.25rem',
             }}>
               <div style={{ fontWeight: '700', color: retryResult.improvement ? '#166534' : '#991b1b', marginBottom: '0.75rem' }}>
-                {retryResult.improvement ? '✅' : '📊'} {t('coachRevisionComparison')}
+                <span className="si-icon-text"><Icon name={retryResult.improvement ? 'checkCircle' : 'barChart'} size={18} />{t('coachRevisionComparison')}</span>
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
                 <div style={{
@@ -489,13 +490,13 @@ export default function CoachOverlay({ feedback, originalAnswer, questionText, s
                   style={{
                     flex: 2, minWidth: isMobile ? '100%' : '120px',
                     padding: isMobile ? '1rem' : '0.875rem',
-                    background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                    background: 'linear-gradient(135deg, var(--si-primary), #214cba)',
                     color: '#fff', border: 'none', borderRadius: '10px',
                     fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem',
                     boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
                   }}
                 >
-                  {retryResult.improvement ? t('coachAcceptContinue') : t('coachContinueAnyway')}
+                  <span className="si-icon-text si-action-icon">{stripUiIcons(retryResult.improvement ? t('coachAcceptContinue') : t('coachContinueAnyway'))}<Icon name={language === 'he' ? 'arrowLeft' : 'arrowRight'} size={16} /></span>
                 </button>
               </div>
             </div>

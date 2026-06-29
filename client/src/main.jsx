@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { LanguageProvider } from './utils/LanguageContext';
+import './styles/theme.css';
 
 // Global fetch interceptor to append JWT token
 const originalFetch = window.fetch;

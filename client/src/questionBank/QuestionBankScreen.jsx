@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { getAuthHeaders } from '../utils/auth';
 import { useLanguage } from '../utils/LanguageContext';
+import { useIsMobile } from '../hooks/useIsMobile';
+import Icon, { stripUiIcons } from '../components/ui/icons';
 
-const INDIGO = '#4f46e5';
-const INDIGO_LIGHT = '#f5f3ff';
+const INDIGO = '#3157d5';
+const INDIGO_LIGHT = '#eef3ff';
 
 const spinnerKeyframes = `
   @keyframes spin {
@@ -31,6 +33,7 @@ export default function QuestionBankScreen() {
   const [showJd, setShowJd] = useState(false);
 
   const { t, language } = useLanguage();
+  const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -137,14 +140,14 @@ export default function QuestionBankScreen() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="si-page">
       <style>{spinnerKeyframes}</style>
 
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.25rem', letterSpacing: '-0.02em' }}>
-            📋 {t('qbPageTitle')}
+            <span className="si-icon-text"><Icon name="clipboard" size={24} />{t('qbPageTitle')}</span>
           </h1>
           <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0 }}>
             {t('qbPageSubtitle')}
@@ -162,15 +165,15 @@ export default function QuestionBankScreen() {
             direction: 'ltr',
           }}
         >
-          <span>←</span>
+          <Icon name={language === 'he' ? 'arrowRight' : 'arrowLeft'} size={16} />
           <span>{t('qbBackDashboard')}</span>
         </button>
       </div>
 
       {/* Filters / Details Card */}
       <div style={{
-        backgroundColor: '#fff', borderRadius: '16px',
-        border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+            border: '1px solid var(--si-border)', boxShadow: 'var(--si-shadow-sm)',
         padding: '1.5rem',
       }}>
         {isReadOnly ? (
@@ -182,15 +185,15 @@ export default function QuestionBankScreen() {
                   {t('qbJobSpecification')}
                 </span>
                 <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>
-                  💼 {jobRole}
+                  <span className="si-icon-text"><Icon name="briefcase" size={20} />{jobRole}</span>
                 </h2>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
                 <span style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '0.35rem 0.75rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '700' }}>
-                  🏷️ {translateSeniority(seniorityLevel)}
+                  <span className="si-icon-text"><Icon name="clipboard" size={14} />{translateSeniority(seniorityLevel)}</span>
                 </span>
                 <span style={{ backgroundColor: '#f5f3ff', color: '#4f46e5', padding: '0.35rem 0.75rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '700' }}>
-                  🏢 {industry}
+                  <span className="si-icon-text"><Icon name="briefcase" size={14} />{industry}</span>
                 </span>
               </div>
             </div>
@@ -206,7 +209,7 @@ export default function QuestionBankScreen() {
                     padding: 0, display: 'flex', alignItems: 'center', gap: '0.25rem'
                   }}
                 >
-                  <span style={{ fontSize: '0.65rem' }}>{showJd ? '▲' : '▼'}</span>
+                  <Icon name={showJd ? 'chevronUp' : 'chevronDown'} size={14} />
                   <span>{showJd ? t('qbHideJd') : t('qbShowJd')}</span>
                 </button>
                 {showJd && (
@@ -237,7 +240,7 @@ export default function QuestionBankScreen() {
                   transition: 'all 0.2s ease',
                 }}
               >
-                {t('qbCreateNewGuideBtn')}
+                <span className="si-icon-text"><Icon name="clipboard" size={16} />{stripUiIcons(t('qbCreateNewGuideBtn'))}</span>
               </button>
             </div>
           </div>
@@ -263,7 +266,7 @@ export default function QuestionBankScreen() {
                   required
                   style={{
                     width: '100%', padding: '0.65rem 0.875rem',
-                    borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                    borderRadius: '10px', border: '1.5px solid var(--si-border)',
                     fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
                     boxSizing: 'border-box', transition: 'border-color 0.15s',
                   }}
@@ -284,7 +287,7 @@ export default function QuestionBankScreen() {
                   required
                   style={{
                     width: '100%', padding: '0.65rem 0.875rem',
-                    borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                    borderRadius: '10px', border: '1.5px solid var(--si-border)',
                     fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
                     boxSizing: 'border-box', transition: 'border-color 0.15s',
                   }}
@@ -302,7 +305,7 @@ export default function QuestionBankScreen() {
                   onChange={e => setSeniorityLevel(e.target.value)}
                   style={{
                     width: '100%', padding: '0.65rem 0.875rem',
-                    borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                    borderRadius: '10px', border: '1.5px solid var(--si-border)',
                     fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
                     boxSizing: 'border-box', backgroundColor: '#fff', cursor: 'pointer',
                     transition: 'border-color 0.15s',
@@ -326,7 +329,7 @@ export default function QuestionBankScreen() {
                   onChange={e => setQuestionCount(e.target.value)}
                   style={{
                     width: '100%', padding: '0.65rem 0.875rem',
-                    borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                    borderRadius: '10px', border: '1.5px solid var(--si-border)',
                     fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
                     boxSizing: 'border-box', transition: 'border-color 0.15s',
                   }}
@@ -347,7 +350,7 @@ export default function QuestionBankScreen() {
                 placeholder={t('qbOptionalJdPlaceholder')}
                 style={{
                   width: '100%', height: '70px', padding: '0.65rem 0.875rem',
-                  borderRadius: '10px', border: '1.5px solid #e2e8f0',
+                  borderRadius: '10px', border: '1.5px solid var(--si-border)',
                   fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
                   boxSizing: 'border-box', resize: 'vertical', lineHeight: '1.5',
                   transition: 'border-color 0.15s',
@@ -363,7 +366,7 @@ export default function QuestionBankScreen() {
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
                 width: '100%', padding: '0.9rem',
-                background: loading ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                background: loading ? '#a5b4fc' : 'linear-gradient(135deg, var(--si-primary), #214cba)',
                 color: '#fff', border: 'none', borderRadius: '12px',
                 fontWeight: '700', fontSize: '0.95rem', cursor: loading ? 'not-allowed' : 'pointer',
                 boxShadow: loading ? 'none' : '0 4px 14px rgba(79,70,229,0.35)',
@@ -392,25 +395,25 @@ export default function QuestionBankScreen() {
           color: '#b91c1c', padding: '0.875rem 1rem',
           borderRadius: '10px', fontWeight: '500', fontSize: '0.9rem',
         }}>
-          ⚠️ {error}
+          <span className="si-icon-text"><Icon name="alert" size={16} />{error}</span>
         </div>
       )}
 
       {/* Split Layout */}
       {questions.length > 0 && (
-        <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '1.25rem', alignItems: 'flex-start' }}>
           {/* LEFT – AI Generated Questions (65%) */}
-          <div style={{ flex: '0 0 65%', minWidth: 0 }}>
+          <div style={{ flex: isMobile ? '1 1 auto' : '0 0 65%', width: isMobile ? '100%' : 'auto', minWidth: 0 }}>
             <div style={{
-              backgroundColor: '#fff', borderRadius: '16px',
-              border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+              backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+              border: '1px solid var(--si-border)', boxShadow: 'var(--si-shadow-sm)',
               overflow: 'hidden',
             }}>
               {/* Section header */}
               <div style={{
                 padding: '1rem 1.5rem', borderBottom: '1px solid #e2e8f0',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                backgroundColor: '#fafafa',
+                backgroundColor: 'var(--si-surface-muted)',
               }}>
                 <span style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>
                   {t('qbAiQuestionsHeader')} ({questions.length})
@@ -430,8 +433,8 @@ export default function QuestionBankScreen() {
                   const inBasket = basket.some(b => b.text === q.text);
                   return (
                     <div key={idx} style={{
-                      backgroundColor: '#f8fafc',
-                      border: `1px solid ${inBasket ? '#c7d2fe' : '#e2e8f0'}`,
+                      backgroundColor: inBasket ? '#f7f9ff' : 'var(--si-surface-muted)',
+                      border: `1px solid ${inBasket ? '#c7d2fe' : 'var(--si-border)'}`,
                       borderRadius: '12px',
                       padding: '1rem',
                       position: 'relative',
@@ -444,10 +447,10 @@ export default function QuestionBankScreen() {
                           <span style={{
                             fontSize: '0.7rem', fontWeight: '700', padding: '0.2rem 0.6rem',
                             borderRadius: '20px',
-                            backgroundColor: isTechnical ? '#dbeafe' : '#dcfce7',
-                            color: isTechnical ? '#1d4ed8' : '#166534',
+                          backgroundColor: isTechnical ? 'var(--si-info-soft)' : 'var(--si-success-soft)',
+                          color: isTechnical ? 'var(--si-info)' : 'var(--si-success)',
                           }}>
-                            {isTechnical ? `${t('qbTechnical')}` : `💬 ${t('qbBehavioral')}`}
+                            <span className="si-icon-text"><Icon name={isTechnical ? 'settings' : 'users'} size={13} />{stripUiIcons(isTechnical ? t('qbTechnical') : t('qbBehavioral'))}</span>
                           </span>
                           {q.methodology_expectation && (
                             <span style={{
@@ -473,7 +476,7 @@ export default function QuestionBankScreen() {
                             transition: 'all 0.15s',
                           }}
                         >
-                          {inBasket ? '✓' : '+'}
+                          <Icon name={inBasket ? 'check' : 'plus'} size={16} />
                         </button>
                       </div>
 
@@ -536,16 +539,16 @@ export default function QuestionBankScreen() {
           </div>
 
           {/* RIGHT – Interview Basket (35%) */}
-          <div style={{ flex: '0 0 35%', position: 'sticky', top: '80px', minWidth: 0 }}>
+          <div style={{ flex: isMobile ? '1 1 auto' : '0 0 35%', width: isMobile ? '100%' : 'auto', position: isMobile ? 'static' : 'sticky', top: '80px', minWidth: 0 }}>
             <div style={{
-              backgroundColor: '#fff', borderRadius: '16px',
-              border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+              backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+              border: '1px solid var(--si-border)', boxShadow: 'var(--si-shadow-sm)',
               overflow: 'hidden',
             }}>
               {/* Basket header */}
               <div style={{
                 padding: '1rem 1.25rem', borderBottom: '1px solid #e2e8f0',
-                backgroundColor: '#fafafa',
+                backgroundColor: 'var(--si-surface-muted)',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
                 <span style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>
@@ -567,7 +570,7 @@ export default function QuestionBankScreen() {
                     textAlign: 'center', padding: '2rem 1rem',
                     color: '#94a3b8', fontSize: '0.85rem', lineHeight: '1.5',
                   }}>
-                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🗃️</div>
+                    <div style={{ marginBottom: '0.5rem' }}><Icon name="folder" size={32} /></div>
                     {t('qbBasketEmpty')}<br />{t('qbBasketEmptyHint')}
                   </div>
                 ) : (
@@ -596,7 +599,7 @@ export default function QuestionBankScreen() {
                           onMouseEnter={e => { e.target.style.backgroundColor = '#fee2e2'; e.target.style.color = '#dc2626'; }}
                           onMouseLeave={e => { e.target.style.backgroundColor = '#f1f5f9'; e.target.style.color = '#94a3b8'; }}
                         >
-                          ✕
+                          <Icon name="close" size={14} />
                         </button>
                       </div>
                     ))}
@@ -609,7 +612,7 @@ export default function QuestionBankScreen() {
                 <div style={{ padding: '0.75rem 0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {exportError && (
                     <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.8rem', fontWeight: '500' }}>
-                      ⚠️ Export error: {exportError}
+                      <span className="si-icon-text"><Icon name="alert" size={14} />Export error: {exportError}</span>
                     </div>
                   )}
                   <button
@@ -625,7 +628,7 @@ export default function QuestionBankScreen() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
                     }}
                   >
-                    {exporting === 'pdf' ? `⏳ ${t('qbExporting')}` : ` ${t('qbExportPdfBtn')}`}
+                    <span className="si-icon-text"><Icon name={exporting === 'pdf' ? 'refresh' : 'download'} size={16} />{stripUiIcons(exporting === 'pdf' ? t('qbExporting') : t('qbExportPdfBtn'))}</span>
                   </button>
                 </div>
               )}

@@ -5,8 +5,9 @@ import Stepper from '../components/Stepper';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { getAuthHeaders } from '../utils/auth';
 import { useLanguage } from '../utils/LanguageContext';
+import Icon from '../components/ui/icons';
 
-const INDIGO = '#4f46e5';
+const INDIGO = '#3157d5';
 
 export default function SimulatorScreen() {
   const location = useLocation();
@@ -222,10 +223,10 @@ export default function SimulatorScreen() {
   if (!cv_text || !jd_text) {
     return (
       <div style={{
-        background: '#fff', borderRadius: '16px', padding: '3rem 1.5rem',
-        border: '1px solid #e2e8f0', textAlign: 'center',
+        background: 'var(--si-surface)', borderRadius: '16px', padding: '3rem 1.5rem',
+        border: '1px solid var(--si-border)', textAlign: 'center',
       }}>
-        <span style={{ fontSize: '3rem' }}>📋</span>
+        <Icon name="clipboard" size={48} style={{ color: 'var(--si-primary)' }} />
         <h3 style={{ marginTop: '1rem', color: '#1e293b' }}>{t('simMissingData')}</h3>
         <p style={{ color: '#64748b', marginTop: '0.5rem' }}>
           {t('simMissingDataBody')}
@@ -240,7 +241,7 @@ export default function SimulatorScreen() {
           textDecoration: 'none',
           direction: 'ltr',
         }}>
-          <span>←</span>
+          <Icon name={language === 'he' ? 'arrowRight' : 'arrowLeft'} size={16} />
           <span>{t('simBackSetup')}</span>
         </Link>
       </div>
@@ -324,8 +325,8 @@ export default function SimulatorScreen() {
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           padding: isMobile ? '3rem 1rem' : '4rem 2rem', gap: '1.5rem',
-          backgroundColor: '#ffffff', borderRadius: '16px',
-          border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+          backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+          border: '1px solid var(--si-border)', boxShadow: 'var(--si-shadow-sm)',
         }}>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           <div style={{
@@ -349,9 +350,9 @@ export default function SimulatorScreen() {
 
       {/* Global Session Control Header */}
       <div style={{
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--si-surface)',
         borderRadius: '16px',
-        border: '1px solid #e2e8f0',
+        border: '1px solid var(--si-border)',
         padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
         marginBottom: '1.5rem',
         display: 'flex',
@@ -359,10 +360,10 @@ export default function SimulatorScreen() {
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: '0.75rem',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+        boxShadow: 'var(--si-shadow-sm)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontSize: isMobile ? '1rem' : '1.2rem' }}>🎤</span>
+          <Icon name="microphone" size={isMobile ? 18 : 22} style={{ color: INDIGO }} />
           <div>
             <span style={{ fontWeight: '800', color: '#0f172a', fontSize: isMobile ? '0.85rem' : '0.95rem', display: 'block' }}>
               {t('simTitle')}
@@ -388,7 +389,7 @@ export default function SimulatorScreen() {
             onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
           >
-            🚪 {t('simExitSession')}
+            <span className="si-icon-text"><Icon name="logOut" size={16} />{t('simExitSession')}</span>
           </button>
         )}
       </div>
@@ -400,8 +401,8 @@ export default function SimulatorScreen() {
           borderRadius: '10px', marginBottom: '1rem', fontWeight: '500',
           fontSize: '0.875rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
-          <span>⚠️ {t('simSttWarning')}</span>
-          <button onClick={() => setSttWarning(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#92400e', fontWeight: '700', marginLeft: '0.75rem' }}>✕</button>
+          <span className="si-icon-text"><Icon name="alert" size={16} />{t('simSttWarning')}</span>
+          <button onClick={() => setSttWarning(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#92400e', fontWeight: '700', marginInlineStart: '0.75rem' }} aria-label="Close"><Icon name="close" size={16} /></button>
         </div>
       )}
 
@@ -409,7 +410,7 @@ export default function SimulatorScreen() {
            before saveProgress has completed — avoids stale dashboard reads. */}
       {exitConfirm && !loading && (
         <div style={{
-          backgroundColor: '#fff', border: '1px solid #fecaca',
+          backgroundColor: 'var(--si-surface)', border: '1px solid #fecaca',
           borderRadius: '12px', padding: '1.25rem 1.5rem',
           marginBottom: '1rem', boxShadow: '0 4px 16px rgba(220,38,38,0.1)',
         }}>
@@ -443,20 +444,20 @@ export default function SimulatorScreen() {
           borderRadius: '10px', marginBottom: '1rem', fontWeight: '500',
           fontSize: isMobile ? '0.875rem' : '1rem',
         }}>
-          ⚠️ {error}
+          <span className="si-icon-text"><Icon name="alert" size={16} />{error}</span>
         </div>
       )}
 
       {/* Active Interview Panel */}
       {!feedback && (
         <div style={{
-          backgroundColor: '#fff', borderRadius: '16px',
-          border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+          backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+          border: '1px solid var(--si-border)', boxShadow: 'var(--si-shadow)',
           overflow: 'hidden',
         }}>
           {/* Interview Header */}
           <div style={{
-            background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+            background: 'linear-gradient(135deg, #143268 0%, var(--si-primary) 100%)',
             padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
           }}>
             <span style={{ color: '#fff', fontWeight: '800', fontSize: isMobile ? '0.82rem' : '0.9rem' }}>
@@ -471,20 +472,20 @@ export default function SimulatorScreen() {
               {!isMobile && (
                 <div style={{
                   width: '48px', height: '48px', borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #a78bfa, #818cf8)',
+                  background: 'linear-gradient(135deg, #dbeafe, #b8e5dc)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '1.4rem', flexShrink: 0,
-                  boxShadow: '0 2px 8px rgba(124,58,237,0.3)',
+                  boxShadow: '0 4px 12px rgba(49,87,213,0.16)',
                 }}>
-                  👩‍💼
+                  <Icon name="user" size={24} />
                 </div>
               )}
               <div style={{
                 flex: 1,
-                backgroundColor: '#f8fafc',
+                backgroundColor: 'var(--si-surface-muted)',
                 borderRadius: isMobile ? '10px' : '0 16px 16px 16px',
                 padding: isMobile ? '0.75rem 1rem' : '1rem 1.25rem',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--si-border)',
               }}>
                 <div style={{
                   fontSize: '0.7rem', color: '#a78bfa', fontWeight: '700',
@@ -528,7 +529,7 @@ export default function SimulatorScreen() {
                     }}
                     title={isSpeaking ? t('simStopReading') : t('simReadAloud')}
                   >
-                    {isSpeaking ? '⏹' : '🔊'}
+                    <Icon name={isSpeaking ? 'stop' : 'speaker'} size={16} />
                   </button>
                 </div>
               </div>
@@ -536,8 +537,8 @@ export default function SimulatorScreen() {
 
             {/* Text answer area */}
             <div style={{
-              border: '1px solid #e2e8f0', borderRadius: '14px',
-              overflow: 'hidden', backgroundColor: '#fafafa',
+              border: '1px solid var(--si-border)', borderRadius: '14px',
+              overflow: 'hidden', backgroundColor: 'var(--si-surface-muted)',
             }}>
               <form onSubmit={handleAnswerSubmit} style={{ padding: isMobile ? '1rem' : '1.25rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.4rem' }}>
@@ -588,7 +589,7 @@ export default function SimulatorScreen() {
                         minHeight: '36px',
                       }}
                     >
-                      {isRecording ? `🔴 ${t('simStopBtn')}` : `🎤 ${t('simMicBtn')}`}
+                      <span className="si-icon-text"><Icon name={isRecording ? 'stop' : 'microphone'} size={14} />{isRecording ? t('simStopBtn') : t('simMicBtn')}</span>
                     </button>
                   </div>
                 </div>
@@ -602,7 +603,7 @@ export default function SimulatorScreen() {
                     width: '100%',
                     height: isMobile ? '130px' : '140px',
                     padding: '0.875rem', borderRadius: '10px',
-                    border: '1.5px solid #e2e8f0', fontFamily: 'inherit',
+                    border: '1.5px solid var(--si-border)', fontFamily: 'inherit',
                     fontSize: isMobile ? '1rem' : '0.95rem',
                     color: '#334155', resize: 'vertical',
                     outline: 'none', lineHeight: '1.5',
@@ -619,20 +620,20 @@ export default function SimulatorScreen() {
                     marginTop: '0.75rem', width: '100%',
                     padding: isMobile ? '1rem' : '0.875rem',
                     background: answerText.trim()
-                      ? 'linear-gradient(135deg, #4f46e5, #7c3aed)'
+                      ? 'linear-gradient(135deg, var(--si-primary), #214cba)'
                       : '#e2e8f0',
                     color: answerText.trim() ? '#fff' : '#94a3b8',
                     border: 'none', borderRadius: '10px',
                     fontWeight: '700', fontSize: isMobile ? '1rem' : '0.95rem',
                     cursor: answerText.trim() ? 'pointer' : 'default',
                     boxShadow: answerText.trim()
-                      ? '0 4px 14px rgba(79,70,229,0.35)'
+                      ? '0 8px 20px rgba(49,87,213,0.22)'
                       : 'none',
                     transition: 'all 0.2s ease',
                     minHeight: '48px',
                   }}
                 >
-                  ✓ {t('simSubmitAnswer')}
+                  <span className="si-icon-text"><Icon name="check" size={18} />{t('simSubmitAnswer')}</span>
                 </button>
               </form>
             </div>

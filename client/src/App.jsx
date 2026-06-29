@@ -8,6 +8,108 @@ import RecruiterDashboard from './questionBank/RecruiterDashboard';
 import SettingsScreen from './settings/SettingsScreen';
 import { useIsMobile } from './hooks/useIsMobile';
 import { useLanguage } from './utils/LanguageContext';
+import Icon from './components/ui/icons';
+
+const HIREUP_LOGO_SRC = '/brand/hireup-logo-transparent.png';
+const HIREUP_SYMBOL_SRC = '/brand/hireup-internal-symbol-white.png';
+
+function FullHireUpLogo({ isMobile }) {
+  return (
+    <div
+      dir="ltr"
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        marginBottom: isMobile ? '1rem' : '1.25rem',
+      }}
+    >
+      <img
+        src={HIREUP_LOGO_SRC}
+        alt="HireUp — AI Interview Coach & Recruitment Matchmaker"
+        style={{
+          display: 'block',
+          width: isMobile ? 'min(78vw, 270px)' : 'min(100%, 320px)',
+          maxHeight: isMobile ? '112px' : '136px',
+          objectFit: 'contain',
+        }}
+      />
+    </div>
+  );
+}
+
+function HireUpTextBrand({ isMobile }) {
+  return (
+    <div
+      dir="ltr"
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        marginBottom: isMobile ? '1.25rem' : '2.5rem',
+        zIndex: 1,
+      }}
+    >
+      <span
+        style={{
+          fontSize: isMobile ? '1.6rem' : '1.9rem',
+          fontWeight: '800',
+          color: '#ffffff',
+          letterSpacing: '0',
+        }}
+      >
+        Hire<span style={{ color: '#d8b4fe' }}>Up</span>
+      </span>
+    </div>
+  );
+}
+
+function NavBrandLockup({ isMobile }) {
+  return (
+    <span
+      dir="ltr"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: isMobile ? '0.45rem' : '0.55rem',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <span
+        style={{
+          width: isMobile ? '30px' : '32px',
+          height: isMobile ? '30px' : '32px',
+          borderRadius: '8px',
+          background: 'linear-gradient(135deg, #143268, #3157d5)',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 6px 14px rgba(49,87,213,0.22)',
+        }}
+      >
+        <img
+          src={HIREUP_SYMBOL_SRC}
+          alt=""
+          aria-hidden="true"
+          style={{
+            display: 'block',
+            width: isMobile ? '18px' : '19px',
+            height: isMobile ? '19px' : '20px',
+            objectFit: 'contain',
+          }}
+        />
+      </span>
+      <span
+        style={{
+          fontSize: isMobile ? '1rem' : '1.1rem',
+          fontWeight: '800',
+          color: '#0f172a',
+          letterSpacing: '0',
+        }}
+      >
+        Hire<span style={{ color: '#3157d5' }}>Up</span>
+      </span>
+    </span>
+  );
+}
 
 function UserDropdown({ onClose, onLogout, t, isRtl }) {
   return (
@@ -16,8 +118,8 @@ function UserDropdown({ onClose, onLogout, t, isRtl }) {
       right: isRtl ? 'auto' : 0,
       left: isRtl ? 0 : 'auto',
       marginTop: '0.5rem',
-      backgroundColor: '#ffffff', border: '1px solid #e2e8f0',
-      borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+      backgroundColor: 'var(--si-surface)', border: '1px solid var(--si-border)',
+      borderRadius: '12px', boxShadow: 'var(--si-shadow)',
       width: '150px', zIndex: 200, display: 'flex', flexDirection: 'column',
       padding: '0.4rem 0',
     }}>
@@ -30,7 +132,7 @@ function UserDropdown({ onClose, onLogout, t, isRtl }) {
           alignItems: 'center', gap: '0.5rem',
         }}
       >
-        ⚙️ {t('navSettings')}
+        <span className="si-icon-text"><Icon name="settings" size={16} />{t('navSettings')}</span>
       </NavLink>
       <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '0.3rem 0' }} />
       <button
@@ -41,7 +143,7 @@ function UserDropdown({ onClose, onLogout, t, isRtl }) {
           textAlign: 'start', cursor: 'pointer', width: '100%',
         }}
       >
-        🚪 {t('navLogout')}
+        <span className="si-icon-text"><Icon name="logOut" size={16} />{t('navLogout')}</span>
       </button>
     </div>
   );
@@ -229,36 +331,36 @@ export default function App() {
   };
 
   const navLinkStyle = (isActive) => ({
-    padding: '0.45rem 1rem', borderRadius: '8px', fontWeight: '600',
-    fontSize: '0.875rem', color: isActive ? '#4f46e5' : '#64748b',
-    backgroundColor: isActive ? '#f5f3ff' : 'transparent',
+    padding: '0.5rem 0.95rem', borderRadius: '999px', fontWeight: '700',
+    fontSize: '0.875rem', color: isActive ? 'var(--si-primary)' : 'var(--si-text-muted)',
+    backgroundColor: isActive ? 'var(--si-primary-soft)' : 'transparent',
     textDecoration: 'none', transition: 'all 0.15s ease',
-    border: isActive ? '1px solid #e0d9ff' : '1px solid transparent',
+    border: isActive ? '1px solid #cbd8ff' : '1px solid transparent',
   });
 
   const mobileNavLinkStyle = (isActive) => ({
     display: 'block', padding: '0.75rem 1rem', borderRadius: '8px',
     fontWeight: '600', fontSize: '0.9rem',
-    color: isActive ? '#4f46e5' : '#334155',
-    backgroundColor: isActive ? '#f5f3ff' : 'transparent',
+    color: isActive ? 'var(--si-primary)' : 'var(--si-text)',
+    backgroundColor: isActive ? 'var(--si-primary-soft)' : 'transparent',
     textDecoration: 'none', transition: 'background 0.15s',
   });
 
   const switchBtnStyle = {
     padding: '0.45rem 0.85rem', borderRadius: '8px',
-    backgroundColor: '#f5f3ff', color: '#4f46e5',
-    border: '1px solid #e0d9ff', fontSize: '0.8rem',
+    backgroundColor: 'var(--si-secondary-soft)', color: 'var(--si-secondary)',
+    border: '1px solid #b8e5dc', fontSize: '0.8rem',
     fontWeight: '700', cursor: 'pointer',
   };
 
   const inputStyle = {
     width: '100%', padding: '0.65rem 0.875rem',
-    borderRadius: '10px', border: '1.5px solid #e2e8f0',
+    borderRadius: '10px', border: '1.5px solid var(--si-border)',
     fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box',
     fontFamily: 'inherit',
   };
 
-  const roleCard = (roleVal, icon, label) => (
+  const roleCard = (roleVal, iconName, label) => (
     <div
       onClick={() => setSelectedRole(roleVal)}
       style={{
@@ -268,7 +370,7 @@ export default function App() {
         cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease',
       }}
     >
-      <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '0.25rem' }}>{icon}</span>
+      <span className="si-icon-box" style={{ marginBottom: '0.25rem' }}><Icon name={iconName} size={24} /></span>
       <span style={{ fontSize: '0.8rem', fontWeight: '700', color: selectedRole === roleVal ? '#4f46e5' : '#475569' }}>{label}</span>
     </div>
   );
@@ -334,7 +436,7 @@ export default function App() {
           color: '#b91c1c', padding: '0.75rem', borderRadius: '10px',
           fontSize: '0.85rem', marginBottom: '1rem', fontWeight: '500',
         }}>
-          ⚠️ {error}
+          <span className="si-icon-text"><Icon name="alert" size={16} />{error}</span>
         </div>
       )}
       {successMsg && (
@@ -343,7 +445,7 @@ export default function App() {
           color: '#15803d', padding: '0.75rem', borderRadius: '10px',
           fontSize: '0.85rem', marginBottom: '1rem', fontWeight: '500',
         }}>
-          ✅ {successMsg}
+          <span className="si-icon-text"><Icon name="checkCircle" size={16} />{successMsg}</span>
         </div>
       )}
 
@@ -383,11 +485,11 @@ export default function App() {
             disabled={loading || !inputIdentifier.trim() || !inputPassword}
             style={{
               width: '100%', padding: '0.75rem', marginTop: '0.25rem',
-              background: (!loading && inputIdentifier.trim() && inputPassword) ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : '#e2e8f0',
+              background: (!loading && inputIdentifier.trim() && inputPassword) ? 'linear-gradient(135deg, var(--si-primary), #214cba)' : '#e2e8f0',
               color: (!loading && inputIdentifier.trim() && inputPassword) ? '#fff' : '#94a3b8',
               border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '0.95rem',
               cursor: (!loading && inputIdentifier.trim() && inputPassword) ? 'pointer' : 'default',
-              boxShadow: (!loading && inputIdentifier.trim() && inputPassword) ? '0 4px 12px rgba(79,70,229,0.2)' : 'none',
+              boxShadow: (!loading && inputIdentifier.trim() && inputPassword) ? '0 8px 20px rgba(49,87,213,0.22)' : 'none',
             }}
           >
             {loading ? t('signingIn') : t('signIn')}
@@ -403,8 +505,8 @@ export default function App() {
               {t('selectRole')}
             </label>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
-              {roleCard('candidate', '👨‍💻', t('roleCandidate'))}
-              {roleCard('interviewer', '💼', t('roleInterviewer'))}
+              {roleCard('candidate', 'user', t('roleCandidate'))}
+              {roleCard('interviewer', 'briefcase', t('roleInterviewer'))}
             </div>
           </div>
           <div style={{ textAlign: 'start' }}>
@@ -478,7 +580,7 @@ export default function App() {
             style={{
               width: '100%', padding: '0.75rem', marginTop: '0.25rem',
               background: (!loading && inputUsername.trim() && inputEmail.trim() && inputRegisterPassword && inputRegisterPassword === inputConfirmPassword)
-                ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : '#e2e8f0',
+                ? 'linear-gradient(135deg, var(--si-primary), #214cba)' : '#e2e8f0',
               color: (!loading && inputUsername.trim() && inputEmail.trim() && inputRegisterPassword && inputRegisterPassword === inputConfirmPassword)
                 ? '#fff' : '#94a3b8',
               border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '0.95rem',
@@ -503,8 +605,8 @@ export default function App() {
         </label>
         {authTab === 'signin' && (
           <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.5rem' }}>
-            {roleCard('candidate', '👨‍💻', t('roleCandidate'))}
-            {roleCard('interviewer', '💼', t('roleInterviewer'))}
+            {roleCard('candidate', 'user', t('roleCandidate'))}
+            {roleCard('interviewer', 'briefcase', t('roleInterviewer'))}
           </div>
         )}
       </div>
@@ -533,7 +635,7 @@ export default function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          background: 'linear-gradient(135deg, var(--si-bg) 0%, var(--si-bg-soft) 100%)',
           fontFamily: 'Inter, sans-serif',
           padding: '1.5rem',
           boxSizing: 'border-box',
@@ -543,23 +645,20 @@ export default function App() {
             maxWidth: '420px',
             backgroundColor: '#ffffff',
             borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 10px 25px -5px rgba(79, 70, 229, 0.1)',
+            border: '1px solid var(--si-border)',
+            boxShadow: 'var(--si-shadow-lg)',
             padding: '2rem 1.5rem',
             textAlign: 'center',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-              <div style={{
-                width: '36px', height: '36px',
-                background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-                borderRadius: '10px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '18px',
-              }}>🎯</div>
-              <span style={{ fontSize: '1.3rem', fontWeight: '800', color: '#0f172a' }}>
-                Smart<span style={{ color: '#4f46e5' }}>Interviewer</span>
-              </span>
-            </div>
+            {authTab === 'signup' ? (
+              <FullHireUpLogo isMobile={isMobile} />
+            ) : (
+              <div dir="ltr" style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
+                <span style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0f172a', letterSpacing: '0' }}>
+                  Hire<span style={{ color: '#3157d5' }}>Up</span>
+                </span>
+              </div>
+            )}
             <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>
               {authTab === 'signin' ? t('welcomeBack') : t('createYourAccount')}
             </h2>
@@ -578,12 +677,12 @@ export default function App() {
         minHeight: '100vh',
         display: 'flex',
         fontFamily: 'Inter, sans-serif',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        background: 'linear-gradient(135deg, var(--si-bg) 0%, var(--si-bg-soft) 100%)',
       }}>
         {/* Left panel — branding */}
         <div style={{
           flex: 1,
-          background: 'linear-gradient(145deg, #4f46e5 0%, #7c3aed 60%, #6d28d9 100%)',
+          background: 'linear-gradient(145deg, #143268 0%, #3157d5 58%, #0f766e 100%)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -605,21 +704,7 @@ export default function App() {
             background: 'rgba(255,255,255,0.06)',
           }} />
 
-          {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2.5rem', zIndex: 1 }}>
-            <div style={{
-              width: '52px', height: '52px',
-              background: 'rgba(255,255,255,0.2)',
-              backdropFilter: 'blur(8px)',
-              borderRadius: '14px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '26px',
-              border: '1px solid rgba(255,255,255,0.3)',
-            }}>🎯</div>
-            <span style={{ fontSize: '1.8rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
-              Smart<span style={{ color: '#c4b5fd' }}>Interviewer</span>
-            </span>
-          </div>
+          <HireUpTextBrand />
 
           <h1 style={{ fontSize: '2rem', fontWeight: '800', textAlign: 'center', marginBottom: '1rem', lineHeight: 1.2, zIndex: 1 }}>
             {t('heroTitle').split('\n').map((line, i) => (
@@ -633,10 +718,10 @@ export default function App() {
           {/* Feature bullets */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', zIndex: 1, width: '100%', maxWidth: '340px' }}>
             {[
-              { icon: '🚀', key: 'feature1' },
-              { icon: '📊', key: 'feature2' },
-              { icon: '🧠', key: 'feature3' },
-              { icon: '💼', key: 'feature4' },
+              { icon: 'play', key: 'feature1' },
+              { icon: 'barChart', key: 'feature2' },
+              { icon: 'brain', key: 'feature3' },
+              { icon: 'briefcase', key: 'feature4' },
             ].map(f => (
               <div key={f.key} style={{
                 display: 'flex', alignItems: 'center', gap: '0.75rem',
@@ -644,7 +729,7 @@ export default function App() {
                 borderRadius: '10px', padding: '0.65rem 1rem',
                 border: '1px solid rgba(255,255,255,0.15)',
               }}>
-                <span style={{ fontSize: '1.1rem' }}>{f.icon}</span>
+                <Icon name={f.icon} size={18} />
                 <span style={{ fontSize: '0.9rem', fontWeight: '600', color: 'rgba(255,255,255,0.9)' }}>{t(f.key)}</span>
               </div>
             ))}
@@ -659,10 +744,11 @@ export default function App() {
           alignItems: 'center',
           justifyContent: 'center',
           padding: '3rem 2.5rem',
-          backgroundColor: '#ffffff',
-          boxShadow: '-4px 0 24px rgba(0,0,0,0.06)',
+          backgroundColor: 'var(--si-surface)',
+          boxShadow: '-4px 0 24px rgba(16,32,51,0.08)',
         }}>
           <div style={{ width: '100%', maxWidth: '380px' }}>
+            {authTab === 'signup' && <FullHireUpLogo isMobile={false} />}
             <h2 style={{ fontSize: '1.6rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.4rem' }}>
               {authTab === 'signin' ? t('welcomeBack') : t('createYourAccount')}
             </h2>
@@ -678,12 +764,12 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+      <div style={{ minHeight: '100vh', backgroundColor: 'transparent' }}>
         {/* ─── Navbar ───────────────────────────────────── */}
         <nav style={{
-          backgroundColor: '#ffffff',
-          borderBottom: '1px solid #e8eaf0',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+          backgroundColor: 'rgba(255,255,255,0.92)',
+          borderBottom: '1px solid var(--si-border)',
+          boxShadow: '0 1px 10px rgba(16,32,51,0.06)',
           padding: isMobile ? '0 1rem' : '0 2rem',
           minHeight: '64px',
           display: 'flex',
@@ -700,19 +786,8 @@ export default function App() {
             height: '64px',
           }}>
             {/* Logo */}
-            <NavLink to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
-              <div style={{
-                width: '32px', height: '32px',
-                background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-                borderRadius: '8px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '16px',
-              }}>
-                🎯
-              </div>
-              <span style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', letterSpacing: '-0.02em' }}>
-                Smart<span style={{ color: '#4f46e5' }}>Interviewer</span>
-              </span>
+            <NavLink to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', minWidth: 0 }}>
+              <NavBrandLockup isMobile={isMobile} />
             </NavLink>
 
             {isMobile ? (
@@ -726,7 +801,7 @@ export default function App() {
                 }}
                 aria-label="Toggle menu"
               >
-                {mobileMenuOpen ? '✕' : '☰'}
+                <Icon name={mobileMenuOpen ? 'close' : 'menu'} size={20} />
               </button>
             ) : (
               /* Desktop nav */
@@ -734,19 +809,19 @@ export default function App() {
                 <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
                   {role === 'candidate' ? (
                     <>
-                      <NavLink to="/" end style={({ isActive }) => navLinkStyle(isActive)}>🏠 {t('navDashboard')}</NavLink>
-                      <NavLink to="/prepare" style={({ isActive }) => navLinkStyle(isActive)}>🚀 {t('navPractice')}</NavLink>
+                      <NavLink to="/" end style={({ isActive }) => navLinkStyle(isActive)}><span className="si-icon-text"><Icon name="home" size={16} />{t('navDashboard')}</span></NavLink>
+                      <NavLink to="/prepare" style={({ isActive }) => navLinkStyle(isActive)}><span className="si-icon-text"><Icon name="play" size={16} />{t('navPractice')}</span></NavLink>
                     </>
                   ) : (
                     <>
-                      <NavLink to="/" end style={({ isActive }) => navLinkStyle(isActive)}>🏠 {t('navRecruiterDashboard')}</NavLink>
-                      <NavLink to="/questions" style={({ isActive }) => navLinkStyle(isActive)}>📋 {t('navQuestionGenerator')}</NavLink>
+                      <NavLink to="/" end style={({ isActive }) => navLinkStyle(isActive)}><span className="si-icon-text"><Icon name="home" size={16} />{t('navRecruiterDashboard')}</span></NavLink>
+                      <NavLink to="/questions" style={({ isActive }) => navLinkStyle(isActive)}><span className="si-icon-text"><Icon name="clipboard" size={16} />{t('navQuestionGenerator')}</span></NavLink>
                     </>
                   )}
                 </div>
 
                 <button onClick={handleSwitchRole} style={switchBtnStyle}>
-                  🔄 {role === 'candidate' ? t('switchToRecruiter') : t('switchToCandidate')}
+                  <span className="si-icon-text"><Icon name="refresh" size={16} />{role === 'candidate' ? t('switchToRecruiter') : t('switchToCandidate')}</span>
                 </button>
 
                 {/* User Dropdown Pill */}
@@ -760,7 +835,7 @@ export default function App() {
                       padding: '0.45rem 1rem', borderRadius: '20px',
                     }}
                   >
-                    👤 {username === 'Guest' ? t('guest') : username} <span style={{ fontSize: '0.7rem' }}>▼</span>
+                    <span className="si-icon-text"><Icon name="user" size={16} />{username === 'Guest' ? t('guest') : username} <Icon name="chevronDown" size={14} /></span>
                   </button>
                   {menuOpen && <UserDropdown onClose={() => setMenuOpen(false)} onLogout={handleLogout} t={t} isRtl={language === 'he'} />}
                 </div>
@@ -779,24 +854,24 @@ export default function App() {
             }}>
               {role === 'candidate' ? (
                 <>
-                  <NavLink to="/" end onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>🏠 {t('navDashboard')}</NavLink>
-                  <NavLink to="/prepare" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>🚀 {t('navPractice')}</NavLink>
+                  <NavLink to="/" end onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}><span className="si-icon-text"><Icon name="home" size={16} />{t('navDashboard')}</span></NavLink>
+                  <NavLink to="/prepare" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}><span className="si-icon-text"><Icon name="play" size={16} />{t('navPractice')}</span></NavLink>
                 </>
               ) : (
                 <>
-                  <NavLink to="/" end onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>🏠 {t('navRecruiterDashboard')}</NavLink>
-                  <NavLink to="/questions" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>📋 {t('navQuestionGenerator')}</NavLink>
+                  <NavLink to="/" end onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}><span className="si-icon-text"><Icon name="home" size={16} />{t('navRecruiterDashboard')}</span></NavLink>
+                  <NavLink to="/questions" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}><span className="si-icon-text"><Icon name="clipboard" size={16} />{t('navQuestionGenerator')}</span></NavLink>
                 </>
               )}
-              <NavLink to="/settings" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}>⚙️ {t('navSettings')}</NavLink>
+              <NavLink to="/settings" onClick={() => setMobileMenuOpen(false)} style={({ isActive }) => mobileNavLinkStyle(isActive)}><span className="si-icon-text"><Icon name="settings" size={16} />{t('navSettings')}</span></NavLink>
               <button onClick={handleSwitchRole} style={{ ...mobileNavLinkStyle(false), textAlign: 'start', border: 'none', cursor: 'pointer', width: '100%' }}>
-                🔄 {role === 'candidate' ? t('switchToRecruiter') : t('switchToCandidate')}
+                <span className="si-icon-text"><Icon name="refresh" size={16} />{role === 'candidate' ? t('switchToRecruiter') : t('switchToCandidate')}</span>
               </button>
               <button
                 onClick={handleLogout}
                 style={{ ...mobileNavLinkStyle(false), textAlign: 'start', border: 'none', cursor: 'pointer', color: '#dc2626', width: '100%' }}
               >
-                🚪 {t('navLogout')}
+                <span className="si-icon-text"><Icon name="logOut" size={16} />{t('navLogout')}</span>
               </button>
             </div>
           )}
@@ -806,7 +881,7 @@ export default function App() {
         <main style={{
           maxWidth: '1280px',
           margin: '0 auto',
-          padding: isMobile ? '1rem' : '2rem 1.5rem',
+          padding: isMobile ? '1rem' : '2rem 1.5rem 3rem',
         }}>
           <Routes>
             <Route path="/" element={<HomeRoute role={role} />} />

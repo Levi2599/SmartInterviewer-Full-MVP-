@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { getAuthHeaders } from '../utils/auth';
 import { useLanguage } from '../utils/LanguageContext';
+import Icon from '../components/ui/icons';
 
-const INDIGO = '#4f46e5';
+const INDIGO = '#3157d5';
 
 export default function SettingsScreen() {
   const navigate = useNavigate();
@@ -96,7 +97,7 @@ export default function SettingsScreen() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: 'clamp(1.35rem, 5vw, 1.75rem)', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
-            ⚙️ {t('settingsTitle')}
+            <span className="si-icon-text"><Icon name="settings" size={24} />{t('settingsTitle')}</span>
           </h1>
           <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0 }}>
             {t('settingsSubtitle')}
@@ -115,7 +116,7 @@ export default function SettingsScreen() {
             direction: 'ltr',
           }}
         >
-          <span>←</span>
+          <Icon name={language === 'he' ? 'arrowRight' : 'arrowLeft'} size={16} />
           <span>{t('settingsDashboardBtn')}</span>
         </button>
       </div>
@@ -124,11 +125,11 @@ export default function SettingsScreen() {
 
         {/* Profile Card */}
         <div style={{
-          backgroundColor: '#fff', borderRadius: '16px',
-          border: '1px solid #e2e8f0', padding: '1.25rem 1.5rem',
+          backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+          border: '1px solid var(--si-border)', padding: '1.25rem 1.5rem',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           flexWrap: 'wrap', gap: '0.75rem',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          boxShadow: 'var(--si-shadow-sm)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{
@@ -137,7 +138,7 @@ export default function SettingsScreen() {
               alignItems: 'center', justifyContent: 'center', fontSize: isMobile ? '1.4rem' : '1.75rem', fontWeight: 'bold',
               flexShrink: 0,
             }}>
-              {role === 'candidate' ? '👨‍💻' : '💼'}
+              <Icon name={role === 'candidate' ? 'user' : 'briefcase'} size={isMobile ? 24 : 28} />
             </div>
             <div>
               <div style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b' }}>{username === 'Guest' ? t('guest') : username}</div>
@@ -160,12 +161,12 @@ export default function SettingsScreen() {
 
           {/* Section 0: Interface Language */}
           <div style={{
-            backgroundColor: '#fff', borderRadius: '16px',
-            border: '1px solid #e2e8f0', padding: '1.5rem',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+            backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+            border: '1px solid var(--si-border)', padding: '1.5rem',
+            boxShadow: 'var(--si-shadow-sm)',
           }}>
             <h2 style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b', margin: '0 0 1.25rem 0', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
-              🌐 {t('settingsInterfaceLang')}
+              <span className="si-icon-text"><Icon name="language" size={18} />{t('settingsInterfaceLang')}</span>
             </h2>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               {[
@@ -183,16 +184,16 @@ export default function SettingsScreen() {
                     flex: 1,
                     padding: '0.65rem 1rem',
                     borderRadius: '10px',
-                    border: `2px solid ${language === code ? '#4f46e5' : '#e2e8f0'}`,
-                    backgroundColor: language === code ? '#f5f3ff' : '#fff',
-                    color: language === code ? '#4f46e5' : '#475569',
+                    border: `2px solid ${language === code ? 'var(--si-primary)' : 'var(--si-border)'}`,
+                    backgroundColor: language === code ? 'var(--si-primary-soft)' : '#fff',
+                    color: language === code ? 'var(--si-primary)' : '#475569',
                     fontWeight: '700',
                     fontSize: '0.9rem',
                     cursor: 'pointer',
                     transition: 'all 0.15s',
                   }}
                 >
-                  {language === code ? '✓ ' : ''}{label}
+                  <span className="si-icon-text">{language === code && <Icon name="check" size={14} />}{label}</span>
                 </button>
               ))}
             </div>
@@ -200,12 +201,12 @@ export default function SettingsScreen() {
 
           {/* Section 1: Accessibility & Speech */}
           <div style={{
-            backgroundColor: '#fff', borderRadius: '16px',
-            border: '1px solid #e2e8f0', padding: '1.5rem',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+            backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+            border: '1px solid var(--si-border)', padding: '1.5rem',
+            boxShadow: 'var(--si-shadow-sm)',
           }}>
             <h2 style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b', margin: '0 0 1.25rem 0', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
-              ♿ {t('settingsAccessibilityTitle')}
+              <span className="si-icon-text"><Icon name="settings" size={18} />{t('settingsAccessibilityTitle')}</span>
             </h2>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -275,8 +276,8 @@ export default function SettingsScreen() {
                     width: isMobile ? '100%' : 'auto', minWidth: isMobile ? 'unset' : '150px',
                   }}
                 >
-                  <option value="en-US">🇺🇸 English (US)</option>
-                  <option value="he-IL">🇮🇱 Hebrew (IL)</option>
+                  <option value="en-US">English (US)</option>
+                  <option value="he-IL">Hebrew (IL)</option>
                 </select>
               </div>
             </div>
@@ -284,14 +285,14 @@ export default function SettingsScreen() {
 
           {/* Section 2: Role customized sector */}
           <div style={{
-            backgroundColor: '#fff', borderRadius: '16px',
-            border: '1px solid #e2e8f0', padding: '1.5rem',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+            backgroundColor: 'var(--si-surface)', borderRadius: '16px',
+            border: '1px solid var(--si-border)', padding: '1.5rem',
+            boxShadow: 'var(--si-shadow-sm)',
           }}>
             {role === 'candidate' ? (
               <div>
                 <h2 style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b', margin: '0 0 1.25rem 0', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
-                  👨‍💻 {t('settingsCandidatePrefs')}
+                  <span className="si-icon-text"><Icon name="user" size={18} />{t('settingsCandidatePrefs')}</span>
                 </h2>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <div>
@@ -320,7 +321,7 @@ export default function SettingsScreen() {
             ) : (
               <div>
                 <h2 style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b', margin: '0 0 1.25rem 0', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
-                  💼 {t('settingsRecruiterPrefs')}
+                  <span className="si-icon-text"><Icon name="briefcase" size={18} />{t('settingsRecruiterPrefs')}</span>
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   {/* Brand Name */}
@@ -390,7 +391,7 @@ export default function SettingsScreen() {
             fontSize: '0.875rem',
             marginBottom: '1rem',
           }}>
-            ✓ {t('settingsSavedMsg')}
+            <span className="si-icon-text"><Icon name="checkCircle" size={16} />{t('settingsSavedMsg')}</span>
           </div>
         )}
 
@@ -398,19 +399,19 @@ export default function SettingsScreen() {
 
       {/* Danger Zone */}
       <div style={{
-        marginTop: '2.5rem', backgroundColor: '#fff', borderRadius: '16px',
+        marginTop: '2.5rem', backgroundColor: 'var(--si-surface)', borderRadius: '16px',
         border: '1px solid #fecaca', padding: '1.5rem',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+        boxShadow: 'var(--si-shadow-sm)',
       }}>
         <h2 style={{ fontSize: '1rem', fontWeight: '800', color: '#b91c1c', margin: '0 0 0.25rem 0' }}>
-          ⚠️ {t('settingsDangerZone')}
+          <span className="si-icon-text"><Icon name="alert" size={18} />{t('settingsDangerZone')}</span>
         </h2>
         <p style={{ fontSize: '0.8rem', color: '#dc2626', margin: '0 0 1.25rem 0' }}>
           {t('settingsDangerDesc')}
         </p>
         {deleteError && (
           <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: '8px', padding: '0.65rem 1rem', marginBottom: '0.75rem', fontSize: '0.85rem', fontWeight: '500' }}>
-            ⚠️ {deleteError}
+            <span className="si-icon-text"><Icon name="alert" size={16} />{deleteError}</span>
           </div>
         )}
 

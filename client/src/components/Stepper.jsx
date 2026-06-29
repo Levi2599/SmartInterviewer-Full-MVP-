@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../utils/LanguageContext';
+import Icon from './ui/icons';
 
 export default function Stepper({ activeStep = 1 }) {
   const { t } = useLanguage();
@@ -12,13 +13,13 @@ export default function Stepper({ activeStep = 1 }) {
   ];
 
   return (
-    <div style={{
+    <div aria-label="Progress" style={{
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 0,
       marginBottom: '2rem',
-      padding: '1rem 0',
+      padding: '0.75rem 0.25rem 1rem',
       overflowX: 'auto',
     }}>
       {STEPS.map((label, idx) => {
@@ -31,26 +32,26 @@ export default function Stepper({ activeStep = 1 }) {
             {/* Step node */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem', minWidth: '72px' }}>
               <div style={{
-                width: '32px',
-                height: '32px',
+                width: '34px',
+                height: '34px',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: '700',
                 fontSize: '0.8rem',
-                background: isDone ? '#4f46e5' : isActive ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : '#e2e8f0',
-                color: isDone || isActive ? '#fff' : '#94a3b8',
-                boxShadow: isActive ? '0 0 0 3px #e0d9ff' : 'none',
+                background: isDone ? 'var(--si-primary)' : isActive ? 'linear-gradient(135deg, var(--si-primary), #214cba)' : '#e8eef5',
+                color: isDone || isActive ? '#fff' : 'var(--si-text-soft)',
+                boxShadow: isActive ? '0 0 0 4px rgba(49,87,213,0.16)' : 'none',
                 transition: 'all 0.2s ease',
                 flexShrink: 0,
               }}>
-                {isDone ? '✓' : step}
+                {isDone ? <Icon name="check" size={15} /> : step}
               </div>
               <span style={{
                 fontSize: '0.7rem',
-                fontWeight: isActive ? '700' : '500',
-                color: isActive ? '#4f46e5' : isDone ? '#6366f1' : '#94a3b8',
+                fontWeight: isActive ? '800' : '600',
+                color: isActive ? 'var(--si-primary)' : isDone ? '#3157d5' : 'var(--si-text-soft)',
                 whiteSpace: 'nowrap',
               }}>
                 {label}
@@ -61,7 +62,7 @@ export default function Stepper({ activeStep = 1 }) {
               <div style={{
                 height: '2px',
                 width: '40px',
-                backgroundColor: isDone ? '#4f46e5' : '#e2e8f0',
+                backgroundColor: isDone ? 'var(--si-primary)' : '#e8eef5',
                 marginBottom: '1.4rem',
                 flexShrink: 0,
                 transition: 'background-color 0.2s ease',
